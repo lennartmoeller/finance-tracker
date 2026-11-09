@@ -5,6 +5,7 @@
 1. Install the Node.js version in [`.nvmrc`](./.nvmrc), for example with `nvm install` or `fnm install`.
 2. Install pnpm with `npm install --global pnpm`; any pnpm version switches itself to the one pinned in the `packageManager` field of [`package.json`](./package.json).
 3. Run `pnpm install`.
+4. Install each Claude Code plugin enabled in [`.claude/settings.json`](./.claude/settings.json) with `claude plugin install <plugin>@<marketplace> --scope project`, because Claude Code enables these plugins for every clone but does not download them.
 
 ## Add a workspace
 
@@ -31,3 +32,4 @@ Run `pnpm check`, the quality gate; the [`CI` workflow](./.github/workflows/ci.y
 
 Dependabot opens weekly pull requests for npm dependencies and GitHub Actions; versions it ignores, with the reason for each, live in [`.github/dependabot.yml`](./.github/dependabot.yml).
 Update Node.js in `.nvmrc` and pnpm in the `packageManager` field of `package.json` by hand, because Dependabot does not track them.
+Claude Code updates the plugins enabled in `.claude/settings.json` itself, because a project cannot pin plugin versions.

@@ -111,3 +111,17 @@ Before writing, name the principle the change is most likely to break, state it 
 
 - Give humans a selective overview of the repository's purpose, high-level architecture and boundaries, how to start, and where authoritative guidance for each reader task lives.
 - Link to contributor and task-specific guides for detailed procedures, keeping the overview focused rather than turning it into a complete repository manual.
+
+## Agent skills
+
+### Issue tracker
+
+Track issues and specs as GitHub issues, following the [issue tracker conventions](./docs/agents/issue-tracker.md).
+
+### Triage labels
+
+Apply the five default triage labels as mapped in the [triage label table](./docs/agents/triage-labels.md).
+
+### Domain docs
+
+Read and write domain docs in the single-context layout the [domain docs rules](./docs/agents/domain.md) describe.
