@@ -5,6 +5,7 @@ import {
   type IngRawTransactionV1,
 } from "@finance-tracker/bank-data-api/ing";
 import type { IngAccountRow } from "./entrypoints/ing-accounts.content.ts";
+import { shapeMismatch } from "./shape-mismatch.ts";
 import { inject, navigate, notLoggedIn, withSyncTab } from "./sync-tab.ts";
 
 export async function readIngTransactions(iban: string) {
@@ -50,11 +51,7 @@ export function parseIngCsv(text: string, iban: string): IngRawTransactionV1[] {
     ];
   });
   const parsed = z.array(ingRawTransactionV1).safeParse(rows);
-  if (header < 0 || !parsed.success) {
-    throw new Error(
-      "ING changed its export format, so nothing was sent; the adapter needs a new shape version.",
-    );
-  }
+  if (header < 0 || !parsed.success) throw shapeMismatch("ING");
   return parsed.data;
 }
 

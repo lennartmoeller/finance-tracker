@@ -3,6 +3,7 @@ import {
   tradeRepublicRawTransactionV1,
   type TradeRepublicRawTransactionV1,
 } from "@finance-tracker/bank-data-api/trade-republic";
+import { shapeMismatch } from "./shape-mismatch.ts";
 import { inject, navigate, notLoggedIn, withSyncTab } from "./sync-tab.ts";
 
 export async function readTradeRepublicTransactions(iban: string) {
@@ -38,11 +39,8 @@ export function parseTradeRepublicCsv(
         ),
       ),
     );
-  if (JSON.stringify(header) !== JSON.stringify(columns) || !parsed.success) {
-    throw new Error(
-      "Trade Republic changed its export format, so nothing was sent; the adapter needs a new shape version.",
-    );
-  }
+  if (JSON.stringify(header) !== JSON.stringify(columns) || !parsed.success)
+    throw shapeMismatch("Trade Republic");
   return parsed.data;
 }
 

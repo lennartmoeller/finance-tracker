@@ -2,6 +2,7 @@ import { defineBackground } from "wxt/utils/define-background";
 import { errorMessage } from "@finance-tracker/bank-data-api/client";
 import type { Account } from "@finance-tracker/bank-data-api/contract";
 import { apiClient } from "../api.ts";
+import { readDeutscheBankTransactions } from "../deutsche-bank.ts";
 import { readIngTransactions } from "../ing.ts";
 import { readTradeRepublicTransactions } from "../trade-republic.ts";
 
@@ -15,6 +16,7 @@ export type SyncRequest = Pick<Account, "id" | "bank" | "iban">;
 const readers = {
   ING: readIngTransactions,
   "Trade Republic": readTradeRepublicTransactions,
+  "Deutsche Bank": readDeutscheBankTransactions,
 };
 
 export default defineBackground(() => {
