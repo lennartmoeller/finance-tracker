@@ -13,7 +13,7 @@ Each app under `apps/` and each shared package under `packages/` is a pnpm works
 The first change of a component creates its directory with:
 
 - a `package.json` with `"name": "@finance-tracker/<directory>"`, `"private": true` and `"type": "module"`;
-- a `tsconfig.json` that extends `../../tsconfig.base.json` and sets the module resolution, `lib`, `jsx` and `types` its runtime needs.
+- a `tsconfig.json` that extends `../../tsconfig.base.json`, sets the module resolution, `lib`, `jsx` and `types` its runtime needs, and includes every TypeScript file of the workspace, config files too, because type-aware linting rejects TypeScript files outside every `tsconfig.json`.
 
 Depend on a shared package with `"@finance-tracker/<package>": "workspace:*"`.
 Add an external dependency with `pnpm add --filter @finance-tracker/<directory> <dependency>`, which pins its exact version.
@@ -21,7 +21,7 @@ Name test files `*.test.ts` or `*.test.tsx`.
 
 ## Check a change
 
-Run `pnpm check`, the quality gate; the [`CI` workflow](./.github/workflows/ci.yml) runs the same command and a CodeQL analysis on every pull request to `main` and every push to `main`.
+Run `pnpm check`, the quality gate; the [`CI` workflow](./.github/workflows/ci.yml) runs the same command and a CodeQL analysis.
 
 - Fix formatting with `pnpm exec prettier --write .` and autofixable lint findings with `pnpm exec eslint --fix .`.
 - Delete what knip reports as unused instead of ignoring it.
@@ -30,6 +30,6 @@ Run `pnpm check`, the quality gate; the [`CI` workflow](./.github/workflows/ci.y
 
 ## Dependency updates
 
-Dependabot opens weekly pull requests for npm dependencies and GitHub Actions; versions it ignores, with the reason for each, live in [`.github/dependabot.yml`](./.github/dependabot.yml).
+[Dependabot](./.github/dependabot.yml) opens the update pull requests and holds every ignored version with its reason.
 Update Node.js in `.nvmrc` and pnpm in the `packageManager` field of `package.json` by hand, because Dependabot does not track them.
 Claude Code updates the plugins enabled in `.claude/settings.json` itself, because a project cannot pin plugin versions.

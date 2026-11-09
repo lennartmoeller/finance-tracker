@@ -5,3 +5,6 @@ saveExact: true
 allowBuilds:
   # Its install script only downloads geckodriver with GECKODRIVER_AUTO_INSTALL set; the MCP server downloads it on first use.
   geckodriver: false
+overrides:
+  # @mozilla/firefox-devtools-mcp 0.10.7 pins 1.29.0, which has known advisories; remove once it depends on 1.32.0 or later.
+  "@modelcontextprotocol/sdk": ^1.32.2
