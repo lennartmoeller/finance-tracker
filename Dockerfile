@@ -10,6 +10,6 @@ CMD ["node", "apps/backend/src/main.ts"]
 FROM workspace AS frontend-build
 RUN pnpm --filter @finance-tracker/frontend build
 
-FROM nginx:1.30.6-alpine AS frontend
+FROM nginx:1.31.8-alpine AS frontend
 COPY apps/frontend/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=frontend-build /app/apps/frontend/dist /usr/share/nginx/html
