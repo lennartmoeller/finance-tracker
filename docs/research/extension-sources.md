@@ -3,22 +3,6 @@
 Researched on 2026-11-09 for the bank websites the extension reads, which [ADR 0003](../adr/0003-ingestion-through-the-extension-only.md) makes all of them.
 Move each fact into the adapter that handles it, and delete this note once none remain.
 
-## Firefox
-
-- Release and Beta builds of Firefox install only add-ons signed by Mozilla; a private add-on can be signed as unlisted on addons.mozilla.org without being published, or loaded through `about:debugging` until the browser restarts ([signing overview][amo-signing]).
-- `webRequest.filterResponseData()` lets an extension read HTTP response bodies, which Chromium browsers do not offer ([StreamFilter][streamfilter]).
-
-## ING
-
-The user's proof-of-concept extension verified these facts on a live account in September 2026, except where a source is linked.
-
-- The Umsatzanzeige's "Exportieren → CSV (Excel)" exports one account for the von/bis range set in its filter, as an `xmlhttprequest` that `filterResponseData()` reads, and the `downloads` API can cancel and erase the file Firefox would save.
-- ING keeps about 13 months online and silently clamps a wider von/bis range to it, while a preset such as "1 Jahr" overwrites von/bis and exports less, so the file's own Zeitraum line is the only trustworthy period.
-- The file is windows-1252, semicolon-separated and unquoted, starts with a preamble of IBAN, Kontoname, Zeitraum and Saldo, and has the columns Buchung, Wertstellungsdatum, Auftraggeber/Empfänger, Buchungstext, Verwendungszweck, Saldo, Währung, Betrag and Währung.
-- A semicolon inside a Verwendungszweck lengthens its row, which realigns from both ends because the four columns before and after it are fixed.
-- The file has neither counterparty IBAN nor transaction ID nor pending transactions ([RechnungsFee templates][ing-csv]).
-- The site renders on the server with Apache Wicket and answers AJAX in XML, and its transaction list loads a row's Verwendungszweck only when the row is expanded, so the export carries more than the page.
-
 ## Trade Republic
 
 - The web app presumably reads the same WebSocket timeline as the unofficial client `pytr`, in which each event carries an `id` (UUID), `timestamp`, `title` (merchant or counterparty), `subtitle`, `amount`, `status`, `eventType` and detail sections ([pytr][pytr]).
@@ -51,18 +35,15 @@ The user's proof-of-concept extension verified these facts on a live account in 
 - The activity CSV lists currency conversions as separate rows ([beancount-paypal][pp-csv]).
 - PayPal's login rejects a WebDriver-controlled Firefox, so an adapter is tried out in a regular profile ([#4][i4]).
 
-[amo-signing]: https://extensionworkshop.com/documentation/publish/signing-and-distribution-overview/
 [amo-tr]: https://addons.mozilla.org/addon/trade-republic-csv-exporter/
 [db-csv]: https://github.com/ramazankarisan/household-budget/blob/main/docs/research/07-deutsche-bank-csv.md
 [fsm-flex]: https://www.fonds-super-markt.de/fnz-bank/konto-flex/
 [fsm-portal]: https://www.fonds-super-markt.de/neuigkeiten/artikel/welche-moeglichkeiten-bietet-das-online-portal-der-fnz-bank/
 [i4]: https://github.com/lennartmoeller/finance-tracker/issues/4#issuecomment-6745729813
-[ing-csv]: https://github.com/nicolettas-muggelbude/RechnungsFee/blob/main/vorlagen/bank-csv/README.md
 [mobiflip-tr]: https://www.mobiflip.de/trade-republic-bekommt-neue-export-funktion-und-outbank-zieht-sofort-nach/
 [outbank-db]: https://help.outbankapp.com/en/kb/articles/deutsche-bank-neues-banking
 [pp-csv]: https://github.com/nils-werner/beancount-paypal/blob/master/beancount_paypal/lang.py
 [pp-tr-csv]: https://forum.portfolio-performance.info/t/import-trade-republic-csv-transaktionsexport/39126
 [pp-trcsv]: https://github.com/portfolio-performance/portfolio/blob/master/name.abuchen.portfolio/src/name/abuchen/portfolio/datatransfer/traderepublic/TradeRepublicCSVExtractor.java
 [pytr]: https://github.com/pytr-org/pytr
-[streamfilter]: https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/webRequest/StreamFilter
 [wf-45]: https://github.com/waldonso2/wealthfolio-importer-addon/issues/45

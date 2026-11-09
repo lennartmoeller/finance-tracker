@@ -11,8 +11,8 @@ flowchart LR
   backend["Backend"]
   postgres[("PostgreSQL")]
   websites["Bank websites"]
-  frontend -- "view, opening balances" --> backend
-  extension -- "raw transactions" --> backend
+  frontend -- "accounts, view, opening balances" --> backend
+  extension -- "accounts, raw transactions" --> backend
   extension -- "reads the logged-in session" --> websites
   backend --> postgres
 ```
@@ -25,10 +25,10 @@ flowchart LR
 
 | Component | Owns | Leaves to others |
 | --- | --- | --- |
-| Web frontend | browsing, filtering and summarizing transactions per account; each account's opening balance; each bank's last sync | reading bank websites; talking to the extension |
+| Web frontend | creating accounts; browsing, filtering and summarizing transactions per account; each account's opening balance and last sync | reading bank websites; talking to the extension |
 | Backend | the API contract's implementation; validation, deduplication, raw storage and extraction | state outside PostgreSQL |
-| Extension | one adapter per bank website; shape validation; the toolbar sync and its result | storing bank credentials; talking to the frontend |
-| PostgreSQL | raw transactions, normalized transactions, each account's opening balance | |
+| Extension | one adapter per bank website; shape validation; the popup that lists the accounts and syncs each one | storing bank credentials; talking to the frontend |
+| PostgreSQL | accounts, raw transactions, normalized transactions | |
 
 The extension exists because a web page cannot read banking sites in the user's session: the same-origin policy and the banks' framing bans block it.
 Why the web frontend and the extension stay separate is recorded in [ADR 0001](./adr/0001-separate-web-frontend-and-thin-extension.md).
@@ -66,29 +66,41 @@ flowchart TD
 ```
 
 Ingest runs synchronously within the sync request, so the caller receives the imported and skipped counts.
+Extraction is not built yet, so ingest stores raw transactions only.
 
 ## Extension sync
 
 ```mermaid
 sequenceDiagram
   actor User
-  participant Site as Bank website
-  participant Ext as Extension
+  participant Popup
+  participant Ext as Extension background
+  participant Tab as Background tab
   participant BE as Backend
-  User->>Site: Log in
-  User->>Ext: Click the toolbar button
-  Ext->>Site: Read transactions in the user's session
-  Ext->>Ext: Validate against the bank's shape versions
-  alt no shape version matches
-    Ext-->>User: Report the mismatch, send nothing
-  else a shape version matches
-    Ext->>BE: Sync raw booked transactions with source and shape version
-    BE-->>Ext: Imported and skipped counts
-    Ext-->>User: Show the result
+  User->>Tab: Log in to the bank website in any tab
+  User->>Popup: Open
+  Popup->>BE: List accounts with their last sync
+  User->>Popup: Sync an account
+  Popup->>Ext: Sync the account
+  Ext->>Tab: Open the bank website in an inactive tab
+  alt the session is missing
+    Ext-->>Popup: Report that the user is not logged in
+  else the session exists
+    Ext->>Tab: Find the account by its IBAN and export its transactions
+    Ext->>Ext: Validate against the bank's shape versions
+    alt no shape version matches
+      Ext-->>Popup: Report the mismatch, send nothing
+    else a shape version matches
+      Ext->>BE: Sync the account's raw booked transactions with their shape version
+      BE-->>Ext: Imported and skipped counts
+      Ext-->>Popup: Show the result
+    end
   end
+  Ext->>Tab: Close
 ```
 
-A mismatch means the bank changed its format and the adapter needs a new shape version.
+- A sync reads one account and needs a bank session the user opened in the same Firefox, which banks end after a few minutes without activity.
+- A mismatch means the bank changed its format and the adapter needs a new shape version.
 What each bank website exposes, and reference code for reading it, is collected in the [extension sources research](./research/extension-sources.md).
 
 ## Repository layout
@@ -101,7 +113,7 @@ flowchart TD
     frontend["frontend<br/>views, opening balances"]
   end
   subgraph packages["packages/"]
-    api["api<br/>contract: procedures with input and output schemas"]
+    api["api<br/>contract: procedures with input and output schemas; typed client"]
     banks["banks<br/>versioned raw shapes of extension sources"]
   end
   extension --> api
@@ -118,8 +130,8 @@ flowchart TD
 ## API contract
 
 - The extension and the frontend call the backend through contract-first typed RPC.
-- `packages/api` defines each procedure's name with its input and output schemas and contains no implementation.
-- The backend implements the contract, and the extension and the frontend build typed clients from it.
+- `packages/api` defines each procedure's name with its input and output schemas, and the typed client the extension and the frontend call the backend with.
+- The backend implements the contract.
 - The RPC library must support contract-first definitions, which rules out plain tRPC because it derives the contract from the implementation.
 
 ## Hosting and security
@@ -137,15 +149,15 @@ flowchart LR
       ext["Extension"]
     end
   end
-  tab --> fe
-  tab -- "bearer token" --> be
+  tab -- "bearer token" --> fe
+  fe -- "proxies /rpc" --> be
   ext -- "bearer token" --> be
   be --> pg
 ```
 
 - Everything runs on the user's machine now; the same containers move to a self-hosted Kubernetes cluster later, and that move adds the manifests and decides whether Docker Compose stays.
 - Kubernetes compatibility means the backend keeps no state outside PostgreSQL, every app reads its configuration from environment variables, and each container serves one app.
-- Every backend request carries a bearer token that the backend reads from its environment; the user enters it once in the extension's settings and once in the frontend.
+- Every backend request carries a bearer token that the backend reads from its environment; the user enters it once in the extension's popup and once in the frontend.
 
 ## Technology
 
