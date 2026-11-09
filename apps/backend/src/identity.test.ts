@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 import type { IngRawTransactionV1 } from "@finance-tracker/banks/ing";
-import { identifyIngTransactions } from "./identity.ts";
+import type { TradeRepublicRawTransactionV1 } from "@finance-tracker/banks/trade-republic";
+import { identifyRawTransactions } from "./identity.ts";
 
 const coffee = (saldo: string): IngRawTransactionV1 => [
   "03.11.2026",
@@ -27,13 +28,33 @@ const rent: IngRawTransactionV1 = [
   "EUR",
 ];
 
-const identities = (rawTransactions: IngRawTransactionV1[]) =>
-  identifyIngTransactions(rawTransactions).map(({ identity }) => identity);
+const ingIdentities = (rawTransactions: IngRawTransactionV1[]) =>
+  identifyRawTransactions({
+    accountId: 1,
+    source: "ING",
+    shapeVersion: 1,
+    rawTransactions,
+  }).map(({ identity }) => identity);
 
-test("identical same-day bookings stay distinct and keep their identities when their order changes", () => {
-  const first = identities([coffee("996,50"), coffee("993,00"), rent]);
-  const reordered = identities([rent, coffee("993,00"), coffee("996,50")]);
+test("identical same-day ING bookings stay distinct and keep their identities when their order changes", () => {
+  const first = ingIdentities([coffee("996,50"), coffee("993,00"), rent]);
+  const reordered = ingIdentities([rent, coffee("993,00"), coffee("996,50")]);
 
   expect(new Set(first).size).toBe(3);
   expect(new Set(reordered)).toEqual(new Set(first));
+});
+
+test("a Trade Republic raw transaction's identity is its transaction ID", () => {
+  const interest = {
+    transaction_id: "1c7a4d3f-9e2b-4d6f-8a3c-4b5e6f7a8b9c",
+  } as TradeRepublicRawTransactionV1;
+
+  expect(
+    identifyRawTransactions({
+      accountId: 1,
+      source: "Trade Republic",
+      shapeVersion: 1,
+      rawTransactions: [interest],
+    }),
+  ).toEqual([{ identity: interest.transaction_id, data: interest }]);
 });

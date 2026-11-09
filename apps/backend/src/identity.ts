@@ -1,11 +1,17 @@
 import { createHash } from "node:crypto";
-import type { IngRawTransactionV1 } from "@finance-tracker/banks/ing";
+import type { SyncInput } from "@finance-tracker/api/contract";
 
-export function identifyIngTransactions(
-  rawTransactions: IngRawTransactionV1[],
-) {
+export function identifyRawTransactions(
+  input: SyncInput,
+): { identity: string; data: SyncInput["rawTransactions"][number] }[] {
+  if (input.source === "Trade Republic") {
+    return input.rawTransactions.map((data) => ({
+      identity: data.transaction_id,
+      data,
+    }));
+  }
   const occurrences = new Map<string, number>();
-  return rawTransactions.map((data) => {
+  return input.rawTransactions.map((data) => {
     // Saldo and its currency are left out, because same-day bookings, and with them their running balances, may change order between exports.
     const [
       booking,

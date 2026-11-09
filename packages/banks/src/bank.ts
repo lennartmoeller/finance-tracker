@@ -1,3 +1,3 @@
 import { z } from "zod";
 
-export const bank = z.enum(["ING"]);
+export const bank = z.enum(["ING", "Trade Republic"]);

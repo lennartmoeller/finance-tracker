@@ -1,7 +1,7 @@
 # Finance Tracker
 
 A single-user, self-hosted tracker that collects the transactions of its user's accounts, depots included, stores them, and shows them.
-So far it syncs ING accounts and stores their raw transactions.
+So far it syncs ING accounts and the Trade Republic cash account and stores their raw transactions.
 
 It consists of a web frontend, a backend with PostgreSQL, and a Firefox extension that reads the transactions from the bank websites in the user's own sessions.
 
