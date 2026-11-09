@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { currency } from "./currency.ts";
 
 const decimal = z.string().regex(/^-?\d+(\.\d+)?$/);
 
@@ -16,7 +17,7 @@ export const tradeRepublicRawTransactionV1 = z.strictObject({
   amount: decimal,
   fee: z.string(),
   tax: z.string(),
-  currency: z.string().regex(/^[A-Z]{3}$/),
+  currency,
   original_amount: z.string(),
   original_currency: z.string(),
   fx_rate: z.string(),
