@@ -1,6 +1,6 @@
-# API comparison
+# Ingestion through Enable Banking and the extension
 
-Enable Banking, in its free restricted mode, reads every account whose bank delivers usable PSD2 data, and the Firefox extension reads the rest ([ingestion](./architecture.md#ingestion)).
+Enable Banking, in its free restricted mode, reads every account whose bank delivers usable PSD2 data, and the Firefox extension reads the rest ([ingestion](../architecture.md#ingestion)).
 The comparison ran on 2026-11-09 with a budget of up to €10/month and weighed price, coverage and data per bank alongside eligibility, consent, raw-data access, vendor risk and setup.
 
 ## The bank decides the data
@@ -44,9 +44,9 @@ flowchart LR
 | Consent | 180 days, Trade Republic 90 | mostly 90 days | 90 days | 180 days |
 | Operator | company since 2019, profitable since 2025 ([Sifted][eb-sifted]) | commercial since May 2026, support silences reported ([#207][obio-i207]) | company formed November 2024 ([Companies House][lf-ch]) | small vendor, active changelog |
 
-## Data per institution
+## Data per bank
 
-| Institution | Usable API route | What the API delivers | Richer route |
+| Bank | Usable API route | What the API delivers | Richer route |
 | --- | --- | --- | --- |
 | ING | PSD2 | stable transaction ID, booking and value date, counterparty name and IBAN, purpose text behind a fixed prefix, pending flag ([ING spec][ing-spec]) | none needed |
 | Deutsche Bank | PSD2, beta | fields unverified; Deutsche Bank publishes none ([PSD2 FAQ][db-faq]) | FinTS in CAMT format ([Quaestor #158][quaestor-158]) or the website |
@@ -95,7 +95,7 @@ flowchart LR
 
 ## Unknowns
 
-The Control Panel's Data Insights page shows field presence and history length per bank after sign-up ([FAQ][eb-faq]), which settles these:
+The Control Panel's Data Insights page shows field presence and history length per bank after sign-up ([FAQ][eb-faq]), which settles these, as tracked in [#4](https://github.com/lennartmoeller/finance-tracker/issues/4):
 
 - which fields Deutsche Bank fills;
 - how much history each bank returns on the first fetch;

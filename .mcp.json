@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "firefox-devtools": {
+      "command": "pnpm",
+      "args": ["exec", "firefox-devtools-mcp"]
+    }
+  }
+}
