@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
-import type { IngRawTransactionV1 } from "@finance-tracker/banks/ing";
-import type { TradeRepublicRawTransactionV1 } from "@finance-tracker/banks/trade-republic";
+import type { IngRawTransactionV1 } from "@finance-tracker/bank-data-api/ing";
+import type { TradeRepublicRawTransactionV1 } from "@finance-tracker/bank-data-api/trade-republic";
 import { identifyRawTransactions } from "./identity.ts";
 
 const coffee = (saldo: string): IngRawTransactionV1 => [

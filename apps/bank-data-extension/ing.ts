@@ -3,9 +3,9 @@ import {
   ingHeaderV1,
   ingRawTransactionV1,
   type IngRawTransactionV1,
-} from "@finance-tracker/banks/ing";
+} from "@finance-tracker/bank-data-api/ing";
 import type { IngAccountRow } from "./entrypoints/ing-accounts.content.ts";
-import { inject, navigate, withSyncTab } from "./sync-tab.ts";
+import { inject, navigate, notLoggedIn, withSyncTab } from "./sync-tab.ts";
 
 export async function readIngTransactions(iban: string) {
   browser.downloads.onCreated.addListener(eraseIngDownload);
@@ -59,11 +59,8 @@ export function parseIngCsv(text: string, iban: string): IngRawTransactionV1[] {
 }
 
 async function openIng(tabId: number, url: string) {
-  if (!(await navigate(tabId, url)).startsWith("https://banking.ing.de/")) {
-    throw new Error(
-      "Not logged in to ING. Log in at banking.ing.de and sync within five minutes.",
-    );
-  }
+  if (!(await navigate(tabId, url)).startsWith("https://banking.ing.de/"))
+    throw await notLoggedIn("ING", "https://banking.ing.de");
 }
 
 function captureCsv(tabId: number): Promise<ArrayBuffer> {

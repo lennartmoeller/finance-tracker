@@ -6,7 +6,10 @@ import {
   timestamp,
   unique,
 } from "drizzle-orm/pg-core";
-import type { Account, SyncInput } from "@finance-tracker/api/contract";
+import type {
+  Account,
+  SyncInput,
+} from "@finance-tracker/bank-data-api/contract";
 
 export const accounts = pgTable("accounts", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),

@@ -1,5 +1,5 @@
 {
-  "name": "@finance-tracker/extension",
+  "name": "@finance-tracker/bank-data-extension",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -10,8 +10,7 @@
     "postinstall": "wxt prepare"
   },
   "dependencies": {
-    "@finance-tracker/api": "workspace:*",
-    "@finance-tracker/banks": "workspace:*",
+    "@finance-tracker/bank-data-api": "workspace:*",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "zod": "4.6.7"

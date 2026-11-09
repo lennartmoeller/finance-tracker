@@ -200,14 +200,11 @@ importers:
         specifier: 5.1.0
         version: 5.1.0(@types/node@26.6.6)(vite@8.3.6(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
 
-  apps/backend:
+  apps/bank-data-backend:
     dependencies:
-      '@finance-tracker/api':
+      '@finance-tracker/bank-data-api':
         specifier: workspace:*
-        version: link:../../packages/api
-      '@finance-tracker/banks':
-        specifier: workspace:*
-        version: link:../../packages/banks
+        version: link:../../packages/bank-data-api
       '@orpc/server':
         specifier: 1.16.2
         version: 1.16.2(ws@8.21.0)
@@ -225,14 +222,11 @@ importers:
         specifier: 0.31.11
         version: 0.31.11
 
-  apps/extension:
+  apps/bank-data-extension:
     dependencies:
-      '@finance-tracker/api':
+      '@finance-tracker/bank-data-api':
         specifier: workspace:*
-        version: link:../../packages/api
-      '@finance-tracker/banks':
-        specifier: workspace:*
-        version: link:../../packages/banks
+        version: link:../../packages/bank-data-api
       react:
         specifier: 19.3.1
         version: 19.3.1
@@ -262,48 +256,14 @@ importers:
         specifier: 0.21.5
         version: 0.21.5(esbuild@0.28.2)(eslint@9.39.4(jiti@2.7.0)(supports-color@7.2.0))(oxc-parser@0.156.0)(rolldown@1.2.16)(typescript@6.0.3)(vite@8.3.6(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(web-ext@10.8.0(express@5.3.0(supports-color@7.2.0))(jiti@2.7.0)(supports-color@7.2.0))
 
-  apps/frontend:
+  packages/bank-data-api:
     dependencies:
-      '@finance-tracker/api':
-        specifier: workspace:*
-        version: link:../../packages/api
-      react:
-        specifier: 19.3.1
-        version: 19.3.1
-      react-dom:
-        specifier: 19.3.1
-        version: 19.3.1(react@19.3.1)
-    devDependencies:
-      '@types/react':
-        specifier: 19.3.0
-        version: 19.3.0
-      '@types/react-dom':
-        specifier: 19.3.0
-        version: 19.3.0(@types/react@19.3.0)
-      '@vitejs/plugin-react':
-        specifier: 6.2.1
-        version: 6.2.1(vite@8.3.6(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
-      vite:
-        specifier: 8.3.6
-        version: 8.3.6(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)
-
-  packages/api:
-    dependencies:
-      '@finance-tracker/banks':
-        specifier: workspace:*
-        version: link:../banks
       '@orpc/client':
         specifier: 1.16.2
         version: 1.16.2
       '@orpc/contract':
         specifier: 1.16.2
         version: 1.16.2
-      zod:
-        specifier: 4.6.7
-        version: 4.6.7
-
-  packages/banks:
-    dependencies:
       zod:
         specifier: 4.6.7
         version: 4.6.7
@@ -3838,7 +3798,7 @@ snapshots:
       open: 8.4.2
       picomatch: 2.3.2
       source-map: 0.7.6
-      yargs: 17.7.2
+      yargs: 17.7.3
 
   '@aklinker1/zero-zip@1.0.1': {}
 
