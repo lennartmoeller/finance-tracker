@@ -1,4 +1,4 @@
-# finance-tracker
+# Finance Tracker
 
 A single-user, self-hosted tracker that collects its owner's bank and depot transactions, stores them, and shows them.
 No component is implemented yet.
