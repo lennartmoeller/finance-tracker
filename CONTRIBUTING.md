@@ -35,6 +35,7 @@ Edit [`apps/backend/src/schema.ts`](./apps/backend/src/schema.ts) and run `pnpm 
 ## Check a change
 
 Run `pnpm check`, the quality gate; the [`CI` workflow](./.github/workflows/ci.yml) runs the same command and a CodeQL analysis.
+Tests run without a database, so `pnpm check` and CI need no PostgreSQL; skipping known raw transactions rests on the database's unique constraint on account and identity and is checked by hand.
 
 - Fix formatting with `pnpm exec prettier --write .` and autofixable lint findings with `pnpm exec eslint --fix .`.
 - Delete what knip reports as unused instead of ignoring it.
