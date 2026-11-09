@@ -1,3 +1,7 @@
+---
+status: superseded by ADR-0003
+---
+
 # Ingestion through Enable Banking and the extension
 
 Enable Banking, in its free restricted mode, reads every account whose bank delivers usable PSD2 data, and the Firefox extension reads the rest ([ingestion](../architecture.md#ingestion)).
@@ -48,25 +52,28 @@ flowchart LR
 
 | Bank | Usable API route | What the API delivers | Richer route |
 | --- | --- | --- | --- |
-| ING | PSD2 | stable transaction ID, booking and value date, counterparty name and IBAN, purpose text behind a fixed prefix, pending flag ([ING spec][ing-spec]) | none needed |
-| Deutsche Bank | PSD2, beta | fields unverified; Deutsche Bank publishes none ([PSD2 FAQ][db-faq]) | FinTS in CAMT format ([Quaestor #158][quaestor-158]) or the website |
-| PayPal | PSD2 | ID, counterparty name and email, amount in the original currency, transaction date; no description ([Sure #1193][sure-1193]) | website with item titles, fees and conversions |
+| ING | PSD2 | transaction ID, booking, value and transaction date, counterparty name, purpose text behind a fixed prefix ([Firefly III #12811][ff-12811]); counterparty account on 14% of debits and no credits; 390 days of history | none needed |
+| Deutsche Bank | PSD2, beta | transaction ID, booking and value date, counterparty name and IBAN on 97% of debits and all credits, purpose text on 99% of debits and 66% of credits, ISO 20022 transaction codes; 1772 days of history | FinTS in CAMT format ([Quaestor #158][quaestor-158]) or the website |
+| PayPal | PSD2 | ID, counterparty name and email, amount in the original currency, transaction date; no description ([Sure #1193][sure-1193]); 1093 days of history, but 376 days on the linked account although it holds more ([#4](https://github.com/lennartmoeller/finance-tracker/issues/4#issuecomment-6745729813)) | website with item titles, fees and conversions |
 | Trade Republic | none | amount, currency and booking date, no ID ([DE notes][eb-de]) | web app or CSV export with IDs, counterparty, IBAN, exchange rates and trades ([CSV extractor][tr-csv]) |
 | finvesto | none for individuals | nothing | portal; a proprietary channel serves only StarMoney, MoneyMoney and WISO ([FondsSuperMarkt][fsm-fnz]) |
+
+Shares and history lengths are the Control Panel's Data Insights across Enable Banking's German personal accounts on 2026-11-09 ([FAQ][eb-faq]).
 
 ## Routing
 
 ```mermaid
 flowchart LR
-  ing["ING"] -- "giro, savings" --> eb["Enable Banking"]
+  ing["ING"] -- "giro" --> eb["Enable Banking"]
   db["Deutsche Bank"] -- "giro" --> eb
   paypal["PayPal"] --> eb
-  db -- "depot" --> ext["Extension"]
+  ing -- "savings" --> ext["Extension"]
+  db -- "depot" --> ext
   tr["Trade Republic"] -- "cash, depot" --> ext
   fv["finvesto"] -- "fund depot, cash" --> ext
 ```
 
-- An Enable Banking account whose data proves unusable after sign-up moves to the extension, and so does the ING savings account if Enable Banking cannot link it.
+- An Enable Banking account whose data proves unusable moves to the extension, as the ING savings account did because ING offers only the giro account for linking.
 - Ingestion keeps exactly these two routes; FinTS, unofficial clients and other data services stay out.
 
 ## Why Enable Banking
@@ -93,17 +100,8 @@ flowchart LR
 - Deutsche Bank is in beta at Enable Banking.
 - Within budget, open-banking.io delivers the same data for €5–6/month, Lunch Flow covers ING, Deutsche Bank and PayPal for €4–6/month, and any bank can move to the extension.
 
-## Unknowns
-
-The Control Panel's Data Insights page shows field presence and history length per bank after sign-up ([FAQ][eb-faq]), which settles these, as tracked in [#4](https://github.com/lennartmoeller/finance-tracker/issues/4):
-
-- which fields Deutsche Bank fills;
-- how much history each bank returns on the first fetch;
-- whether the ING savings account can be linked.
-
 [actual-eb]: https://actualbudget.org/docs/advanced/bank-sync/enable-banking
 [banksync]: https://banksync.io/pricing
-[db-faq]: https://www.deutsche-bank.de/pk/lp/xs2a/psd2-faq.html
 [dbapi]: https://ams-prd.developer.db.com/c2/faqs.model.json
 [eb-banks]: https://enablebanking.com/api/aspsps?country=DE
 [eb-de]: https://enablebanking.com/docs/markets/de/
@@ -118,7 +116,6 @@ The Control Panel's Data Insights page shows field presence and history length p
 [fsm-fnz]: https://www.fonds-super-markt.de/neuigkeiten/artikel/fnz-bank-finanzplanungssoftware/
 [gc-signups]: https://bankaccountdata.gocardless.com/new-signups-disabled
 [ing-fints]: https://www.ing.de/hilfe/log-in/fints/
-[ing-spec]: https://github.com/ing-bank/ing-open-banking-sdk/blob/master/api/account/information/Account-Information-API.json
 [lf-ch]: https://find-and-update.company-information.service.gov.uk/company/16061160/officers
 [lf-openapi]: https://www.lunchflow.app/api/v1/openapi.json
 [lf-pricing]: https://www.lunchflow.app/docs/guides/account/pricing
