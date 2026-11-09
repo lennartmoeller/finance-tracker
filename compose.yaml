@@ -26,4 +26,5 @@ services:
     restart: unless-stopped
 
 volumes:
+  # Renaming this volume starts an empty database beside the old one, so it keeps its name without the service prefix.
   postgres:

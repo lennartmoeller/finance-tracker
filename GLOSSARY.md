@@ -89,6 +89,10 @@ _Avoid_: validation error, parse error
 A run the user starts that reads one account's raw transactions from its bank's website and ingests them.
 _Avoid_: refresh, import, update
 
+**Last sync**:
+The time of an account's most recent successful sync, which shows how fresh its transactions are.
+_Avoid_: data freshness, last update, last refresh
+
 **Ingest**:
 The backend step that stores a sync's raw transactions and extracts them, skipping each one whose identity is already stored and importing every other one.
 _Avoid_: import (for the step)

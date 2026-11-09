@@ -18,6 +18,7 @@ export default defineConfig({
     host_permissions: ["http://localhost/*", "https://app.traderepublic.com/*"],
     browser_specific_settings: {
       gecko: {
+        // addons.mozilla.org signs releases for this ID and Firefox keeps the stored API token under it, so it keeps its name without the service prefix.
         id: "finance-tracker@lennartmoeller",
         strict_min_version: "140.0",
         data_collection_permissions: { required: ["financialAndPaymentInfo"] },
