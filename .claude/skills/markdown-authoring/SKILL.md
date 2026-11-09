@@ -58,6 +58,12 @@ Refactor, merge, move, or rewrite existing text before adding new text.
 When section grows misshapen, fix its shape then — do not append another rule to nearest bullet list and leave mess for later.
 Move misplaced content to page that owns it instead of linking around bad structure.
 
+## Diagrams
+
+Illustrate structure and flows with Mermaid wherever diagram can carry them: components, data flows, interactions, dependencies, deployments, decisions.
+Pick diagram type matching content, such as `flowchart` for structure and flows and `sequenceDiagram` for interactions over time.
+Keep prose to rules and rationale diagram cannot show, and never re-narrate what diagram already shows.
+
 ## One home per fact
 
 Give every fact exactly one canonical home, and link to it from anywhere else that needs it.
