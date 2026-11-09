@@ -1,6 +1,6 @@
-# API comparison
+# Ingestion through Enable Banking and the extension
 
-Enable Banking, in its free restricted mode, reads every account whose bank delivers usable PSD2 data, and the Firefox extension reads the rest ([ingestion](./architecture.md#ingestion)).
+Enable Banking, in its free restricted mode, reads every account whose bank delivers usable PSD2 data, and the Firefox extension reads the rest ([ingestion](../architecture.md#ingestion)).
 The comparison ran on 2026-11-09 with a budget of up to €10/month and weighed price, coverage and data per bank alongside eligibility, consent, raw-data access, vendor risk and setup.
 
 ## The bank decides the data
@@ -95,7 +95,7 @@ flowchart LR
 
 ## Unknowns
 
-The Control Panel's Data Insights page shows field presence and history length per bank after sign-up ([FAQ][eb-faq]), which settles these:
+The Control Panel's Data Insights page shows field presence and history length per bank after sign-up ([FAQ][eb-faq]), which settles these, as tracked in [#4](https://github.com/lennartmoeller/finance-tracker/issues/4):
 
 - which fields Deutsche Bank fills;
 - how much history each bank returns on the first fetch;

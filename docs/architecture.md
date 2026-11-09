@@ -35,7 +35,8 @@ flowchart LR
 | PostgreSQL | raw transactions, normalized transactions, Enable Banking consents with their expiry | |
 
 The extension exists because a web page cannot read banking sites in the user's session: the same-origin policy and the banks' framing bans block it.
-Which bank takes which ingestion route, and why Enable Banking, is decided in the [API comparison](./api-comparison.md).
+Why the web frontend and the extension stay separate is recorded in [ADR 0001](./adr/0001-separate-web-frontend-and-thin-extension.md).
+Which bank takes which ingestion route, and why Enable Banking, is decided in [ADR 0002](./adr/0002-ingestion-through-enable-banking-and-the-extension.md).
 
 ## Raw data and shape versions
 
