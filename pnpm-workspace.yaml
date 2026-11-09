@@ -2,3 +2,6 @@ packages:
   - apps/*
   - packages/*
 saveExact: true
+allowBuilds:
+  # Its install script only downloads geckodriver with GECKODRIVER_AUTO_INSTALL set; the MCP server downloads it on first use.
+  geckodriver: false
