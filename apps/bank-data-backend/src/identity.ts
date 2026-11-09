@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { SyncInput } from "@finance-tracker/api/contract";
+import type { SyncInput } from "@finance-tracker/bank-data-api/contract";
 
 export function identifyRawTransactions(
   input: SyncInput,

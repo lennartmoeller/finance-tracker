@@ -1,3 +1,7 @@
+---
+status: superseded by ADR-0005
+---
+
 # Separate web frontend and thin extension
 
 The web frontend does everything except reading bank websites, and the Firefox extension only reads the bank websites no affordable API reaches and sends their raw transactions to the backend; the two meet only at the backend.

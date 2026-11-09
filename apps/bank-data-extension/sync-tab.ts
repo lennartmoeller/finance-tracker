@@ -1,3 +1,15 @@
+import type { Account } from "@finance-tracker/bank-data-api/contract";
+
+export async function notLoggedIn(
+  bank: Account["bank"],
+  loginUrl: string,
+): Promise<Error> {
+  await browser.tabs.create({ url: loginUrl });
+  return new Error(
+    `Not logged in to ${bank}. Log in on the tab that opened and sync again within five minutes.`,
+  );
+}
+
 export async function withSyncTab<T>(
   read: (tabId: number) => Promise<T>,
 ): Promise<T> {
@@ -33,6 +45,8 @@ export async function navigate(tabId: number, url: string): Promise<string> {
     });
     browser.tabs.update(tabId, { url }).catch(settle);
   });
+  // The extension may not inject into another host, such as a bank's login page, and the adapter rejects such a page anyway.
+  if (new URL(loaded).host !== new URL(url).host) return loaded;
   // In an inactive tab, a file injected before the page's first idle period never ran, so navigation ends only after one.
   await browser.scripting.executeScript({
     target: { tabId },

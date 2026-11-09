@@ -23,3 +23,14 @@ li p {
   grid-column: 1 / -1;
   margin: 0;
 }
+
+form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  padding-top: 0.5rem;
+}
+
+input {
+  flex: 1;
+}

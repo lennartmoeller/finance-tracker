@@ -2,36 +2,38 @@
 
 ## System overview
 
+The bank data service is the repository's only service so far; consumers, such as future finance logic backends and a frontend, are services of their own.
+
 ```mermaid
 flowchart LR
-  subgraph firefox["Firefox"]
-    frontend["Web frontend"]
+  subgraph bankdata["Bank data service"]
     extension["Extension"]
+    backend["Backend"]
+    postgres[("PostgreSQL")]
   end
-  backend["Backend"]
-  postgres[("PostgreSQL")]
   websites["Bank websites"]
-  frontend -- "accounts, view, opening balances" --> backend
+  consumers["Consumers"]
   extension -- "accounts, raw transactions" --> backend
   extension -- "reads the logged-in session" --> websites
   backend --> postgres
+  consumers -.->|"normalized transactions"| backend
 ```
 
 - One user owns all data; the system manages no users and no permissions.
 - The system never sees bank credentials, because the extension reads only sessions the user opened.
-- Transaction data enters only through the extension; the frontend never changes it.
+- Transaction data enters only through the extension.
+- Consumers read normalized transactions only through the backend's API, never from the service's database; that API is not built yet.
 
 ## Components
 
 | Component | Owns | Leaves to others |
 | --- | --- | --- |
-| Web frontend | creating accounts; browsing, filtering and summarizing transactions per account; each account's opening balance and last sync | reading bank websites; talking to the extension |
-| Backend | the API contract's implementation; validation, deduplication, raw storage and extraction | state outside PostgreSQL |
-| Extension | one adapter per bank website; shape validation; the popup that lists the accounts and syncs each one | storing bank credentials; talking to the frontend |
+| Backend | the API contract's implementation; validation, deduplication, raw storage and extraction; serving normalized transactions to consumers | state outside PostgreSQL; opening balances and balances |
+| Extension | one adapter per bank website; shape validation; the popup that creates accounts, lists them with their IBAN and last sync, and syncs each one | storing bank credentials |
 | PostgreSQL | accounts, raw transactions, normalized transactions | |
 
 The extension exists because a web page cannot read banking sites in the user's session: the same-origin policy and the banks' framing bans block it.
-Why the web frontend and the extension stay separate is recorded in [ADR 0001](./adr/0001-separate-web-frontend-and-thin-extension.md).
+Why the extension is the service's only interface, and consumers own balances, is recorded in [ADR 0005](./adr/0005-bank-data-service-with-the-extension-as-its-interface.md).
 Why every account takes the extension is decided in [ADR 0003](./adr/0003-ingestion-through-the-extension-only.md).
 
 ## Raw data and shape versions
@@ -46,11 +48,11 @@ Why every account takes the extension is decided in [ADR 0003](./adr/0003-ingest
 - Re-extracting normalized data from stored raw data stays possible by design and is built only once needed.
 - Database columns live in the backend's schema.
 
-## Normalized transactions and balances
+## Normalized transactions
 
 - A normalized transaction carries a date, an amount in the account's currency, a counterparty, and a description wherever the source has one.
 - Its date is the booking date where the source has one, otherwise the transaction date.
-- An account's balance is its opening balance plus the sum of its normalized transactions, so no transaction carries a balance.
+- A normalized transaction carries no balance, because consumers derive balances from an account's transactions.
 
 ## Ingestion
 
@@ -75,7 +77,7 @@ sequenceDiagram
   actor User
   participant Popup
   participant Ext as Extension background
-  participant Tab as Background tab
+  participant Tab as Sync tab
   participant BE as Backend
   User->>Tab: Log in to the bank website in any tab
   User->>Popup: Open
@@ -84,6 +86,7 @@ sequenceDiagram
   Popup->>Ext: Sync the account
   Ext->>Tab: Open the bank website in an inactive tab
   alt the session is missing
+    Ext->>User: Open the bank website in a foreground tab to log in
     Ext-->>Popup: Report that the user is not logged in
   else the session exists
     Ext->>Tab: Find the account by its IBAN and export its transactions
@@ -100,6 +103,7 @@ sequenceDiagram
 ```
 
 - A sync reads one account and needs a bank session the user opened in the same Firefox, which banks end after a few minutes without activity.
+- A sync reads the full history the bank offers and relies on skipped identities for the overlap, so the extension keeps no state between syncs.
 - A mismatch means the bank changed its format and the adapter needs a new shape version.
 What each bank website exposes, and reference code for reading it, is collected in the [extension sources research](./research/extension-sources.md).
 
@@ -108,29 +112,24 @@ What each bank website exposes, and reference code for reading it, is collected 
 ```mermaid
 flowchart TD
   subgraph apps["apps/"]
-    extension["extension<br/>bank website adapters, toolbar sync"]
-    backend["backend<br/>contract implementation, ingest, extraction and identity, schema"]
-    frontend["frontend<br/>views, opening balances"]
+    extension["bank-data-extension<br/>bank website adapters, popup"]
+    backend["bank-data-backend<br/>contract implementation, ingest, extraction and identity, schema"]
   end
   subgraph packages["packages/"]
-    api["api<br/>contract: procedures with input and output schemas; typed client"]
-    banks["banks<br/>versioned raw shapes of extension sources"]
+    api["bank-data-api<br/>contract: procedures with input and output schemas; typed client; versioned raw shapes of the sources"]
   end
   extension --> api
-  extension --> banks
   backend --> api
-  backend --> banks
-  frontend --> api
-  api --> banks
 ```
 
+- Each directory under `apps/` and `packages/` starts with the name of the service it belongs to, such as `bank-data-`.
 - Code used by more than one app lives under `packages/`, and code used by one app lives in that app.
-- No app depends on another app.
+- No app depends on another app, and an app of another service depends on the bank data service only through `packages/bank-data-api`.
 
 ## API contract
 
-- The extension and the frontend call the backend through contract-first typed RPC.
-- `packages/api` defines each procedure's name with its input and output schemas, and the typed client the extension and the frontend call the backend with.
+- The extension calls the backend through contract-first typed RPC.
+- `packages/bank-data-api` defines each procedure's name with its input and output schemas, and the typed client the extension calls the backend with.
 - The backend implements the contract.
 - The RPC library must support contract-first definitions, which rules out plain tRPC because it derives the contract from the implementation.
 
@@ -140,24 +139,20 @@ flowchart TD
 flowchart LR
   subgraph machine["Local machine"]
     subgraph compose["Docker Compose"]
-      fe["frontend container"]
-      be["backend container"]
+      be["bank-data-backend container"]
       pg[("PostgreSQL container")]
     end
     subgraph browser["Firefox"]
-      tab["Frontend tab"]
       ext["Extension"]
     end
   end
-  tab -- "bearer token" --> fe
-  fe -- "proxies /rpc" --> be
   ext -- "bearer token" --> be
   be --> pg
 ```
 
 - Everything runs on the user's machine now; the same containers move to a self-hosted Kubernetes cluster later, and that move adds the manifests and decides whether Docker Compose stays.
 - Kubernetes compatibility means the backend keeps no state outside PostgreSQL, every app reads its configuration from environment variables, and each container serves one app.
-- Every backend request carries a bearer token that the backend reads from its environment; the user enters it once in the extension's popup and once in the frontend.
+- Every backend request carries a bearer token that the backend reads from its environment; the user enters it once in the extension's popup.
 
 ## Technology
 

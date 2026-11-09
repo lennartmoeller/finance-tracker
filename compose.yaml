@@ -12,9 +12,9 @@ services:
       interval: 2s
     restart: unless-stopped
 
-  backend:
+  bank-data-backend:
     build:
-      target: backend
+      target: bank-data-backend
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres
       API_TOKEN: ${API_TOKEN:?Set API_TOKEN in .env}
@@ -23,15 +23,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    restart: unless-stopped
-
-  frontend:
-    build:
-      target: frontend
-    ports:
-      - 127.0.0.1:8080:80
-    depends_on:
-      - backend
     restart: unless-stopped
 
 volumes:

@@ -1,6 +1,12 @@
 import { useEffect, useState, type SubmitEvent } from "react";
-import { errorMessage, isUnauthorized } from "@finance-tracker/api/client";
-import type { Account } from "@finance-tracker/api/contract";
+import {
+  errorMessage,
+  isUnauthorized,
+} from "@finance-tracker/bank-data-api/client";
+import {
+  newAccount,
+  type Account,
+} from "@finance-tracker/bank-data-api/contract";
 import { apiClient, saveApiToken } from "../../api.ts";
 import type { SyncRequest, SyncState } from "../background.ts";
 
@@ -25,8 +31,9 @@ export function App() {
   const [error, setError] = useState("");
   const [needsToken, setNeedsToken] = useState(false);
 
-  async function load() {
+  async function load(action?: () => Promise<unknown>) {
     try {
+      await action?.();
       setAccounts(await (await apiClient()).account.list());
       setError("");
     } catch (failure) {
@@ -69,6 +76,19 @@ export function App() {
     await load();
   }
 
+  function create(event: SubmitEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const parsed = newAccount.safeParse({
+      bank: form.get("bank"),
+      type: form.get("type"),
+      iban: (form.get("iban") as string).replaceAll(" ", "").toUpperCase(),
+    });
+    if (parsed.success)
+      void load(async () => (await apiClient()).account.create(parsed.data));
+    else setError(parsed.error.issues.map((issue) => issue.message).join(", "));
+  }
+
   if (needsToken) {
     return (
       <form onSubmit={(event) => void saveToken(event)}>
@@ -100,6 +120,7 @@ export function App() {
               >
                 {sync?.state === "running" ? "Syncing…" : "Sync"}
               </button>
+              <p>{account.iban.replace(/(.{4})/g, "$1 ")}</p>
               <p>
                 {account.lastSyncedAt
                   ? `Synced ${ago(account.lastSyncedAt)}`
@@ -115,6 +136,22 @@ export function App() {
           );
         })}
       </ul>
+      <form onSubmit={create}>
+        <select name="bank">
+          {newAccount.shape.bank.options.map((bank) => (
+            <option key={bank}>{bank}</option>
+          ))}
+        </select>
+        <select name="type">
+          {newAccount.shape.type.options.map((type) => (
+            <option key={type} value={type}>
+              {type} account
+            </option>
+          ))}
+        </select>
+        <input name="iban" placeholder="IBAN" required />
+        <button>Add account</button>
+      </form>
       {error && <p role="alert">{error}</p>}
     </>
   );

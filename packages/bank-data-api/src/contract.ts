@@ -1,8 +1,8 @@
 import { oc } from "@orpc/contract";
 import { z } from "zod";
-import { bank } from "@finance-tracker/banks/bank";
-import { ingRawTransactionV1 } from "@finance-tracker/banks/ing";
-import { tradeRepublicRawTransactionV1 } from "@finance-tracker/banks/trade-republic";
+import { bank } from "./bank.ts";
+import { ingRawTransactionV1 } from "./ing.ts";
+import { tradeRepublicRawTransactionV1 } from "./trade-republic.ts";
 
 const account = z.object({
   id: z.int(),

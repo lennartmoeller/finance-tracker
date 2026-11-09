@@ -1,13 +1,12 @@
 {
-  "name": "@finance-tracker/backend",
+  "name": "@finance-tracker/bank-data-backend",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "node --env-file=../../.env --watch src/main.ts"
   },
   "dependencies": {
-    "@finance-tracker/api": "workspace:*",
-    "@finance-tracker/banks": "workspace:*",
+    "@finance-tracker/bank-data-api": "workspace:*",
     "@orpc/server": "1.16.2",
     "drizzle-orm": "0.45.4",
     "pg": "8.23.1"

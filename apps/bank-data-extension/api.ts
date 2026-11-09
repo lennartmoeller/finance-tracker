@@ -1,4 +1,4 @@
-import { createApiClient } from "@finance-tracker/api/client";
+import { createApiClient } from "@finance-tracker/bank-data-api/client";
 
 export async function apiClient() {
   const { apiToken } = await browser.storage.local.get("apiToken");

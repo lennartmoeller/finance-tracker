@@ -1,6 +1,6 @@
 # Finance tracker
 
-A self-hosted system that collects the transactions of one user's accounts at several banks, stores them, and shows them.
+A self-hosted system that collects the transactions of one user's accounts at several banks, stores them, and serves them to consumers.
 
 ## Language
 
@@ -96,3 +96,13 @@ _Avoid_: import (for the step)
 **Extraction**:
 Turning a raw transaction into a normalized transaction.
 _Avoid_: parsing, mapping, normalization
+
+### Services
+
+**Bank data service**:
+The service that collects the transactions of the user's accounts from their banks' websites, stores them, and serves them as normalized transactions to consumers.
+_Avoid_: ingestion service, bank sync, importer
+
+**Consumer**:
+A service that reads normalized transactions from the bank data service, such as a finance logic backend or a frontend.
+_Avoid_: client, downstream service

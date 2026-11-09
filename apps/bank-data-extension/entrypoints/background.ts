@@ -1,6 +1,6 @@
 import { defineBackground } from "wxt/utils/define-background";
-import { errorMessage } from "@finance-tracker/api/client";
-import type { Account } from "@finance-tracker/api/contract";
+import { errorMessage } from "@finance-tracker/bank-data-api/client";
+import type { Account } from "@finance-tracker/bank-data-api/contract";
 import { apiClient } from "../api.ts";
 import { readIngTransactions } from "../ing.ts";
 import { readTradeRepublicTransactions } from "../trade-republic.ts";
