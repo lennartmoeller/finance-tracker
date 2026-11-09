@@ -7,13 +7,6 @@ description: Author and edit GitHub Actions workflows, reusable actions, and reu
 
 Always strictly follow these rules when authoring or editing workflows, reusable actions, and reusable workflows.
 
-## Runners
-
-Run every GitHub Actions job on the self-hosted runner for its stage:
-- DEV: `gap-acc090-dev-gwc-4gb`.
-- UAT: `gap-acc090-uat-gwc-4gb`.
-- PROD: `gap-acc090-prod-gwc-4gb`.
-
 ## Shell programs
 
 Split Bash work into the smallest useful workflow or action steps instead of hiding multi-purpose logic in an external script.
