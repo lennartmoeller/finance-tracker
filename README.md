@@ -9,6 +9,7 @@ It consists of a web frontend, a backend with PostgreSQL that also fetches from 
 
 - [Architecture](./docs/architecture.md): components, data flows, repository layout, hosting and security.
 - [API comparison](./docs/api-comparison.md): why Enable Banking, and which bank takes which ingestion route.
+- [Contributing](./CONTRIBUTING.md): local setup, adding a workspace, the quality gate and dependency updates.
 
 ## License
 
