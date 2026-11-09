@@ -21,7 +21,7 @@ flowchart LR
   eb --> apibanks
 ```
 
-- One user owns all data; there are no user accounts or permissions.
+- One user owns all data; the system manages no users and no permissions.
 - The system never sees bank credentials: Enable Banking logins happen on the bank's own page, and the extension reads only sessions the user opened.
 - Transaction data enters only through the two ingestion routes; the frontend never changes it.
 
@@ -30,9 +30,9 @@ flowchart LR
 | Component | Owns | Leaves to others |
 | --- | --- | --- |
 | Web frontend | browsing, filtering and summarizing transactions per account; the Enable Banking "Sync now" button; connecting and renewing Enable Banking consents; each bank's last sync | reading bank websites; talking to the extension |
-| Backend | the API contract's implementation; both ingestion routes; validation, deduplication, raw storage and extraction; the Enable Banking client and its sessions | state outside PostgreSQL |
+| Backend | the API contract's implementation; both ingestion routes; validation, deduplication, raw storage and extraction; the Enable Banking client and its consents | state outside PostgreSQL |
 | Extension | one adapter per bank website; shape validation; the toolbar sync and its result | storing bank credentials; talking to the frontend |
-| PostgreSQL | raw transactions, normalized transactions, Enable Banking sessions with their consent expiry | |
+| PostgreSQL | raw transactions, normalized transactions, Enable Banking consents with their expiry | |
 
 The extension exists because a web page cannot read banking sites in the user's session: the same-origin policy and the banks' framing bans block it.
 Which bank takes which ingestion route, and why Enable Banking, is decided in the [API comparison](./api-comparison.md).
@@ -130,9 +130,9 @@ sequenceDiagram
   User->>Bank: Log in and approve
   Bank-->>FE: Redirect via Enable Banking to the HTTPS callback with a code
   FE->>BE: Hand over the code
-  BE->>EB: Create a session from the code
-  EB-->>BE: Session with linked accounts and consent expiry
-  BE->>BE: Store the session and expiry in PostgreSQL
+  BE->>EB: Exchange the code for a consent
+  EB-->>BE: Consent with linked accounts and expiry
+  BE->>BE: Store the consent in PostgreSQL
 ```
 
 Consents expire after a bank-specific period of 90 to 180 days, and the frontend shows each expiry.

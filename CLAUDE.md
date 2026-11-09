@@ -112,6 +112,10 @@ Before writing, name the principle the change is most likely to break, state it 
 - Give humans a selective overview of the repository's purpose, high-level architecture and boundaries, how to start, and where authoritative guidance for each reader task lives.
 - Link to contributor and task-specific guides for detailed procedures, keeping the overview focused rather than turning it into a complete repository manual.
 
+## Privacy
+
+- Name banks, but describe the user's accounts only by their account type from the [glossary](./GLOSSARY.md), never by product name or account number, in every file, issue and pull request.
+
 ## Agent skills
 
 ### Issue tracker
