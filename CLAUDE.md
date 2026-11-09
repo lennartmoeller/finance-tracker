@@ -84,7 +84,6 @@ Before writing, name the principle the change is most likely to break, state it 
 ## Working on a change
 
 - Read the repository-root `CONTRIBUTING.md` before making changes and follow its applicable contributor procedures.
-- Load `.github/skills/keep-the-why/SKILL.md` at session start, follow its task-specific references, and consult the configured context index for rationale relevant to the change.
 - Only for implementation changes and only at the complete end after fully implementing a change, run the repository's canonical quality gate.
 - By default, keep changes in the repository uncommitted and only commit or push after receiving the explicit instruction to do so.
 - If instructed to commit, only commit to a feature branch, not directly to the main branch; create the feature branch from latest main if it not exists yet.
@@ -97,16 +96,16 @@ Before writing, name the principle the change is most likely to break, state it 
 - Give each fact or rule one canonical home and link to it instead of maintaining duplicate explanations.
 - Keep implemented contracts in code, schemas, workflows and tests; generate references from those sources where needed.
 
-### `AGENTS.md`
+### `CLAUDE.md`
 
 - Give coding agents concise repository-specific constraints and preferences governing their changes, rather than an implementation tour or contributor manual.
-- Keep root rules repository-wide and place directory-only rules in nested `AGENTS.md` files at the relevant scope.
+- Keep root rules repository-wide and place directory-only rules in nested `CLAUDE.md` files at the relevant scope.
 - State each rule as one imperative sentence an agent can check.
 
 ### `CONTRIBUTING.md`
 
 - Maintain a root guide for contributors preparing, extending and verifying changes, including necessary local setup, authoring conventions and check procedures.
-- Point to canonical commands and source contracts instead of copying architecture, package, dependency, API or schema catalogs; keep decision rationale in the rationale store.
+- Point to canonical commands and source contracts instead of copying architecture, package, dependency, API or schema catalogs.
 
 ### `README.md`
 
