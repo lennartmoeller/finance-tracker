@@ -2,7 +2,7 @@ import { implement, ORPCError } from "@orpc/server";
 import { eq } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { contract } from "@finance-tracker/api/contract";
-import { identifyIngTransactions } from "./identity.ts";
+import { identifyRawTransactions } from "./identity.ts";
 import { accounts, rawTransactions } from "./schema.ts";
 
 export function createRouter(db: NodePgDatabase, apiToken: string) {
@@ -43,14 +43,16 @@ export function createRouter(db: NodePgDatabase, apiToken: string) {
           throw new ORPCError("NOT_FOUND", {
             message: "The account does not exist.",
           });
-        const rows = identifyIngTransactions(input.rawTransactions).map(
-          (row) => ({
-            ...row,
-            accountId: account.id,
-            source: account.bank,
-            shapeVersion: input.shapeVersion,
-          }),
-        );
+        if (account.bank !== input.source)
+          throw new ORPCError("BAD_REQUEST", {
+            message: `The account is a ${account.bank} account, not a ${input.source} account.`,
+          });
+        const rows = identifyRawTransactions(input).map((row) => ({
+          ...row,
+          accountId: account.id,
+          source: input.source,
+          shapeVersion: input.shapeVersion,
+        }));
         const imported = rows.length
           ? await tx
               .insert(rawTransactions)

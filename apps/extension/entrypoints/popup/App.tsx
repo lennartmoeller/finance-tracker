@@ -84,7 +84,11 @@ export function App() {
       <ul>
         {accounts.map((account) => {
           const sync = syncs[account.id];
-          const request: SyncRequest = { id: account.id, iban: account.iban };
+          const request: SyncRequest = {
+            id: account.id,
+            bank: account.bank,
+            iban: account.iban,
+          };
           return (
             <li key={account.id}>
               <strong>

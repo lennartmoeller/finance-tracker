@@ -15,7 +15,7 @@ export default defineConfig({
       "webRequestBlocking",
       "webRequestFilterResponse",
     ],
-    host_permissions: ["http://localhost/*"],
+    host_permissions: ["http://localhost/*", "https://app.traderepublic.com/*"],
     browser_specific_settings: {
       gecko: {
         id: "finance-tracker@lennartmoeller",

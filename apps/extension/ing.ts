@@ -5,33 +5,28 @@ import {
   type IngRawTransactionV1,
 } from "@finance-tracker/banks/ing";
 import type { IngAccountRow } from "./entrypoints/ing-accounts.content.ts";
+import { inject, navigate, withSyncTab } from "./sync-tab.ts";
 
-export async function readIngTransactions(
-  iban: string,
-): Promise<IngRawTransactionV1[]> {
-  const { id: tabId } = await browser.tabs.create({
-    url: "about:blank",
-    active: false,
-  });
-  if (tabId === undefined) throw new Error("Firefox opened no tab.");
+export async function readIngTransactions(iban: string) {
   browser.downloads.onCreated.addListener(eraseIngDownload);
   try {
-    await navigate(tabId, "https://banking.ing.de/app/obligo");
-    const rows = await inject<IngAccountRow[]>(
-      tabId,
-      "/content-scripts/ing-accounts.js",
-    );
-    const account = rows.find((row) => row.text.includes(iban));
-    if (!account)
-      throw new Error(`ING lists no account with the IBAN ${iban}.`);
-    await navigate(tabId, account.url);
-    const [csv] = await Promise.all([
-      captureCsv(tabId),
-      inject(tabId, "/content-scripts/ing-export.js"),
-    ]);
-    return parseIngCsv(new TextDecoder("windows-1252").decode(csv), iban);
+    const rawTransactions = await withSyncTab(async (tabId) => {
+      await openIng(tabId, "https://banking.ing.de/app/obligo");
+      const rows = await inject<IngAccountRow[]>(tabId, {
+        files: ["/content-scripts/ing-accounts.js"],
+      });
+      const account = rows.find((row) => row.text.includes(iban));
+      if (!account)
+        throw new Error(`ING lists no account with the IBAN ${iban}.`);
+      await openIng(tabId, account.url);
+      const [csv] = await Promise.all([
+        captureCsv(tabId),
+        inject(tabId, { files: ["/content-scripts/ing-export.js"] }),
+      ]);
+      return parseIngCsv(new TextDecoder("windows-1252").decode(csv), iban);
+    });
+    return { source: "ING", shapeVersion: 1, rawTransactions } as const;
   } finally {
-    await browser.tabs.remove(tabId);
     browser.downloads.onCreated.removeListener(eraseIngDownload);
   }
 }
@@ -63,53 +58,12 @@ export function parseIngCsv(text: string, iban: string): IngRawTransactionV1[] {
   return parsed.data;
 }
 
-async function navigate(tabId: number, url: string) {
-  await new Promise<void>((resolve, reject) => {
-    const settle = (error?: Error) => {
-      browser.webNavigation.onCompleted.removeListener(onCompleted);
-      clearTimeout(timeout);
-      if (error) reject(error);
-      else resolve();
-    };
-    const timeout = setTimeout(() => {
-      settle(new Error("ING did not load in time."));
-    }, 60_000);
-    // tabs.onUpdated reports "complete" while the previous page is still shown, so only webNavigation tells when the new page loaded.
-    function onCompleted(details: browser.webNavigation._OnCompletedDetails) {
-      if (details.tabId !== tabId || details.frameId !== 0) return;
-      if (details.url.startsWith("https://banking.ing.de/")) settle();
-      else {
-        settle(
-          new Error(
-            "Not logged in to ING. Log in at banking.ing.de and sync within five minutes.",
-          ),
-        );
-      }
-    }
-    browser.webNavigation.onCompleted.addListener(onCompleted, {
-      url: [{ hostEquals: "banking.ing.de" }, { hostEquals: "access.ing.de" }],
-    });
-    browser.tabs.update(tabId, { url }).catch(settle);
-  });
-  // In an inactive tab, a file injected before the page's first idle period never ran, so navigation ends only after one.
-  await browser.scripting.executeScript({
-    target: { tabId },
-    func: () =>
-      new Promise<void>((resolve) => {
-        requestIdleCallback(() => {
-          resolve();
-        });
-      }),
-  });
-}
-
-async function inject<T>(tabId: number, file: string): Promise<T> {
-  const [injection] = await browser.scripting.executeScript({
-    target: { tabId },
-    files: [file],
-  });
-  if (injection?.error !== undefined) throw new Error(String(injection.error));
-  return injection?.result as T;
+async function openIng(tabId: number, url: string) {
+  if (!(await navigate(tabId, url)).startsWith("https://banking.ing.de/")) {
+    throw new Error(
+      "Not logged in to ING. Log in at banking.ing.de and sync within five minutes.",
+    );
+  }
 }
 
 function captureCsv(tabId: number): Promise<ArrayBuffer> {

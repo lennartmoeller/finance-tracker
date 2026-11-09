@@ -6,8 +6,7 @@ import {
   timestamp,
   unique,
 } from "drizzle-orm/pg-core";
-import type { Account } from "@finance-tracker/api/contract";
-import type { IngRawTransactionV1 } from "@finance-tracker/banks/ing";
+import type { Account, SyncInput } from "@finance-tracker/api/contract";
 
 export const accounts = pgTable("accounts", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
@@ -27,7 +26,7 @@ export const rawTransactions = pgTable(
     source: text().notNull(),
     shapeVersion: integer().notNull(),
     identity: text().notNull(),
-    data: jsonb().$type<IngRawTransactionV1>().notNull(),
+    data: jsonb().$type<SyncInput["rawTransactions"][number]>().notNull(),
   },
   (table) => [unique().on(table.accountId, table.identity)],
 );
