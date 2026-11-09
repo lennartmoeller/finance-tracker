@@ -10,52 +10,53 @@ flowchart LR
   end
   backend["Backend"]
   postgres[("PostgreSQL")]
-  eb["Enable Banking"]
-  apibanks["Banks with usable PSD2 data"]
-  websites["Bank websites without usable API"]
-  frontend -- "view, sync, consents" --> backend
+  websites["Bank websites"]
+  frontend -- "view, opening balances" --> backend
   extension -- "raw transactions" --> backend
   extension -- "reads the logged-in session" --> websites
   backend --> postgres
-  backend -- "fetches on demand" --> eb
-  eb --> apibanks
 ```
 
 - One user owns all data; the system manages no users and no permissions.
-- The system never sees bank credentials: Enable Banking logins happen on the bank's own page, and the extension reads only sessions the user opened.
-- Transaction data enters only through the two ingestion routes; the frontend never changes it.
+- The system never sees bank credentials, because the extension reads only sessions the user opened.
+- Transaction data enters only through the extension; the frontend never changes it.
 
 ## Components
 
 | Component | Owns | Leaves to others |
 | --- | --- | --- |
-| Web frontend | browsing, filtering and summarizing transactions per account; the Enable Banking "Sync now" button; connecting and renewing Enable Banking consents; each bank's last sync | reading bank websites; talking to the extension |
-| Backend | the API contract's implementation; both ingestion routes; validation, deduplication, raw storage and extraction; the Enable Banking client and its consents | state outside PostgreSQL |
+| Web frontend | browsing, filtering and summarizing transactions per account; each account's opening balance; each bank's last sync | reading bank websites; talking to the extension |
+| Backend | the API contract's implementation; validation, deduplication, raw storage and extraction | state outside PostgreSQL |
 | Extension | one adapter per bank website; shape validation; the toolbar sync and its result | storing bank credentials; talking to the frontend |
-| PostgreSQL | raw transactions, normalized transactions, Enable Banking consents with their expiry | |
+| PostgreSQL | raw transactions, normalized transactions, each account's opening balance | |
 
 The extension exists because a web page cannot read banking sites in the user's session: the same-origin policy and the banks' framing bans block it.
 Why the web frontend and the extension stay separate is recorded in [ADR 0001](./adr/0001-separate-web-frontend-and-thin-extension.md).
-Which bank takes which ingestion route, and why Enable Banking, is decided in [ADR 0002](./adr/0002-ingestion-through-enable-banking-and-the-extension.md).
+Why every account takes the extension is decided in [ADR 0003](./adr/0003-ingestion-through-the-extension-only.md).
 
 ## Raw data and shape versions
 
-- A source is either one extension adapter per bank or Enable Banking.
-- Each source's raw data follows a versioned shape; a format change at the bank or the API adds a new shape version beside the existing ones.
+- A source is one extension adapter per bank website.
+- Each source's raw data follows a versioned shape; a format change at the bank adds a new shape version beside the existing ones.
 - Every raw transaction is stored as JSON together with its source and the shape version it was validated against, and is never changed afterwards.
 - A shape version's definition and extraction stay in the code as long as stored raw data follows it.
 - Only booked transactions are imported, because pending ones change amount, date or ID when they book.
-- A transaction's identity is the bank's own ID where one exists (Enable Banking's `entry_reference`), otherwise a hash of stable fields with an occurrence counter for identical same-day entries; identities are always scoped to the account.
-- Extraction turns a raw transaction into a normalized transaction; per-bank quirks of Enable Banking data, such as ING's prefixed purpose text, are handled there.
+- A transaction's identity is the bank's own ID where the source carries one, otherwise a hash of stable fields with an occurrence counter for identical same-day entries; identities are always scoped to the account.
+- Extraction turns a raw transaction into a normalized transaction and handles each bank's quirks.
 - Re-extracting normalized data from stored raw data stays possible by design and is built only once needed.
 - Database columns live in the backend's schema.
+
+## Normalized transactions and balances
+
+- A normalized transaction carries a date, an amount in the account's currency, a counterparty, and a description wherever the source has one.
+- Its date is the booking date where the source has one, otherwise the transaction date.
+- An account's balance is its opening balance plus the sum of its normalized transactions, so no transaction carries a balance.
 
 ## Ingestion
 
 ```mermaid
 flowchart TD
   extsync["Extension sync"] --> validate
-  ebsync["Enable Banking sync"] --> validate
   subgraph ingest["Backend ingest"]
     validate["Validate against the source's shape version"] --> known{"Identity already stored?"}
     known -- "yes" --> skip["Skip"]
@@ -90,64 +91,14 @@ sequenceDiagram
 A mismatch means the bank changed its format and the adapter needs a new shape version.
 What each bank website exposes, and reference code for reading it, is collected in the [extension sources research](./research/extension-sources.md).
 
-## Enable Banking sync
-
-```mermaid
-sequenceDiagram
-  actor User
-  participant FE as Web frontend
-  participant BE as Backend
-  participant EB as Enable Banking
-  User->>FE: Click "Sync now"
-  FE->>BE: Start sync
-  loop each linked account
-    BE->>EB: Fetch booked transactions, following continuation keys
-    alt consent expired
-      EB-->>BE: Access denied
-    else consent valid
-      EB-->>BE: Raw transactions
-      BE->>BE: Ingest
-    end
-  end
-  BE-->>FE: Counts per account and accounts needing renewal
-```
-
-Syncs run only when the user starts them; there is no schedule.
-Authentication, paging, rate limits and per-bank quirks of the Enable Banking API are collected in the [Enable Banking research](./research/enable-banking.md).
-
-## Consent
-
-```mermaid
-sequenceDiagram
-  actor User
-  participant FE as Web frontend
-  participant BE as Backend
-  participant EB as Enable Banking
-  participant Bank as Bank login page
-  User->>FE: Connect or renew a bank
-  FE->>BE: Start authorization
-  BE->>EB: Request an authorization link
-  EB-->>BE: Link
-  BE-->>FE: Link
-  FE->>Bank: Redirect the browser
-  User->>Bank: Log in and approve
-  Bank-->>FE: Redirect via Enable Banking to the HTTPS callback with a code
-  FE->>BE: Hand over the code
-  BE->>EB: Exchange the code for a consent
-  EB-->>BE: Consent with linked accounts and expiry
-  BE->>BE: Store the consent in PostgreSQL
-```
-
-Consents expire after a bank-specific period of 90 to 180 days, and the frontend shows each expiry.
-
 ## Repository layout
 
 ```mermaid
 flowchart TD
   subgraph apps["apps/"]
     extension["extension<br/>bank website adapters, toolbar sync"]
-    backend["backend<br/>contract implementation, ingest, extraction and identity,<br/>Enable Banking client and shape, schema"]
-    frontend["frontend<br/>views, sync, consents"]
+    backend["backend<br/>contract implementation, ingest, extraction and identity, schema"]
+    frontend["frontend<br/>views, opening balances"]
   end
   subgraph packages["packages/"]
     api["api<br/>contract: procedures with input and output schemas"]
@@ -186,20 +137,15 @@ flowchart LR
       ext["Extension"]
     end
   end
-  eb["Enable Banking"]
-  tab -- "HTTPS" --> fe
+  tab --> fe
   tab -- "bearer token" --> be
   ext -- "bearer token" --> be
   be --> pg
-  be -- "application key" --> eb
 ```
 
 - Everything runs on the user's machine now; the same containers move to a self-hosted Kubernetes cluster later, and that move adds the manifests and decides whether Docker Compose stays.
 - Kubernetes compatibility means the backend keeps no state outside PostgreSQL, every app reads its configuration from environment variables, and each container serves one app.
 - Every backend request carries a bearer token that the backend reads from its environment; the user enters it once in the extension's settings and once in the frontend.
-- The frontend is served over HTTPS with a locally trusted certificate, because Enable Banking redirects only to `https://` addresses.
-- The backend reads the Enable Banking application ID and private key from its environment.
-- Each user of this project registers their own Enable Banking application, because Enable Banking's terms forbid sharing one.
 
 ## Technology
 

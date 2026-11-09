@@ -1,12 +1,23 @@
 # Extension sources research
 
-Researched on 2026-11-09 for the banks the extension reads, as routed in [ADR 0002](../adr/0002-ingestion-through-enable-banking-and-the-extension.md#routing).
+Researched on 2026-11-09 for the bank websites the extension reads, which [ADR 0003](../adr/0003-ingestion-through-the-extension-only.md) makes all of them.
 Move each fact into the adapter that handles it, and delete this note once none remain.
 
 ## Firefox
 
 - Release and Beta builds of Firefox install only add-ons signed by Mozilla; a private add-on can be signed as unlisted on addons.mozilla.org without being published, or loaded through `about:debugging` until the browser restarts ([signing overview][amo-signing]).
 - `webRequest.filterResponseData()` lets an extension read HTTP response bodies, which Chromium browsers do not offer ([StreamFilter][streamfilter]).
+
+## ING
+
+The user's proof-of-concept extension verified these facts on a live account in September 2026, except where a source is linked.
+
+- The Umsatzanzeige's "Exportieren → CSV (Excel)" exports one account for the von/bis range set in its filter, as an `xmlhttprequest` that `filterResponseData()` reads, and the `downloads` API can cancel and erase the file Firefox would save.
+- ING keeps about 13 months online and silently clamps a wider von/bis range to it, while a preset such as "1 Jahr" overwrites von/bis and exports less, so the file's own Zeitraum line is the only trustworthy period.
+- The file is windows-1252, semicolon-separated and unquoted, starts with a preamble of IBAN, Kontoname, Zeitraum and Saldo, and has the columns Buchung, Wertstellungsdatum, Auftraggeber/Empfänger, Buchungstext, Verwendungszweck, Saldo, Währung, Betrag and Währung.
+- A semicolon inside a Verwendungszweck lengthens its row, which realigns from both ends because the four columns before and after it are fixed.
+- The file has neither counterparty IBAN nor transaction ID nor pending transactions ([RechnungsFee templates][ing-csv]).
+- The site renders on the server with Apache Wicket and answers AJAX in XML, and its transaction list loads a row's Verwendungszweck only when the row is expanded, so the export carries more than the page.
 
 ## Trade Republic
 
@@ -24,6 +35,8 @@ Move each fact into the adapter that handles it, and delete this note once none 
 
 - The website logs in with the self-defined Deutsche Bank ID since 2025-08-25 ([Outbank][outbank-db]).
 - A Wealthfolio adapter reads depot transactions from the website's CSV export ([wealthfolio-importer-addon #45][wf-45]).
+- The giro account's CSV has the columns Buchungstag, Wert, Umsatzart, Begünstigter / Auftraggeber, Verwendungszweck, IBAN / Kontonummer, BIC, Kundenreferenz, Mandatsreferenz, Gläubiger ID, Fremde Gebühren, Betrag, Abweichender Empfänger, Anzahl der Aufträge, Anzahl der Schecks, Soll, Haben and Währung ([household-budget research][db-csv]).
+- The giro account's CSV never contains pending transactions, and its Kundenreferenz often holds `NOTPROVIDED`, so it is no transaction ID ([household-budget research][db-csv]).
 
 ## finvesto
 
@@ -32,21 +45,18 @@ Move each fact into the adapter that handles it, and delete this note once none 
 - The portal's Online-Postkorb holds depot and account statements, transaction statements and cost information as PDFs ([FondsSuperMarkt][fsm-portal]).
 - No CSV export from the portal was found.
 
-## Banks that may move to the extension
+## PayPal
 
-An Enable Banking account whose data proves unusable moves to the extension ([routing](../adr/0002-ingestion-through-enable-banking-and-the-extension.md#routing)), and these facts cover that case.
-
-- Deutsche Bank's account CSV has the columns Buchungstag, Wert, Umsatzart, Begünstigter / Auftraggeber, Verwendungszweck, IBAN / Kontonummer, BIC, Kundenreferenz, Mandatsreferenz, Gläubiger ID, Fremde Gebühren, Betrag, Abweichender Empfänger, Anzahl der Aufträge, Anzahl der Schecks, Soll, Haben and Währung ([household-budget research][db-csv]).
-- Deutsche Bank's account CSV never contains pending transactions, and its Kundenreferenz often holds `NOTPROVIDED`, so it is no transaction ID ([household-budget research][db-csv]).
-- ING's CSV export has neither counterparty IBAN nor transaction ID, so an ING adapter needs the page's own data or a hash of stable fields ([RechnungsFee templates][ing-csv]).
-- PayPal's activity CSV has Datum, Uhrzeit, Zeitzone, Name, Typ, Status, Währung, Brutto, Gebühr, Netto, sender and recipient email, Transaktionscode, Zugehöriger Transaktionscode, Empfangsnummer, Artikelbezeichnung, Betreff, Hinweis and Guthaben ([beancount-paypal][pp-csv]).
-- PayPal's activity CSV lists currency conversions as separate rows and is the only route with item titles ([beancount-paypal][pp-csv]).
+- The activity CSV has Datum, Uhrzeit, Zeitzone, Name, Typ, Status, Währung, Brutto, Gebühr, Netto, sender and recipient email, Transaktionscode, Zugehöriger Transaktionscode, Empfangsnummer, Artikelbezeichnung, Betreff, Hinweis and Guthaben ([beancount-paypal][pp-csv]).
+- The activity CSV lists currency conversions as separate rows ([beancount-paypal][pp-csv]).
+- PayPal's login rejects a WebDriver-controlled Firefox, so an adapter is tried out in a regular profile ([#4][i4]).
 
 [amo-signing]: https://extensionworkshop.com/documentation/publish/signing-and-distribution-overview/
 [amo-tr]: https://addons.mozilla.org/addon/trade-republic-csv-exporter/
 [db-csv]: https://github.com/ramazankarisan/household-budget/blob/main/docs/research/07-deutsche-bank-csv.md
 [fsm-flex]: https://www.fonds-super-markt.de/fnz-bank/konto-flex/
 [fsm-portal]: https://www.fonds-super-markt.de/neuigkeiten/artikel/welche-moeglichkeiten-bietet-das-online-portal-der-fnz-bank/
+[i4]: https://github.com/lennartmoeller/finance-tracker/issues/4#issuecomment-6745729813
 [ing-csv]: https://github.com/nicolettas-muggelbude/RechnungsFee/blob/main/vorlagen/bank-csv/README.md
 [mobiflip-tr]: https://www.mobiflip.de/trade-republic-bekommt-neue-export-funktion-und-outbank-zieht-sofort-nach/
 [outbank-db]: https://help.outbankapp.com/en/kb/articles/deutsche-bank-neues-banking

@@ -34,16 +34,12 @@ _Avoid_: clearing account, settlement account
 An account that holds securities or fund shares.
 _Avoid_: portfolio, securities account, brokerage account
 
+**Opening balance**:
+The balance the user enters once for an account, which its transactions carry forward to the account's balance.
+_Avoid_: initial balance, starting balance
+
 **Session**:
 The user's logged-in visit to a bank website.
-
-**Consent**:
-The user's permission, given at the bank, for Enable Banking to read an account until a bank-specific expiry.
-_Avoid_: session, connection
-
-**Linked account**:
-An account that Enable Banking may read under a consent.
-_Avoid_: connected account
 
 ### Transactions
 
@@ -74,7 +70,7 @@ _Avoid_: dedup key, fingerprint
 ### Ingestion
 
 **Source**:
-An origin of raw transactions: one adapter per bank website, or Enable Banking.
+An origin of raw transactions: one adapter per bank website.
 _Avoid_: provider, feed, connector
 
 **Adapter**:
@@ -88,10 +84,6 @@ _Avoid_: schema, format
 **Shape mismatch**:
 Raw transactions that match none of their source's shape versions.
 _Avoid_: validation error, parse error
-
-**Ingestion route**:
-One of the two ways raw transactions enter the system: through Enable Banking or through the extension.
-_Avoid_: channel, pipeline, integration
 
 **Sync**:
 A run the user starts that reads one source's raw transactions and ingests them.
