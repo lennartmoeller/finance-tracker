@@ -88,6 +88,7 @@ sequenceDiagram
 ```
 
 A mismatch means the bank changed its format and the adapter needs a new shape version.
+What each bank website exposes, and reference code for reading it, is collected in the [extension sources research](./research/extension-sources.md).
 
 ## Enable Banking sync
 
@@ -112,6 +113,7 @@ sequenceDiagram
 ```
 
 Syncs run only when the user starts them; there is no schedule.
+Authentication, paging, rate limits and per-bank quirks of the Enable Banking API are collected in the [Enable Banking research](./research/enable-banking.md).
 
 ## Consent
 
