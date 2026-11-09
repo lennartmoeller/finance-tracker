@@ -86,7 +86,7 @@ Raw transactions that match none of their source's shape versions.
 _Avoid_: validation error, parse error
 
 **Sync**:
-A run the user starts that reads one source's raw transactions and ingests them.
+A run the user starts that reads one account's raw transactions from its bank's website and ingests them.
 _Avoid_: refresh, import, update
 
 **Ingest**:

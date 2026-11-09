@@ -1,0 +1,23 @@
+body {
+  margin: 2rem;
+  font:
+    15px system-ui,
+    sans-serif;
+}
+
+table {
+  margin-bottom: 2rem;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 0.25rem 1rem 0.25rem 0;
+  text-align: left;
+}
+
+form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}

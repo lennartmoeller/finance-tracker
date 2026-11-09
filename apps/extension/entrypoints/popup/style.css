@@ -1,0 +1,25 @@
+body {
+  width: 22rem;
+  margin: 0.75rem;
+  font:
+    14px system-ui,
+    sans-serif;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.25rem;
+  padding: 0.5rem 0;
+}
+
+li p {
+  grid-column: 1 / -1;
+  margin: 0;
+}
