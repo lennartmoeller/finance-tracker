@@ -104,11 +104,13 @@ test("Deutsche Bank depot receipts add shares and dividends move none", () => {
   ]);
 });
 
-test("Trade Republic trades move their signed shares, and dividends and cash rows move none", () => {
+test("Trade Republic amounts include fees and taxes, trades move their signed shares, and dividends and cash rows move none", () => {
   const row = (
     type: string,
     shares: string,
     amount: string,
+    fee = "",
+    tax = "",
   ): TradeRepublicRawTransactionV1 => ({
     datetime: "2026-11-02T08:14:22.123Z",
     date: "2026-11-02",
@@ -121,8 +123,8 @@ test("Trade Republic trades move their signed shares, and dividends and cash row
     shares,
     price: "",
     amount,
-    fee: "",
-    tax: "",
+    fee,
+    tax,
     currency: "EUR",
     original_amount: "",
     original_currency: "",
@@ -136,13 +138,13 @@ test("Trade Republic trades move their signed shares, and dividends and cash row
   });
   expect(
     extractTransactions({ bank: "Trade Republic", type: "cash" }, [
-      row("SELL", "-5.0000000000", "1006.10"),
-      row("DIVIDEND", "9.0779080000", "4.31"),
+      row("SELL", "-5.0000000000", "1006.10", "-1.00"),
+      row("DIVIDEND", "9.0779080000", "4.31", "", "-0.86"),
       row("TRANSFER_INBOUND", "", "500.000000"),
     ]),
   ).toMatchObject([
-    { amount: "1006.10", isin: "IE00BK5BQT80", quantity: "-5.0000000000" },
-    { amount: "4.31", quantity: null },
+    { amount: "1005.10", isin: "IE00BK5BQT80", quantity: "-5.0000000000" },
+    { amount: "3.45", quantity: null },
     { amount: "500.000000", isin: null, quantity: null },
   ]);
 });
