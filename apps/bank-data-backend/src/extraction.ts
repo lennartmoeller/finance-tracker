@@ -8,7 +8,7 @@ import {
   deutscheBankDepotRawTransactionV1,
   type DeutscheBankDepotRawTransactionV1,
 } from "@finance-tracker/bank-data-api/deutsche-bank-depot";
-import { deutscheBankGiroRawTransactionV1 } from "@finance-tracker/bank-data-api/deutsche-bank-giro";
+import { deutscheBankCashRawTransactionV1 } from "@finance-tracker/bank-data-api/deutsche-bank-cash";
 import {
   finvestoRawTransactionV1,
   type FinvestoRawTransactionV1,
@@ -49,7 +49,7 @@ export function extractTransactions(
             fromDeutscheBankDepot,
           )
         : read(
-            deutscheBankGiroRawTransactionV1,
+            deutscheBankCashRawTransactionV1,
             rawTransactions,
             deutscheBankIdentities,
             (row) =>

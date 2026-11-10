@@ -21,9 +21,9 @@ export const accountNumberFormats: Record<
   Account["bank"],
   Partial<Record<Account["type"], AccountNumberFormat>>
 > = {
-  "Deutsche Bank": { giro: iban, depot: depotNumber(12, [3, 7, 2]) },
+  "Deutsche Bank": { cash: iban, depot: depotNumber(12, [3, 7, 2]) },
   finvesto: { depot: depotNumber(11, [4, 4, 3]) },
-  ING: { giro: iban, savings: iban },
+  ING: { cash: iban },
   "Trade Republic": { cash: iban, depot: depotNumber(10, [4, 4, 2]) },
 };
 

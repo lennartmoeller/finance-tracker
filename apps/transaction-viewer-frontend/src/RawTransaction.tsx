@@ -3,7 +3,7 @@ import type {
   Account,
   Transaction,
 } from "@finance-tracker/bank-data-api/contract";
-import { deutscheBankGiroHeaderV1 } from "@finance-tracker/bank-data-api/deutsche-bank-giro";
+import { deutscheBankCashHeaderV1 } from "@finance-tracker/bank-data-api/deutsche-bank-cash";
 import { finvestoHeaderV1 } from "@finance-tracker/bank-data-api/finvesto";
 import { ingHeaderV1 } from "@finance-tracker/bank-data-api/ing";
 
@@ -12,8 +12,8 @@ type Json = Transaction["data"];
 const headers: Partial<
   Record<Account["bank"], Partial<Record<Account["type"], string>>>
 > = {
-  ING: { giro: ingHeaderV1, savings: ingHeaderV1 },
-  "Deutsche Bank": { giro: deutscheBankGiroHeaderV1 },
+  ING: { cash: ingHeaderV1 },
+  "Deutsche Bank": { cash: deutscheBankCashHeaderV1 },
   finvesto: { depot: finvestoHeaderV1 },
 };
 
