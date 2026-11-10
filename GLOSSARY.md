@@ -34,6 +34,10 @@ _Avoid_: clearing account, settlement account
 An account that holds securities or fund shares.
 _Avoid_: portfolio, securities account, brokerage account
 
+**Account number**:
+The number by which the bank identifies an account: its IBAN where it has one, otherwise the number the bank shows for it, such as a depot number.
+_Avoid_: account ID, IBAN (for every account)
+
 **Opening balance**:
 The balance the user enters once for an account, which its transactions carry forward to the account's balance.
 _Avoid_: initial balance, starting balance
@@ -70,7 +74,7 @@ _Avoid_: dedup key, fingerprint
 ### Ingestion
 
 **Source**:
-An origin of raw transactions: one adapter per bank website.
+An origin of raw transactions in one structure, such as the Deutsche Bank giro account's CSV export or the Deutsche Bank depot's JSON transactions; one adapter may read several sources, and several accounts may share one.
 _Avoid_: provider, feed, connector
 
 **Adapter**:

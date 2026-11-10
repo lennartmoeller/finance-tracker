@@ -2,22 +2,27 @@ import { oc } from "@orpc/contract";
 import { z } from "zod";
 import { bank } from "./bank.ts";
 import { deutscheBankRawTransactionV1 } from "./deutsche-bank.ts";
+import { deutscheBankDepotRawTransactionV1 } from "./deutsche-bank-depot.ts";
 import { ingRawTransactionV1 } from "./ing.ts";
 import { tradeRepublicRawTransactionV1 } from "./trade-republic.ts";
 
 const account = z.object({
   id: z.int(),
   bank,
-  type: z.enum(["giro", "savings", "cash"]),
-  iban: z.string().regex(/^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/, "Invalid IBAN"),
+  type: z.enum(["giro", "savings", "cash", "depot"]),
+  number: z.string().regex(/^[A-Z0-9]+$/, "Invalid account number"),
   lastSyncedAt: z.date().nullable(),
 });
 
 export type Account = z.infer<typeof account>;
 
-export const newAccount = account.pick({ bank: true, type: true, iban: true });
+export const newAccount = account.pick({
+  bank: true,
+  type: true,
+  number: true,
+});
 
-const sourceSync = <S extends Account["bank"], T extends z.ZodType>(
+const sourceSync = <S extends string, T extends z.ZodType>(
   source: S,
   rawTransaction: T,
 ) =>
@@ -32,9 +37,17 @@ const syncInput = z.discriminatedUnion("source", [
   sourceSync("ING", ingRawTransactionV1),
   sourceSync("Trade Republic", tradeRepublicRawTransactionV1),
   sourceSync("Deutsche Bank", deutscheBankRawTransactionV1),
+  sourceSync("Deutsche Bank depot", deutscheBankDepotRawTransactionV1),
 ]);
 
 export type SyncInput = z.infer<typeof syncInput>;
+
+export const sourceBanks: Record<SyncInput["source"], Account["bank"]> = {
+  ING: "ING",
+  "Trade Republic": "Trade Republic",
+  "Deutsche Bank": "Deutsche Bank",
+  "Deutsche Bank depot": "Deutsche Bank",
+};
 
 export const contract = {
   account: {

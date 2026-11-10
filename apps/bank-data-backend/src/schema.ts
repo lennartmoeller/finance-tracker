@@ -11,13 +11,17 @@ import type {
   SyncInput,
 } from "@finance-tracker/bank-data-api/contract";
 
-export const accounts = pgTable("accounts", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  bank: text().$type<Account["bank"]>().notNull(),
-  type: text().$type<Account["type"]>().notNull(),
-  iban: text().notNull().unique(),
-  lastSyncedAt: timestamp({ withTimezone: true }),
-});
+export const accounts = pgTable(
+  "accounts",
+  {
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    bank: text().$type<Account["bank"]>().notNull(),
+    type: text().$type<Account["type"]>().notNull(),
+    number: text().notNull(),
+    lastSyncedAt: timestamp({ withTimezone: true }),
+  },
+  (table) => [unique().on(table.bank, table.number)],
+);
 
 export const rawTransactions = pgTable(
   "raw_transactions",

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { Account } from "@finance-tracker/bank-data-api/contract";
 import {
   tradeRepublicRawTransactionV1,
   type TradeRepublicRawTransactionV1,
@@ -6,14 +7,17 @@ import {
 import { shapeMismatch } from "./shape-mismatch.ts";
 import { inject, navigate, notLoggedIn, withSyncTab } from "./sync-tab.ts";
 
-export async function readTradeRepublicTransactions(iban: string) {
+export async function readTradeRepublicTransactions({
+  type,
+  number,
+}: Pick<Account, "type" | "number">) {
   const csv = await withSyncTab(async (tabId) => {
     await navigate(tabId, "https://app.traderepublic.com/");
     // The API authenticates the session's cookies and refuses requests without them, so the export calls it from the page's own world, as the web app does.
     return inject<string | null>(tabId, {
       world: "MAIN",
       func: exportTransactions,
-      args: [iban],
+      args: [type, number],
     });
   });
   if (csv === null)
@@ -21,12 +25,13 @@ export async function readTradeRepublicTransactions(iban: string) {
   return {
     source: "Trade Republic",
     shapeVersion: 1,
-    rawTransactions: parseTradeRepublicCsv(csv),
+    rawTransactions: parseTradeRepublicCsv(csv, type),
   } as const;
 }
 
 export function parseTradeRepublicCsv(
   text: string,
+  type: Account["type"],
 ): TradeRepublicRawTransactionV1[] {
   const columns = Object.keys(tradeRepublicRawTransactionV1.shape);
   const [header, ...rows] = quotedCells(text) ?? [];
@@ -41,7 +46,10 @@ export function parseTradeRepublicCsv(
     );
   if (JSON.stringify(header) !== JSON.stringify(columns) || !parsed.success)
     throw shapeMismatch("Trade Republic");
-  return parsed.data;
+  // The export holds the cash account's and the depot's rows alike, and the depot's rows are those with an ISIN: trades, dividends and stock perks.
+  return type === "depot"
+    ? parsed.data.filter((row) => row.symbol !== "")
+    : parsed.data;
 }
 
 function quotedCells(text: string): string[][] | undefined {
@@ -62,7 +70,10 @@ function quotedCells(text: string): string[][] | undefined {
 }
 
 // executeScript serializes this function into the page, so it uses nothing from outside its body.
-async function exportTransactions(iban: string): Promise<string | null> {
+async function exportTransactions(
+  type: Account["type"],
+  number: string,
+): Promise<string | null> {
   const missingSession = new Error();
   async function call(path: string, init?: RequestInit): Promise<Response> {
     const response = await fetch(
@@ -78,14 +89,40 @@ async function exportTransactions(iban: string): Promise<string | null> {
     return response;
   }
 
-  try {
-    const { accounts } = (await (
-      await call("account-manager/accounts/switchable")
-    ).json()) as { accounts: { bankingInfo?: { iban?: string } }[] };
-    if (!accounts.some((account) => account.bankingInfo?.iban === iban))
-      throw new Error(`Trade Republic lists no account with the IBAN ${iban}.`);
+  // Only the web app's WebSocket names the depot numbers, in its accountPairs topic, and the session's cookies authenticate a socket the page opens.
+  function depotNumbers(): Promise<string[]> {
+    return new Promise((resolve, reject) => {
+      const socket = new WebSocket("wss://api.traderepublic.com");
+      const timeout = setTimeout(() => {
+        socket.close();
+        reject(new Error("Trade Republic did not name its depots in time."));
+      }, 10_000);
+      socket.onopen = () => {
+        socket.send(`connect 35 ${JSON.stringify({ locale: "de" })}`);
+      };
+      socket.onmessage = ({ data }: MessageEvent<string>) => {
+        if (data === "connected") {
+          socket.send(`sub 1 ${JSON.stringify({ type: "accountPairs" })}`);
+          return;
+        }
+        clearTimeout(timeout);
+        socket.close();
+        const answer = /^1 A (.*)$/s.exec(data)?.[1];
+        if (answer === undefined) {
+          reject(new Error("Trade Republic refused to name its depots."));
+          return;
+        }
+        const { accounts } = JSON.parse(answer) as {
+          accounts: { securitiesAccountNumber: string }[];
+        };
+        resolve(accounts.map((account) => account.securitiesAccountNumber));
+      };
+    });
+  }
 
+  try {
     const exports = "portfolio-analytics/transactions/export";
+    // Only the REST API answers a missing session with 401, so the export is requested before the account is looked up.
     let job = (await (
       await call(`${exports}/request`, {
         method: "POST",
@@ -97,6 +134,20 @@ async function exportTransactions(iban: string): Promise<string | null> {
         }),
       })
     ).json()) as { jobId: string; status: string };
+
+    const listed =
+      type === "depot"
+        ? (await depotNumbers()).includes(number)
+        : (
+            (await (
+              await call("account-manager/accounts/switchable")
+            ).json()) as { accounts: { bankingInfo?: { iban?: string } }[] }
+          ).accounts.some((account) => account.bankingInfo?.iban === number);
+    if (!listed)
+      throw new Error(
+        `Trade Republic lists no ${type === "depot" ? "depot" : "account"} with the number ${number}.`,
+      );
+
     // Firefox suspends the extension's background after 30 seconds without events, so the wait gives up before then.
     for (let polls = 0; job.status === "PENDING"; polls++) {
       if (polls === 20)

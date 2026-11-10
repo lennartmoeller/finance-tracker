@@ -28,8 +28,8 @@ flowchart LR
 
 | Component | Owns | Leaves to others |
 | --- | --- | --- |
-| Backend | the API contract's implementation; validation, deduplication, raw storage and extraction; serving normalized transactions to consumers | state outside PostgreSQL; opening balances and balances |
-| Extension | one adapter per bank website; shape validation; the popup that creates accounts, lists them with their IBAN and last sync, and syncs each one | storing bank credentials |
+| Backend | the API contract's implementation; validation, deduplication, raw storage and extraction; serving normalized transactions to consumers | state outside PostgreSQL; opening balances, balances and holdings |
+| Extension | one adapter per bank website; shape validation; the popup that creates accounts, lists them with their account number and last sync, and syncs each one | storing bank credentials |
 | PostgreSQL | accounts, raw transactions, normalized transactions | |
 
 The extension exists because a web page cannot read banking sites in the user's session: the same-origin policy and the banks' framing bans block it.
@@ -38,11 +38,12 @@ Why every account takes the extension is decided in [ADR 0003](./adr/0003-ingest
 
 ## Raw data and shape versions
 
-- A source is one extension adapter per bank website.
+- Each adapter reads one or more sources, such as Deutsche Bank's CSV export for the giro account and its JSON transactions for the depot.
 - Each source's raw data follows a versioned shape; a format change at the bank adds a new shape version beside the existing ones.
 - Every raw transaction is stored as JSON together with its source and the shape version it was validated against, and is never changed afterwards.
 - A shape version's definition and extraction stay in the code as long as stored raw data follows it.
 - Only booked transactions are imported, because pending ones change amount, date or ID when they book.
+- An account's raw transactions are what its source delivers for it, so a trade or dividend is a raw transaction of both the depot and the account it settles on, and extraction links the two.
 - A transaction's identity is the bank's own ID where the source carries one, otherwise a hash of stable fields with an occurrence counter for identical same-day entries; identities are always scoped to the account.
 - Extraction turns a raw transaction into a normalized transaction and handles each bank's quirks.
 - Re-extracting normalized data from stored raw data stays possible by design and is built only once needed.
@@ -52,7 +53,7 @@ Why every account takes the extension is decided in [ADR 0003](./adr/0003-ingest
 
 - A normalized transaction carries a date, an amount in the account's currency, a counterparty, and a description wherever the source has one.
 - Its date is the booking date where the source has one, otherwise the transaction date.
-- A normalized transaction carries no balance, because consumers derive balances from an account's transactions.
+- A normalized transaction carries no balance, because consumers derive balances, and a depot's holdings, from an account's transactions.
 
 ## Ingestion
 
@@ -89,7 +90,7 @@ sequenceDiagram
     Ext->>User: Open the bank website in a foreground tab to log in
     Ext-->>Popup: Report that the user is not logged in
   else the session exists
-    Ext->>Tab: Find the account by its IBAN and export its transactions
+    Ext->>Tab: Find the account by its number and read its transactions
     Ext->>Ext: Validate against the bank's shape versions
     alt no shape version matches
       Ext-->>Popup: Report the mismatch, send nothing

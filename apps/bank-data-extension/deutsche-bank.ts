@@ -1,9 +1,14 @@
 import { z } from "zod";
+import type { Account } from "@finance-tracker/bank-data-api/contract";
 import {
   deutscheBankHeaderV1,
   deutscheBankRawTransactionV1,
   type DeutscheBankRawTransactionV1,
 } from "@finance-tracker/bank-data-api/deutsche-bank";
+import {
+  deutscheBankDepotRawTransactionV1,
+  type DeutscheBankDepotRawTransactionV1,
+} from "@finance-tracker/bank-data-api/deutsche-bank-depot";
 import { shapeMismatch } from "./shape-mismatch.ts";
 import { inject, navigate, notLoggedIn, withSyncTab } from "./sync-tab.ts";
 
@@ -12,8 +17,11 @@ interface AppRequest {
   headers: Record<string, string>;
 }
 
-export async function readDeutscheBankTransactions(iban: string) {
-  const csvs = await withSyncTab(async (tabId) => {
+export async function readDeutscheBankTransactions({
+  type,
+  number,
+}: Pick<Account, "type" | "number">) {
+  const texts = await withSyncTab(async (tabId) => {
     const overview = captureOverviewRequest(tabId);
     await navigate(tabId, "https://meine.deutsche-bank.de/");
     const request = await overview;
@@ -25,23 +33,30 @@ export async function readDeutscheBankTransactions(iban: string) {
     // The API authenticates a bearer token that the web app holds only in memory, so the export calls it from the page's own world with the token and API key of the app's own request.
     return inject<string[]>(tabId, {
       world: "MAIN",
-      func: exportTransactions,
-      args: [request.url, request.headers, iban],
+      func: fetchTransactions,
+      args: [request.url, request.headers, type, number],
     });
   });
+  if (type === "depot") {
+    return {
+      source: "Deutsche Bank depot",
+      shapeVersion: 1,
+      rawTransactions: texts.flatMap(parseDeutscheBankDepotJson),
+    } as const;
+  }
   return {
     source: "Deutsche Bank",
     shapeVersion: 1,
-    rawTransactions: csvs.flatMap((csv) => parseDeutscheBankCsv(csv, iban)),
+    rawTransactions: texts.flatMap((csv) => parseDeutscheBankCsv(csv, number)),
   } as const;
 }
 
 export function parseDeutscheBankCsv(
   text: string,
-  iban: string,
+  number: string,
 ): DeutscheBankRawTransactionV1[] {
   const lines = text.split("\n").filter(Boolean);
-  if (lines[2]?.split(";")[2] !== iban)
+  if (lines[2]?.split(";")[2] !== number)
     throw new Error(
       "Deutsche Bank exported another account than the one synced.",
     );
@@ -54,6 +69,16 @@ export function parseDeutscheBankCsv(
   );
   if (header < 0 || !parsed.success) throw shapeMismatch("Deutsche Bank");
   return parsed.data;
+}
+
+export function parseDeutscheBankDepotJson(
+  text: string,
+): DeutscheBankDepotRawTransactionV1[] {
+  const parsed = z
+    .object({ transactions: z.array(deutscheBankDepotRawTransactionV1) })
+    .safeParse(JSON.parse(text));
+  if (!parsed.success) throw shapeMismatch("Deutsche Bank");
+  return parsed.data.transactions;
 }
 
 function captureOverviewRequest(tabId: number): Promise<AppRequest | null> {
@@ -117,10 +142,11 @@ function captureOverviewRequest(tabId: number): Promise<AppRequest | null> {
 }
 
 // executeScript serializes this function into the page, so it uses nothing from outside its body.
-async function exportTransactions(
+async function fetchTransactions(
   overviewUrl: string,
   headers: Record<string, string>,
-  iban: string,
+  type: Account["type"],
+  number: string,
 ): Promise<string[]> {
   async function call(url: string, body?: object): Promise<Response> {
     const response = await fetch(
@@ -145,15 +171,43 @@ async function exportTransactions(
     groups: {
       products: {
         id: string;
-        details?: { iban?: string; openingDate: string };
+        category: string;
+        details?: {
+          iban?: string;
+          branchNumber?: string;
+          accountNumber?: string;
+          subAccountNumber?: string;
+          openingDate?: string;
+        };
       }[];
     }[];
   };
-  const account = groups
-    .flatMap((group) => group.products)
-    .find((product) => product.details?.iban === iban);
-  if (!account?.details)
-    throw new Error(`Deutsche Bank lists no account with the IBAN ${iban}.`);
+  const products = groups.flatMap((group) => group.products);
+
+  if (type === "depot") {
+    const depot = products.find(
+      ({ category, details }) =>
+        category === "SECURITIES_ACCOUNT" &&
+        [
+          details?.branchNumber,
+          details?.accountNumber,
+          details?.subAccountNumber,
+        ].join("") === number,
+    );
+    if (!depot)
+      throw new Error(
+        `Deutsche Bank lists no depot with the number ${number}.`,
+      );
+    // The web app asks for the last 90 days, and a start before any depot opened returns the whole history at once.
+    const transactions = `https://api.olb.deutsche-bank.de/investments/securities-accounts/${encodeURIComponent(depot.id)}/transactions?start_date=2000-01-01`;
+    return [await (await call(transactions)).text()];
+  }
+
+  const account = products.find((product) => product.details?.iban === number);
+  if (!account?.details?.openingDate)
+    throw new Error(
+      `Deutsche Bank lists no account with the number ${number}.`,
+    );
 
   const exports = `https://api.olb.deutsche-bank.de/products/${encodeURIComponent(account.id)}/exports/transactions`;
   const today = new Date().toISOString().slice(0, 10);

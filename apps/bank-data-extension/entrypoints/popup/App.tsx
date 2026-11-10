@@ -12,6 +12,10 @@ import type { SyncRequest, SyncState } from "../background.ts";
 
 const relativeTime = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
 
+function typeName(type: Account["type"]): string {
+  return type === "depot" ? "depot" : `${type} account`;
+}
+
 function ago(date: Date): string {
   const seconds = (date.getTime() - Date.now()) / 1000;
   for (const [unit, size] of [
@@ -82,7 +86,7 @@ export function App() {
     const parsed = newAccount.safeParse({
       bank: form.get("bank"),
       type: form.get("type"),
-      iban: (form.get("iban") as string).replaceAll(" ", "").toUpperCase(),
+      number: (form.get("number") as string).replaceAll(" ", "").toUpperCase(),
     });
     if (parsed.success)
       void load(async () => (await apiClient()).account.create(parsed.data));
@@ -107,12 +111,13 @@ export function App() {
           const request: SyncRequest = {
             id: account.id,
             bank: account.bank,
-            iban: account.iban,
+            type: account.type,
+            number: account.number,
           };
           return (
             <li key={account.id}>
               <strong>
-                {account.bank} {account.type} account
+                {account.bank} {typeName(account.type)}
               </strong>
               <button
                 disabled={sync?.state === "running"}
@@ -120,7 +125,7 @@ export function App() {
               >
                 {sync?.state === "running" ? "Syncing…" : "Sync"}
               </button>
-              <p>{account.iban.replace(/(.{4})/g, "$1 ")}</p>
+              <p>{account.number.replace(/(.{4})/g, "$1 ")}</p>
               <p>
                 {account.lastSyncedAt
                   ? `Synced ${ago(account.lastSyncedAt)}`
@@ -145,11 +150,11 @@ export function App() {
         <select name="type">
           {newAccount.shape.type.options.map((type) => (
             <option key={type} value={type}>
-              {type} account
+              {typeName(type)}
             </option>
           ))}
         </select>
-        <input name="iban" placeholder="IBAN" required />
+        <input name="number" placeholder="Account number" required />
         <button>Add account</button>
       </form>
       {error && <p role="alert">{error}</p>}

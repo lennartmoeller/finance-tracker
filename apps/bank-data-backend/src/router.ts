@@ -1,7 +1,7 @@
 import { implement, ORPCError } from "@orpc/server";
 import { eq } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { contract } from "@finance-tracker/bank-data-api/contract";
+import { contract, sourceBanks } from "@finance-tracker/bank-data-api/contract";
 import { identifyRawTransactions } from "./identity.ts";
 import { accounts, rawTransactions } from "./schema.ts";
 
@@ -24,7 +24,7 @@ export function createRouter(db: NodePgDatabase, apiToken: string) {
           .returning();
         if (!account)
           throw new ORPCError("CONFLICT", {
-            message: "An account with this IBAN exists.",
+            message: "This bank already has an account with this number.",
           });
         return account;
       }),
@@ -43,9 +43,9 @@ export function createRouter(db: NodePgDatabase, apiToken: string) {
           throw new ORPCError("NOT_FOUND", {
             message: "The account does not exist.",
           });
-        if (account.bank !== input.source)
+        if (account.bank !== sourceBanks[input.source])
           throw new ORPCError("BAD_REQUEST", {
-            message: `The account is a ${account.bank} account, not a ${input.source} account.`,
+            message: `The account is a ${account.bank} account, not a ${sourceBanks[input.source]} account.`,
           });
         const rows = identifyRawTransactions(input).map((row) => ({
           ...row,

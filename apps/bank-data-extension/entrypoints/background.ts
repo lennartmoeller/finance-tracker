@@ -11,7 +11,7 @@ export type SyncState =
   | { state: "done"; imported: number; skipped: number }
   | { state: "failed"; error: string };
 
-export type SyncRequest = Pick<Account, "id" | "bank" | "iban">;
+export type SyncRequest = Pick<Account, "id" | "bank" | "type" | "number">;
 
 const readers = {
   ING: readIngTransactions,
@@ -32,7 +32,7 @@ async function sync(account: SyncRequest) {
     browser.storage.session.set({ [account.id]: state });
   await setState({ state: "running" });
   try {
-    const read = await readers[account.bank](account.iban);
+    const read = await readers[account.bank](account);
     const api = await apiClient();
     await setState({
       state: "done",

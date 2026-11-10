@@ -14,7 +14,11 @@ export function identifyRawTransactions(
       // Saldo and its currency are left out, because same-day bookings, and with them their running balances, may change order between exports.
       return hashed(input.rawTransactions, (data) => data.toSpliced(6, 2));
     case "Deutsche Bank":
-      return hashed(input.rawTransactions, (data) => data);
+    case "Deutsche Bank depot":
+      return hashed<SyncInput["rawTransactions"][number]>(
+        input.rawTransactions,
+        (data) => data,
+      );
   }
 }
 

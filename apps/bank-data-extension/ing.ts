@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { Account } from "@finance-tracker/bank-data-api/contract";
 import {
   ingHeaderV1,
   ingRawTransactionV1,
@@ -8,7 +9,7 @@ import type { IngAccountRow } from "./entrypoints/ing-accounts.content.ts";
 import { shapeMismatch } from "./shape-mismatch.ts";
 import { inject, navigate, notLoggedIn, withSyncTab } from "./sync-tab.ts";
 
-export async function readIngTransactions(iban: string) {
+export async function readIngTransactions({ number }: Pick<Account, "number">) {
   browser.downloads.onCreated.addListener(eraseIngDownload);
   try {
     const rawTransactions = await withSyncTab(async (tabId) => {
@@ -16,15 +17,15 @@ export async function readIngTransactions(iban: string) {
       const rows = await inject<IngAccountRow[]>(tabId, {
         files: ["/content-scripts/ing-accounts.js"],
       });
-      const account = rows.find((row) => row.text.includes(iban));
+      const account = rows.find((row) => row.text.includes(number));
       if (!account)
-        throw new Error(`ING lists no account with the IBAN ${iban}.`);
+        throw new Error(`ING lists no account with the number ${number}.`);
       await openIng(tabId, account.url);
       const [csv] = await Promise.all([
         captureCsv(tabId),
         inject(tabId, { files: ["/content-scripts/ing-export.js"] }),
       ]);
-      return parseIngCsv(new TextDecoder("windows-1252").decode(csv), iban);
+      return parseIngCsv(new TextDecoder("windows-1252").decode(csv), number);
     });
     return { source: "ING", shapeVersion: 1, rawTransactions } as const;
   } finally {
@@ -32,13 +33,16 @@ export async function readIngTransactions(iban: string) {
   }
 }
 
-export function parseIngCsv(text: string, iban: string): IngRawTransactionV1[] {
+export function parseIngCsv(
+  text: string,
+  number: string,
+): IngRawTransactionV1[] {
   const lines = text.split(/\r?\n/).filter(Boolean);
   const exportIban = lines
     .find((line) => line.startsWith("IBAN;"))
     ?.split(";")[1]
     ?.replaceAll(" ", "");
-  if (exportIban !== iban)
+  if (exportIban !== number)
     throw new Error("ING exported another account than the one synced.");
   const header = lines.indexOf(ingHeaderV1);
   const rows = lines.slice(header + 1).map((line) => {
