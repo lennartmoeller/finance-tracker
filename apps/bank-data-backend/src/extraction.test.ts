@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import type { DeutscheBankRawTransactionV1 } from "@finance-tracker/bank-data-api/deutsche-bank";
+import type { DeutscheBankGiroRawTransactionV1 } from "@finance-tracker/bank-data-api/deutsche-bank-giro";
 import type { DeutscheBankDepotRawTransactionV1 } from "@finance-tracker/bank-data-api/deutsche-bank-depot";
 import type { FinvestoRawTransactionV1 } from "@finance-tracker/bank-data-api/finvesto";
 import type { TradeRepublicRawTransactionV1 } from "@finance-tracker/bank-data-api/trade-republic";
@@ -7,25 +7,20 @@ import { extractTransactions } from "./extraction.ts";
 
 test("an ING booking keeps its German amount as a decimal and an empty counterparty as none", () => {
   expect(
-    extractTransactions({
-      accountId: 1,
-      source: "ING",
-      shapeVersion: 1,
-      rawTransactions: [
-        [
-          "30.09.2026",
-          "30.09.2026",
-          "",
-          "Abschluss",
-          "Abschluss per 30.09.2026",
-          "",
-          "12.410,81",
-          "EUR",
-          "-1.234,50",
-          "EUR",
-        ],
+    extractTransactions({ bank: "ING", type: "giro" }, [
+      [
+        "30.09.2026",
+        "30.09.2026",
+        "",
+        "Abschluss",
+        "Abschluss per 30.09.2026",
+        "",
+        "12.410,81",
+        "EUR",
+        "-1.234,50",
+        "EUR",
       ],
-    }),
+    ]),
   ).toMatchObject([
     {
       date: "2026-09-30",
@@ -40,22 +35,23 @@ test("an ING booking keeps its German amount as a decimal and an empty counterpa
   ]);
 });
 
-test("a Deutsche Bank booking pads its date and keeps an amount without trailing zeros", () => {
-  const row = Array<string>(18).fill("") as DeutscheBankRawTransactionV1;
-  Object.assign(row, {
+const deutscheBankGiroBooking = Object.assign(
+  Array<string>(18).fill("") as DeutscheBankGiroRawTransactionV1,
+  {
     0: "3.5.2026",
+    1: "3.5.2026",
     3: "Max Mustermann",
     4: "Umbuchung",
     11: "-100,8",
     17: "EUR",
-  });
+  },
+);
+
+test("a Deutsche Bank booking pads its date and keeps an amount without trailing zeros", () => {
   expect(
-    extractTransactions({
-      accountId: 1,
-      source: "Deutsche Bank",
-      shapeVersion: 1,
-      rawTransactions: [row],
-    }),
+    extractTransactions({ bank: "Deutsche Bank", type: "giro" }, [
+      deutscheBankGiroBooking,
+    ]),
   ).toMatchObject([
     {
       date: "2026-05-03",
@@ -64,6 +60,14 @@ test("a Deutsche Bank booking pads its date and keeps an amount without trailing
       description: "Umbuchung",
     },
   ]);
+});
+
+test("a Deutsche Bank depot rejects the giro account's raw transactions", () => {
+  expect(
+    extractTransactions({ bank: "Deutsche Bank", type: "depot" }, [
+      deutscheBankGiroBooking,
+    ]),
+  ).toBeUndefined();
 });
 
 test("Deutsche Bank depot receipts add shares and dividends move none", () => {
@@ -85,15 +89,10 @@ test("Deutsche Bank depot receipts add shares and dividends move none", () => {
     },
   });
   expect(
-    extractTransactions({
-      accountId: 1,
-      source: "Deutsche Bank depot",
-      shapeVersion: 1,
-      rawTransactions: [
-        transaction("RECEIPT", "-1714.50"),
-        transaction("DIVIDEND_DISBURSEMENT", "103.52"),
-      ],
-    }),
+    extractTransactions({ bank: "Deutsche Bank", type: "depot" }, [
+      transaction("RECEIPT", "-1714.50"),
+      transaction("DIVIDEND_DISBURSEMENT", "103.52"),
+    ]),
   ).toMatchObject([
     {
       amount: "-1714.50",
@@ -136,16 +135,11 @@ test("Trade Republic trades move their signed shares, and dividends and cash row
     mcc_code: "",
   });
   expect(
-    extractTransactions({
-      accountId: 1,
-      source: "Trade Republic",
-      shapeVersion: 1,
-      rawTransactions: [
-        row("SELL", "-5.0000000000", "1006.10"),
-        row("DIVIDEND", "9.0779080000", "4.31"),
-        row("TRANSFER_INBOUND", "", "500.000000"),
-      ],
-    }),
+    extractTransactions({ bank: "Trade Republic", type: "cash" }, [
+      row("SELL", "-5.0000000000", "1006.10"),
+      row("DIVIDEND", "9.0779080000", "4.31"),
+      row("TRANSFER_INBOUND", "", "500.000000"),
+    ]),
   ).toMatchObject([
     { amount: "1006.10", isin: "IE00BK5BQT80", quantity: "-5.0000000000" },
     { amount: "4.31", quantity: null },
@@ -172,16 +166,11 @@ test("finvesto signs its unsigned payment by Umsatzart and leaves out what moved
     });
   };
   expect(
-    extractTransactions({
-      accountId: 1,
-      source: "finvesto",
-      shapeVersion: 1,
-      rawTransactions: [
-        row("Kauf", "40", "0,334823"),
-        row("Fondsertrag (Ausschüttung)", "3,6", "0"),
-        row("Entgeltbelastung Verkauf", "0", "-0,098047"),
-      ],
-    }),
+    extractTransactions({ bank: "finvesto", type: "depot" }, [
+      row("Kauf", "40", "0,334823"),
+      row("Fondsertrag (Ausschüttung)", "3,6", "0"),
+      row("Entgeltbelastung Verkauf", "0", "-0,098047"),
+    ]),
   ).toMatchObject([
     {
       date: "2026-10-28",

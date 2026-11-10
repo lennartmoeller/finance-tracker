@@ -1,10 +1,10 @@
 import { z } from "zod";
 import type { Account } from "@finance-tracker/bank-data-api/contract";
 import {
-  deutscheBankHeaderV1,
-  deutscheBankRawTransactionV1,
-  type DeutscheBankRawTransactionV1,
-} from "@finance-tracker/bank-data-api/deutsche-bank";
+  deutscheBankGiroHeaderV1,
+  deutscheBankGiroRawTransactionV1,
+  type DeutscheBankGiroRawTransactionV1,
+} from "@finance-tracker/bank-data-api/deutsche-bank-giro";
 import {
   deutscheBankDepotRawTransactionV1,
   type DeutscheBankDepotRawTransactionV1,
@@ -33,31 +33,26 @@ export async function readDeutscheBankTransactions({
       args: [request.url, request.headers, type, number],
     });
   });
-  if (type === "depot") {
-    return {
-      source: "Deutsche Bank depot",
-      shapeVersion: 1,
-      rawTransactions: texts.flatMap(parseDeutscheBankDepotJson),
-    } as const;
-  }
   return {
-    source: "Deutsche Bank",
     shapeVersion: 1,
-    rawTransactions: texts.flatMap((csv) => parseDeutscheBankCsv(csv, number)),
+    rawTransactions:
+      type === "depot"
+        ? texts.flatMap(parseDeutscheBankDepotJson)
+        : texts.flatMap((csv) => parseDeutscheBankGiroCsv(csv, number)),
   } as const;
 }
 
-export function parseDeutscheBankCsv(
+export function parseDeutscheBankGiroCsv(
   text: string,
   number: string,
-): DeutscheBankRawTransactionV1[] {
+): DeutscheBankGiroRawTransactionV1[] {
   const lines = text.split("\n").filter(Boolean);
   if (lines[2]?.split(";")[2] !== number)
     throw new Error(
       "Deutsche Bank exported another account than the one synced.",
     );
-  const header = lines.indexOf(deutscheBankHeaderV1);
-  const parsed = z.array(deutscheBankRawTransactionV1).safeParse(
+  const header = lines.indexOf(deutscheBankGiroHeaderV1);
+  const parsed = z.array(deutscheBankGiroRawTransactionV1).safeParse(
     lines
       .slice(header + 1)
       .filter((line) => !line.startsWith("Kontostand;"))

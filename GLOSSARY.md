@@ -64,7 +64,7 @@ A transaction the bank has not booked yet, whose amount, date or ID can still ch
 _Avoid_: provisional transaction
 
 **Raw transaction**:
-A transaction exactly as its source delivered it, kept unchanged together with its source and shape version.
+A transaction exactly as its bank delivered it, kept unchanged together with its shape version.
 _Avoid_: original transaction, import record
 
 **Normalized transaction**:
@@ -77,20 +77,16 @@ _Avoid_: dedup key, fingerprint
 
 ### Ingestion
 
-**Source**:
-An origin of raw transactions in one structure, such as the Deutsche Bank giro account's CSV export or the Deutsche Bank depot's JSON transactions; one adapter may read several sources, and several accounts may share one.
-_Avoid_: provider, feed, connector
-
 **Adapter**:
 The part of the extension that reads one bank's transactions from the user's session.
 _Avoid_: scraper, connector, plugin
 
 **Shape version**:
-One version of the structure a source's raw transactions follow; a change at the source adds a shape version beside the existing ones.
-_Avoid_: schema, format
+One version of the structure in which a bank delivers one account type's raw transactions; a format change or a switch to another export adds a shape version beside the existing ones.
+_Avoid_: schema, format, source
 
 **Shape mismatch**:
-Raw transactions that match none of their source's shape versions.
+Raw transactions that match none of their account's shape versions.
 _Avoid_: validation error, parse error
 
 **Sync**:

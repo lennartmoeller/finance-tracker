@@ -102,12 +102,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "source": {
-          "name": "source",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
         "shape_version": {
           "name": "shape_version",
           "type": "integer",

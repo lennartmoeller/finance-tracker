@@ -22,7 +22,6 @@ export async function readTradeRepublicTransactions({
   });
   if (csv === null) throw await notLoggedIn("https://app.traderepublic.com");
   return {
-    source: "Trade Republic",
     shapeVersion: 1,
     rawTransactions: parseTradeRepublicCsv(csv, type),
   } as const;

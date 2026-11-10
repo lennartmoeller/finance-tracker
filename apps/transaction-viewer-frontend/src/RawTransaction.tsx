@@ -1,15 +1,20 @@
 import { useState } from "react";
-import type { Transaction } from "@finance-tracker/bank-data-api/contract";
-import { deutscheBankHeaderV1 } from "@finance-tracker/bank-data-api/deutsche-bank";
+import type {
+  Account,
+  Transaction,
+} from "@finance-tracker/bank-data-api/contract";
+import { deutscheBankGiroHeaderV1 } from "@finance-tracker/bank-data-api/deutsche-bank-giro";
 import { finvestoHeaderV1 } from "@finance-tracker/bank-data-api/finvesto";
 import { ingHeaderV1 } from "@finance-tracker/bank-data-api/ing";
 
 type Json = Transaction["data"];
 
-const headers: Partial<Record<Transaction["source"], string>> = {
-  ING: ingHeaderV1,
-  "Deutsche Bank": deutscheBankHeaderV1,
-  finvesto: finvestoHeaderV1,
+const headers: Partial<
+  Record<Account["bank"], Partial<Record<Account["type"], string>>>
+> = {
+  ING: { giro: ingHeaderV1, savings: ingHeaderV1 },
+  "Deutsche Bank": { giro: deutscheBankGiroHeaderV1 },
+  finvesto: { depot: finvestoHeaderV1 },
 };
 
 function flatten(value: Json, path: string): [string, Exclude<Json, object>][] {
@@ -20,14 +25,19 @@ function flatten(value: Json, path: string): [string, Exclude<Json, object>][] {
     : [[path, value]];
 }
 
-export function RawTransaction({ transaction }: { transaction: Transaction }) {
+export function RawTransaction({
+  account,
+  transaction,
+}: {
+  account: Account;
+  transaction: Transaction;
+}) {
   const [json, setJson] = useState(false);
-  const columns = headers[transaction.source]?.split(";");
+  const columns = headers[account.bank]?.[account.type]?.split(";");
   return (
     <div className="raw-panel">
       <div className="raw-head">
         <strong>Raw transaction</strong>
-        <span className="chip">Source {transaction.source}</span>
         <span className="chip">Shape version {transaction.shapeVersion}</span>
         <div className="segmented" role="group" aria-label="Raw view">
           <button

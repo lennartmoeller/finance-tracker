@@ -1,16 +1,36 @@
+import type { z } from "zod";
 import type {
+  Account,
   NormalizedTransaction,
-  SyncInput,
 } from "@finance-tracker/bank-data-api/contract";
-import type { DeutscheBankDepotRawTransactionV1 } from "@finance-tracker/bank-data-api/deutsche-bank-depot";
-import type { FinvestoRawTransactionV1 } from "@finance-tracker/bank-data-api/finvesto";
-import type { TradeRepublicRawTransactionV1 } from "@finance-tracker/bank-data-api/trade-republic";
-import { identifyRawTransactions } from "./identity.ts";
+import {
+  deutscheBankDepotRawTransactionV1,
+  type DeutscheBankDepotRawTransactionV1,
+} from "@finance-tracker/bank-data-api/deutsche-bank-depot";
+import { deutscheBankGiroRawTransactionV1 } from "@finance-tracker/bank-data-api/deutsche-bank-giro";
+import {
+  finvestoRawTransactionV1,
+  type FinvestoRawTransactionV1,
+} from "@finance-tracker/bank-data-api/finvesto";
+import { ingRawTransactionV1 } from "@finance-tracker/bank-data-api/ing";
+import {
+  tradeRepublicRawTransactionV1,
+  type TradeRepublicRawTransactionV1,
+} from "@finance-tracker/bank-data-api/trade-republic";
+import {
+  deutscheBankIdentities,
+  finvestoIdentities,
+  ingIdentities,
+  tradeRepublicIdentities,
+} from "./identity.ts";
 
-export function extractTransactions(input: SyncInput) {
-  switch (input.source) {
+export function extractTransactions(
+  { bank, type }: Pick<Account, "bank" | "type">,
+  rawTransactions: unknown[],
+) {
+  switch (bank) {
     case "ING":
-      return withNormalized(input, (row) =>
+      return read(ingRawTransactionV1, rawTransactions, ingIdentities, (row) =>
         fromGermanBooking({
           date: row[0],
           amount: row[8],
@@ -20,32 +40,53 @@ export function extractTransactions(input: SyncInput) {
         }),
       );
     case "Deutsche Bank":
-      return withNormalized(input, (row) =>
-        fromGermanBooking({
-          date: row[0],
-          amount: row[11],
-          currency: row[17],
-          counterparty: row[3],
-          description: row[4],
-        }),
-      );
-    case "Deutsche Bank depot":
-      return withNormalized(input, fromDeutscheBankDepot);
+      return type === "depot"
+        ? read(
+            deutscheBankDepotRawTransactionV1,
+            rawTransactions,
+            deutscheBankIdentities,
+            fromDeutscheBankDepot,
+          )
+        : read(
+            deutscheBankGiroRawTransactionV1,
+            rawTransactions,
+            deutscheBankIdentities,
+            (row) =>
+              fromGermanBooking({
+                date: row[0],
+                amount: row[11],
+                currency: row[17],
+                counterparty: row[3],
+                description: row[4],
+              }),
+          );
     case "Trade Republic":
-      return withNormalized(input, fromTradeRepublic);
+      return read(
+        tradeRepublicRawTransactionV1,
+        rawTransactions,
+        tradeRepublicIdentities,
+        fromTradeRepublic,
+      );
     case "finvesto":
-      return withNormalized(input, fromFinvesto);
+      return read(
+        finvestoRawTransactionV1,
+        rawTransactions,
+        finvestoIdentities,
+        fromFinvesto,
+      );
   }
 }
 
-function withNormalized<I extends SyncInput>(
-  input: I,
-  extract: (data: I["rawTransactions"][number]) => NormalizedTransaction,
+function read<T>(
+  shape: z.ZodType<T>,
+  rawTransactions: unknown[],
+  identify: (rawTransactions: T[]) => { identity: string; data: T }[],
+  extract: (data: T) => NormalizedTransaction,
 ) {
-  return identifyRawTransactions(input).map((row) => ({
-    ...row,
-    ...extract(row.data),
-  }));
+  const parsed = shape.array().safeParse(rawTransactions);
+  return parsed.success
+    ? identify(parsed.data).map((row) => ({ ...row, ...extract(row.data) }))
+    : undefined;
 }
 
 type Direction = -1 | 0 | 1;

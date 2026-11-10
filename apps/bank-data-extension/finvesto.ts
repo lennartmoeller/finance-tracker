@@ -35,7 +35,6 @@ export async function readFinvestoTransactions({
   });
   if (csv === null) throw await notLoggedIn("https://portal.fnz.de/finvesto");
   return {
-    source: "finvesto",
     shapeVersion: 1,
     rawTransactions: parseFinvestoCsv(csv, number),
   } as const;

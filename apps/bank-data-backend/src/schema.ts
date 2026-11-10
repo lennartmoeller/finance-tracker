@@ -10,7 +10,7 @@ import {
 } from "drizzle-orm/pg-core";
 import type {
   Account,
-  SyncInput,
+  Transaction,
 } from "@finance-tracker/bank-data-api/contract";
 
 export const accounts = pgTable(
@@ -36,10 +36,9 @@ export const transactions = pgTable(
     accountId: integer()
       .notNull()
       .references(() => accounts.id),
-    source: text().$type<SyncInput["source"]>().notNull(),
     shapeVersion: integer().notNull(),
     identity: text().notNull(),
-    data: jsonb().$type<SyncInput["rawTransactions"][number]>().notNull(),
+    data: jsonb().$type<Transaction["data"]>().notNull(),
     date: date().notNull(),
     amount: numeric(),
     currency: text(),

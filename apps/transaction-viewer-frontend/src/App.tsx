@@ -180,7 +180,7 @@ function AccountView({
       {transactions.length ? (
         <TransactionTable
           key={account.id}
-          depot={account.type === "depot"}
+          account={account}
           transactions={transactions}
         />
       ) : (

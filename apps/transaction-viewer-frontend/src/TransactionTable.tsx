@@ -1,6 +1,9 @@
 import { Fragment, useState } from "react";
 import { ChevronRight } from "lucide-react";
-import type { Transaction } from "@finance-tracker/bank-data-api/contract";
+import type {
+  Account,
+  Transaction,
+} from "@finance-tracker/bank-data-api/contract";
 import { RawTransaction } from "./RawTransaction.tsx";
 
 const dateFormat = new Intl.DateTimeFormat("en-GB", {
@@ -24,12 +27,13 @@ export const formatDate = (date: string) =>
 const none = <span className="empty-field">—</span>;
 
 export function TransactionTable({
-  depot,
+  account,
   transactions,
 }: {
-  depot: boolean;
+  account: Account;
   transactions: Transaction[];
 }) {
+  const depot = account.type === "depot";
   const [open, setOpen] = useState<ReadonlySet<number>>(new Set());
   const toggle = (id: number) => {
     setOpen((current) => {
@@ -103,7 +107,10 @@ export function TransactionTable({
               {open.has(transaction.id) && (
                 <tr className="raw">
                   <td colSpan={depot ? 6 : 5}>
-                    <RawTransaction transaction={transaction} />
+                    <RawTransaction
+                      account={account}
+                      transaction={transaction}
+                    />
                   </td>
                 </tr>
               )}

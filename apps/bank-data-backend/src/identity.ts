@@ -1,31 +1,22 @@
 import { createHash } from "node:crypto";
-import type { SyncInput } from "@finance-tracker/bank-data-api/contract";
+import type { FinvestoRawTransactionV1 } from "@finance-tracker/bank-data-api/finvesto";
+import type { IngRawTransactionV1 } from "@finance-tracker/bank-data-api/ing";
+import type { TradeRepublicRawTransactionV1 } from "@finance-tracker/bank-data-api/trade-republic";
 
-export function identifyRawTransactions<I extends SyncInput>(
-  input: I,
-): { identity: string; data: I["rawTransactions"][number] }[];
-export function identifyRawTransactions(
-  input: SyncInput,
-): { identity: string; data: SyncInput["rawTransactions"][number] }[] {
-  switch (input.source) {
-    case "Trade Republic":
-      return input.rawTransactions.map((data) => ({
-        identity: data.transaction_id,
-        data,
-      }));
-    case "finvesto":
-      return input.rawTransactions.map((data) => ({ identity: data[2], data }));
-    case "ING":
-      // Saldo and its currency are left out, because same-day bookings, and with them their running balances, may change order between exports.
-      return hashed(input.rawTransactions, (data) => data.toSpliced(6, 2));
-    case "Deutsche Bank":
-    case "Deutsche Bank depot":
-      return hashed<SyncInput["rawTransactions"][number]>(
-        input.rawTransactions,
-        (data) => data,
-      );
-  }
-}
+export const tradeRepublicIdentities = (
+  rawTransactions: TradeRepublicRawTransactionV1[],
+) => rawTransactions.map((data) => ({ identity: data.transaction_id, data }));
+
+export const finvestoIdentities = (
+  rawTransactions: FinvestoRawTransactionV1[],
+) => rawTransactions.map((data) => ({ identity: data[2], data }));
+
+// Saldo and its currency are left out, because same-day bookings, and with them their running balances, may change order between exports.
+export const ingIdentities = (rawTransactions: IngRawTransactionV1[]) =>
+  hashed(rawTransactions, (data) => data.toSpliced(6, 2));
+
+export const deutscheBankIdentities = <T>(rawTransactions: T[]) =>
+  hashed(rawTransactions, (data) => data);
 
 function hashed<T>(rawTransactions: T[], stableFields: (data: T) => unknown) {
   const occurrences = new Map<string, number>();

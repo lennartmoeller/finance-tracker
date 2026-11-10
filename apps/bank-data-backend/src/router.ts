@@ -1,7 +1,7 @@
 import { implement, ORPCError } from "@orpc/server";
 import { desc, eq } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { contract, sourceBanks } from "@finance-tracker/bank-data-api/contract";
+import { contract } from "@finance-tracker/bank-data-api/contract";
 import { extractTransactions } from "./extraction.ts";
 import { accounts, transactions } from "./schema.ts";
 
@@ -75,14 +75,14 @@ export function createRouter(db: NodePgDatabase, apiToken: string) {
           .where(eq(accounts.id, input.accountId))
           .returning();
         if (!account) throw accountNotFound();
-        if (account.bank !== sourceBanks[input.source])
+        const extracted = extractTransactions(account, input.rawTransactions);
+        if (!extracted)
           throw new ORPCError("BAD_REQUEST", {
-            message: `The account is a ${account.bank} account, not a ${sourceBanks[input.source]} account.`,
+            message: `The raw transactions don't match ${account.bank} ${account.type} shape version ${input.shapeVersion.toString()}.`,
           });
-        const rows = extractTransactions(input).map((row) => ({
+        const rows = extracted.map((row) => ({
           ...row,
           accountId: account.id,
-          source: input.source,
           shapeVersion: input.shapeVersion,
         }));
         const imported = rows.length
