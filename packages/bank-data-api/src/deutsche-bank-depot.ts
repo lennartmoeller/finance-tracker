@@ -8,7 +8,7 @@ const money = z.strictObject({ amount: decimal, currency });
 // The web app's depot transactions carry no transaction ID, and fields such as the settling account or the order ID appear only on the types they apply to.
 export const deutscheBankDepotRawTransactionV1 = z.strictObject({
   type: z.string(),
-  subType: z.string(),
+  subType: z.enum(["DIVIDEND_DISBURSEMENT", "RECEIPT"]),
   bookDate: date,
   valueDate: date,
   createDate: date,

@@ -2,6 +2,8 @@ import { oc } from "@orpc/contract";
 import { z } from "zod";
 import { accountNumberFormats, accountNumberIssue } from "./account-number.ts";
 import { bank } from "./bank.ts";
+import { currency } from "./currency.ts";
+import { decimal } from "./decimal.ts";
 import { deutscheBankRawTransactionV1 } from "./deutsche-bank.ts";
 import { deutscheBankDepotRawTransactionV1 } from "./deutsche-bank-depot.ts";
 import { finvestoRawTransactionV1 } from "./finvesto.ts";
@@ -38,7 +40,15 @@ export const newAccount = account
       });
   });
 
-const sourceSync = <S extends string, T extends z.ZodType>(
+const source = z.enum([
+  "ING",
+  "Trade Republic",
+  "Deutsche Bank",
+  "Deutsche Bank depot",
+  "finvesto",
+]);
+
+const sourceSync = <S extends z.infer<typeof source>, T extends z.ZodType>(
   source: S,
   rawTransaction: T,
 ) =>
@@ -59,13 +69,36 @@ const syncInput = z.discriminatedUnion("source", [
 
 export type SyncInput = z.infer<typeof syncInput>;
 
-export const sourceBanks: Record<SyncInput["source"], Account["bank"]> = {
+export const sourceBanks: Record<z.infer<typeof source>, Account["bank"]> = {
   ING: "ING",
   "Trade Republic": "Trade Republic",
   "Deutsche Bank": "Deutsche Bank",
   "Deutsche Bank depot": "Deutsche Bank",
   finvesto: "finvesto",
 };
+
+const normalizedTransaction = z.object({
+  date: z.iso.date(),
+  amount: decimal.nullable(),
+  currency: currency.nullable(),
+  counterparty: z.string().nullable(),
+  description: z.string().nullable(),
+  isin: z.string().nullable(),
+  securityName: z.string().nullable(),
+  quantity: decimal.nullable(),
+});
+
+export type NormalizedTransaction = z.infer<typeof normalizedTransaction>;
+
+const transaction = normalizedTransaction.extend({
+  id: z.int(),
+  accountId: z.int(),
+  source,
+  shapeVersion: z.int(),
+  data: z.json(),
+});
+
+export type Transaction = z.infer<typeof transaction>;
 
 export const contract = {
   account: {
@@ -77,4 +110,7 @@ export const contract = {
   sync: oc
     .input(syncInput)
     .output(z.object({ imported: z.int(), skipped: z.int() })),
+  transaction: {
+    list: oc.output(z.array(transaction)),
+  },
 };

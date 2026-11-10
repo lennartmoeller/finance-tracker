@@ -6,7 +6,7 @@
 2. Install pnpm with `npm install --global pnpm`; any pnpm version switches itself to the one pinned in the `packageManager` field of [`package.json`](./package.json).
 3. Run `pnpm install`.
 4. Install a Docker-compatible container runtime with Compose, such as Docker Desktop, or Colima with the standalone `docker-compose`, which spells this guide's `docker compose` with a hyphen.
-5. Create a `.env` in the repository root with `API_TOKEN=<a random secret>` and `DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres`; Compose reads the token from it, and the backend's dev server both values.
+5. Create a `.env` in the repository root with `API_TOKEN=<a random secret>` and `DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres`; Compose and the transaction viewer's dev server read the token from it, and the backend's dev server both values.
 6. Install each Claude Code plugin enabled in [`.claude/settings.json`](./.claude/settings.json) with `claude plugin install <plugin>@<marketplace> --scope project`, because Claude Code enables these plugins for every clone but does not download them.
 
 ## Run the system
@@ -14,6 +14,7 @@
 - `docker compose up -d --build` runs PostgreSQL and the backend on <http://localhost:3000>, as [`compose.yaml`](./compose.yaml) defines them.
 - For development, run `docker compose up -d postgres`, then `pnpm --filter @finance-tracker/bank-data-backend dev`.
 - `pnpm --filter @finance-tracker/bank-data-extension dev` opens a Firefox with the extension loaded until that Firefox closes.
+- `pnpm --filter @finance-tracker/transaction-viewer-frontend dev` serves the transaction viewer on <http://localhost:5173>, reading the backend on port 3000.
 - The extension's popup asks for the `API_TOKEN` once.
 
 ## Add a workspace

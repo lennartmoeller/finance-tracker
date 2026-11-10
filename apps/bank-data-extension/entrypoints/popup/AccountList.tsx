@@ -2,31 +2,15 @@ import { useState } from "react";
 import { Check, CircleExclamationPoint, Pencil, RefreshCw } from "lucide-react";
 import { bank } from "@finance-tracker/bank-data-api/bank";
 import type { Account } from "@finance-tracker/bank-data-api/contract";
+import {
+  freshness,
+  lastSyncText,
+} from "@finance-tracker/bank-data-api/last-sync";
 import type { SyncRequest, SyncState } from "../background.ts";
 import { BankLogo } from "./BankLogo.tsx";
 import { EditAccount } from "./EditAccount.tsx";
 
-const relativeTime = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
 const count = new Intl.NumberFormat("en");
-
-function ago(date: Date): string {
-  const seconds = (date.getTime() - Date.now()) / 1000;
-  for (const [unit, size] of [
-    ["day", 86_400],
-    ["hour", 3_600],
-    ["minute", 60],
-  ] as const) {
-    if (Math.abs(seconds) >= size)
-      return relativeTime.format(Math.round(seconds / size), unit);
-  }
-  return "just now";
-}
-
-function freshness(lastSyncedAt: Date | null): string {
-  if (!lastSyncedAt) return "stale";
-  const days = (Date.now() - lastSyncedAt.getTime()) / 86_400_000;
-  return days <= 7 ? "fresh" : days <= 30 ? "aging" : "stale";
-}
 
 export function AccountList({
   accounts,
@@ -137,10 +121,8 @@ function AccountRow({
               )}{" "}
               · {count.format(result.skipped)} skipped
             </span>
-          ) : account.lastSyncedAt ? (
-            `Synced ${ago(account.lastSyncedAt)}`
           ) : (
-            "Never synced"
+            lastSyncText(account.lastSyncedAt)
           )}
         </div>
       </div>

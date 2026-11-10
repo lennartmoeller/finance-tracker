@@ -3,25 +3,15 @@ import { Check } from "lucide-react";
 import {
   accountNumberFormats,
   accountNumberIssue,
+  groupAccountNumber,
 } from "@finance-tracker/bank-data-api/account-number";
+import { accountTypeNames } from "@finance-tracker/bank-data-api/account-type-names";
 import { bank as banks } from "@finance-tracker/bank-data-api/bank";
 import { errorMessage } from "@finance-tracker/bank-data-api/client";
 import type { Account } from "@finance-tracker/bank-data-api/contract";
 import { apiClient } from "../../api.ts";
 import { accountNameTaken } from "./account-name.ts";
-import { accountTypeNames } from "./account-type-names.ts";
 import { BankLogo } from "./BankLogo.tsx";
-
-function group(number: string, groups: readonly number[]): string {
-  const parts: string[] = [];
-  let start = 0;
-  for (const size of groups) {
-    if (start >= number.length) break;
-    parts.push(number.slice(start, start + size));
-    start += size;
-  }
-  return parts.join(" ");
-}
 
 export function AddAccount({
   accounts,
@@ -78,7 +68,7 @@ export function AddAccount({
       caret -= 1;
     }
     raw = raw.slice(0, format.length);
-    const grouped = group(raw, format.groups);
+    const grouped = groupAccountNumber(raw, format.groups);
     let position = 0;
     for (let seen = 0; position < grouped.length && seen < caret; position++)
       if (grouped[position] !== " ") seen++;
@@ -190,7 +180,7 @@ export function AddAccount({
               autoComplete="off"
               spellCheck={false}
               inputMode={format.label === "IBAN" ? "text" : "numeric"}
-              placeholder={group(
+              placeholder={groupAccountNumber(
                 (format.label === "IBAN" ? "DE" : "").padEnd(
                   format.length,
                   "0",

@@ -112,9 +112,13 @@ _Avoid_: parsing, mapping, normalization
 ### Services
 
 **Bank data service**:
-The service that collects the transactions of the user's accounts from their banks' websites, stores them, and serves them as normalized transactions to consumers.
+The service that collects the transactions of the user's accounts from their banks' websites, stores them, and serves them to consumers as normalized transactions together with their raw transactions.
 _Avoid_: ingestion service, bank sync, importer
 
 **Consumer**:
-A service that reads normalized transactions from the bank data service, such as a finance logic backend or a frontend.
+A service that reads transactions through the bank data service's API, such as the transaction viewer or a future finance logic backend.
 _Avoid_: client, downstream service
+
+**Transaction viewer**:
+The consumer that lists each account's normalized transactions beside their raw transactions, so the user can check the bank data service's data.
+_Avoid_: data quality frontend, inspector
