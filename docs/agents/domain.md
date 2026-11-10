@@ -1,6 +1,7 @@
 # Domain docs
 
 This repository uses a single-context layout: one `GLOSSARY.md` and one `docs/adr/` at the repository root, covering every app and package.
+Split it into one context per service only once a term must mean different things in two services.
 
 ## Read before exploring
 

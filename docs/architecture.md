@@ -138,6 +138,7 @@ flowchart TD
 - The extension and the transaction viewer call the backend through contract-first typed RPC.
 - `packages/bank-data-api` defines each procedure's name with its input and output schemas, and the typed client both call the backend with.
 - The backend implements the contract.
+- Consumers pull every account's transactions with one `transaction.list` call, without a cursor or push, because the whole history is about 1,200 rows.
 - The RPC library must support contract-first definitions, which rules out plain tRPC because it derives the contract from the implementation.
 
 ## Hosting and security
