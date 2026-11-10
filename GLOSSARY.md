@@ -11,7 +11,7 @@ The one person who runs the system, holds every account in it, and owns all its 
 _Avoid_: owner, customer, PSU
 
 **Bank**:
-A company where the user holds accounts, such as ING, Deutsche Bank, Trade Republic, finvesto or PayPal.
+A company where the user holds accounts, such as ING, Deutsche Bank, Trade Republic or finvesto.
 _Avoid_: institution, ASPSP, provider
 
 **Account**:
