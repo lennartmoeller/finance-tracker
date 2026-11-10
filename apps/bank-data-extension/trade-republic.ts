@@ -20,8 +20,7 @@ export async function readTradeRepublicTransactions({
       args: [type, number],
     });
   });
-  if (csv === null)
-    throw await notLoggedIn("Trade Republic", "https://app.traderepublic.com");
+  if (csv === null) throw await notLoggedIn("https://app.traderepublic.com");
   return {
     source: "Trade Republic",
     shapeVersion: 1,

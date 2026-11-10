@@ -25,11 +25,7 @@ export async function readDeutscheBankTransactions({
     const overview = captureOverviewRequest(tabId);
     await navigate(tabId, "https://meine.deutsche-bank.de/");
     const request = await overview;
-    if (!request)
-      throw await notLoggedIn(
-        "Deutsche Bank",
-        "https://meine.deutsche-bank.de",
-      );
+    if (!request) throw await notLoggedIn("https://meine.deutsche-bank.de");
     // The API authenticates a bearer token that the web app holds only in memory, so the export calls it from the page's own world with the token and API key of the app's own request.
     return inject<string[]>(tabId, {
       world: "MAIN",

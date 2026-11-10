@@ -8,7 +8,14 @@ export function createApiClient(
   token: string,
 ): ContractRouterClient<typeof contract> {
   return createORPCClient(
-    new RPCLink({ url, headers: { authorization: `Bearer ${token}` } }),
+    new RPCLink({
+      url,
+      headers: { authorization: `Bearer ${token}` },
+      fetch: (request, init) =>
+        fetch(request, init).catch(() => {
+          throw new Error("Can't reach the backend.");
+        }),
+    }),
   );
 }
 

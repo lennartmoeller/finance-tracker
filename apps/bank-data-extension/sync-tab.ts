@@ -1,13 +1,6 @@
-import type { Account } from "@finance-tracker/bank-data-api/contract";
-
-export async function notLoggedIn(
-  bank: Account["bank"],
-  loginUrl: string,
-): Promise<Error> {
+export async function notLoggedIn(loginUrl: string): Promise<Error> {
   await browser.tabs.create({ url: loginUrl });
-  return new Error(
-    `Not logged in to ${bank}. Log in on the tab that opened and sync again within five minutes.`,
-  );
+  return new Error("Log in first on the tab that opened.");
 }
 
 export async function withSyncTab<T>(

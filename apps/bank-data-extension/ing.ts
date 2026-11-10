@@ -61,7 +61,7 @@ export function parseIngCsv(
 
 async function openIng(tabId: number, url: string) {
   if (!(await navigate(tabId, url)).startsWith("https://banking.ing.de/"))
-    throw await notLoggedIn("ING", "https://banking.ing.de");
+    throw await notLoggedIn("https://banking.ing.de");
 }
 
 function captureCsv(tabId: number): Promise<ArrayBuffer> {
