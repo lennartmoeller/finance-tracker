@@ -3,6 +3,8 @@ import { defineConfig } from "wxt";
 export default defineConfig({
   modules: ["@wxt-dev/module-react"],
   imports: false,
+  // WXT's default, the first open port from 3000, misses the backend's port 3000 when it is forwarded on IPv4 only, and takes it on IPv6.
+  dev: { server: { port: 3001 } },
   manifestVersion: 3,
   manifest: {
     name: "Finance Tracker",
