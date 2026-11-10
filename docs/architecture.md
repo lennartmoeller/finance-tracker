@@ -47,7 +47,7 @@ Why every account takes the extension is decided in [ADR 0003](./adr/0003-ingest
 - Removing an account deletes its raw transactions with it.
 - A shape version's definition and extraction stay in the code as long as stored raw data follows it.
 - Only booked transactions are imported, because pending ones change amount, date or ID when they book.
-- An account's raw transactions are what its bank delivers for it, so a trade or dividend is a raw transaction of both the depot and the account it settles on; extraction does not link the two yet, so a consumer that adds up cash across accounts would count it twice.
+- An account's raw transactions are what its bank delivers for it, so a trade or dividend is a raw transaction of both the depot and the account it settles on; a trade carries opposite amounts in the two, so it cancels when adding up across accounts, and a dividend counts only in the account it settles on.
 - A transaction's identity is the bank's own ID where the raw transaction carries one, otherwise a hash of stable fields with an occurrence counter for identical same-day entries; identities are always scoped to the account.
 - Extraction turns a raw transaction into a normalized transaction and handles each bank's quirks.
 - The type codes extraction depends on, such as the Deutsche Bank depot's `subType`, belong to their shape version, so an unknown code is a shape mismatch rather than a wrong normalized transaction.
@@ -58,8 +58,9 @@ Why every account takes the extension is decided in [ADR 0003](./adr/0003-ingest
 
 - A normalized transaction carries a date, an amount with its currency, a counterparty and a description wherever the raw transaction has one.
 - Its date is the booking date where the raw transaction has one, otherwise the transaction date.
-- A depot transaction also carries the security's ISIN and name and the signed change in shares; its amount is the cash the transaction moved, and either stays empty when nothing moved, such as for a dividend's shares or a fee paid by selling shares.
-- A normalized transaction carries no balance, because consumers derive balances, and a depot's holdings, from an account's transactions.
+- A depot transaction also carries the security's ISIN and name and the signed change in shares, which stays empty when no shares moved, such as for a dividend.
+- A depot transaction's amount is the change in the money invested in the depot: a purchase adds what it cost, fees included, a sale subtracts what it paid out, and income, its reinvestment and charges paid by selling shares get none, as [ADR 0012](./adr/0012-depot-amounts-as-invested-money.md) records; every other account's amount is the cash the transaction moved.
+- A normalized transaction carries no balance, because consumers derive an account's balance or a depot's invested money and holdings from its transactions.
 
 ## Ingestion
 

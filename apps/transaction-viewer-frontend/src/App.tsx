@@ -15,6 +15,7 @@ import type {
   Account,
   Transaction,
 } from "@finance-tracker/bank-data-api/contract";
+import { decimalSum } from "@finance-tracker/bank-data-api/decimal";
 import {
   freshness,
   lastSyncText,
@@ -23,6 +24,10 @@ import { formatDate, TransactionTable } from "./TransactionTable.tsx";
 
 const api = createApiClient(`${location.origin}/rpc`);
 const count = new Intl.NumberFormat("en");
+const totalFormat = new Intl.NumberFormat("en", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
 
 export function App() {
   const [accounts, setAccounts] = useState<Account[]>();
@@ -153,6 +158,10 @@ function AccountView({
   const format = accountNumberFormats[account.bank][account.type];
   const dates = transactions.map((transaction) => transaction.date).sort();
   const [first, last] = [dates[0], dates.at(-1)];
+  const totals = new Map<string, string>();
+  for (const { amount, currency } of transactions)
+    if (amount !== null && currency !== null)
+      totals.set(currency, decimalSum([totals.get(currency) ?? "0", amount]));
   return (
     <>
       <div className="account-head">
@@ -176,6 +185,19 @@ function AccountView({
             {lastSyncText(account.lastSyncedAt)}
           </div>
         </div>
+        {totals.size > 0 && (
+          <div className="total">
+            <span className="total-label">
+              {account.type === "depot" ? "Invested" : "Balance"}
+            </span>
+            {[...totals].map(([currency, total]) => (
+              <span className="total-amount" key={currency}>
+                {totalFormat.format(Number(total))}
+                <span className="currency">{currency}</span>
+              </span>
+            ))}
+          </div>
+        )}
       </div>
       {transactions.length ? (
         <TransactionTable

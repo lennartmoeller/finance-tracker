@@ -29,8 +29,9 @@ export const tradeRepublicRawTransactionV1 = z
     mcc_code: z.string(),
   })
   .refine(
-    ({ type, shares }) =>
-      shares === "" || type === "BUY" || type === "SELL" || type === "DIVIDEND",
+    ({ type, symbol, shares }) =>
+      (symbol === "" && shares === "") ||
+      ["BUY", "SELL", "DIVIDEND", "STOCKPERK"].includes(type),
     { path: ["type"] },
   );
 

@@ -236,6 +236,26 @@ button {
   letter-spacing: 0.02em;
 }
 
+.total {
+  margin-left: auto;
+  text-align: right;
+}
+
+.total-label {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.total-amount {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
 .dot {
   display: inline-block;
   width: 7px;
