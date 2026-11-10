@@ -27,7 +27,7 @@ export async function readIngTransactions({ number }: Pick<Account, "number">) {
       ]);
       return parseIngCsv(new TextDecoder("windows-1252").decode(csv), number);
     });
-    return { source: "ING", shapeVersion: 1, rawTransactions } as const;
+    return { shapeVersion: 1, rawTransactions } as const;
   } finally {
     browser.downloads.onCreated.removeListener(eraseIngDownload);
   }

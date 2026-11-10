@@ -41,23 +41,23 @@ Why every account takes the extension is decided in [ADR 0003](./adr/0003-ingest
 
 ## Raw data and shape versions
 
-- Each adapter reads one or more sources, such as Deutsche Bank's CSV export for the giro account and its JSON transactions for the depot.
-- Each source's raw data follows a versioned shape; a format change at the bank adds a new shape version beside the existing ones.
-- Every raw transaction is stored as JSON together with its source, the shape version it was validated against and its normalized transaction, and the raw JSON never changes afterwards.
+- Each adapter reads one or more of its bank's exports, such as Deutsche Bank's CSV export for the giro account and its JSON transactions for the depot.
+- A raw transaction is read by its account's bank and account type, which never change, and by its shape version; shape versions count per bank and account type, and a format change within an export or a switch to another export adds one beside the existing ones; why no transaction stores a source is recorded in [ADR 0011](./adr/0011-raw-transactions-read-by-their-account.md).
+- Every raw transaction is stored as JSON together with the shape version it was validated against and its normalized transaction, and the raw JSON never changes afterwards.
 - Removing an account deletes its raw transactions with it.
 - A shape version's definition and extraction stay in the code as long as stored raw data follows it.
 - Only booked transactions are imported, because pending ones change amount, date or ID when they book.
-- An account's raw transactions are what its source delivers for it, so a trade or dividend is a raw transaction of both the depot and the account it settles on; extraction does not link the two yet, so a consumer that adds up cash across accounts would count it twice.
-- A transaction's identity is the bank's own ID where the source carries one, otherwise a hash of stable fields with an occurrence counter for identical same-day entries; identities are always scoped to the account.
+- An account's raw transactions are what its bank delivers for it, so a trade or dividend is a raw transaction of both the depot and the account it settles on; extraction does not link the two yet, so a consumer that adds up cash across accounts would count it twice.
+- A transaction's identity is the bank's own ID where the raw transaction carries one, otherwise a hash of stable fields with an occurrence counter for identical same-day entries; identities are always scoped to the account.
 - Extraction turns a raw transaction into a normalized transaction and handles each bank's quirks.
-- The type codes extraction depends on, such as the Deutsche Bank depot's `subType`, belong to their source's shape version, so an unknown code is a shape mismatch rather than a wrong normalized transaction.
+- The type codes extraction depends on, such as the Deutsche Bank depot's `subType`, belong to their shape version, so an unknown code is a shape mismatch rather than a wrong normalized transaction.
 - Re-extracting normalized data from stored raw data stays possible by design and is built only once needed.
 - Database columns live in the backend's schema.
 
 ## Normalized transactions
 
-- A normalized transaction carries a date, an amount with its currency, a counterparty and a description wherever the source has one.
-- Its date is the booking date where the source has one, otherwise the transaction date.
+- A normalized transaction carries a date, an amount with its currency, a counterparty and a description wherever the raw transaction has one.
+- Its date is the booking date where the raw transaction has one, otherwise the transaction date.
 - A depot transaction also carries the security's ISIN and name and the signed change in shares; its amount is the cash the transaction moved, and either stays empty when nothing moved, such as for a dividend's shares or a fee paid by selling shares.
 - A normalized transaction carries no balance, because consumers derive balances, and a depot's holdings, from an account's transactions.
 
@@ -67,10 +67,10 @@ Why every account takes the extension is decided in [ADR 0003](./adr/0003-ingest
 flowchart TD
   extsync["Extension sync"] --> validate
   subgraph ingest["Backend ingest"]
-    validate["Validate against the source's shape version"] --> extract["Extract the normalized transaction"]
+    validate["Validate against the account's shape version"] --> extract["Extract the normalized transaction"]
     extract --> known{"Identity already stored?"}
     known -- "yes" --> skip["Skip"]
-    known -- "no" --> store[("Store raw JSON with source, shape version and normalized transaction")]
+    known -- "no" --> store[("Store raw JSON with shape version and normalized transaction")]
   end
 ```
 
@@ -122,7 +122,7 @@ flowchart TD
     viewer["transaction-viewer-frontend<br/>accounts with their normalized and raw transactions"]
   end
   subgraph packages["packages/"]
-    api["bank-data-api<br/>contract: procedures with input and output schemas; typed client; versioned raw shapes of the sources; bank logos and account wording for interfaces"]
+    api["bank-data-api<br/>contract: procedures with input and output schemas; typed client; versioned raw shapes per bank and account type; bank logos and account wording for interfaces"]
   end
   extension --> api
   backend --> api

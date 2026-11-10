@@ -1,3 +1,7 @@
+---
+status: amended by ADR-0011
+---
+
 # Deutsche Bank depot through its JSON transactions
 
 The Deutsche Bank adapter reads the depot from the web app's JSON transactions, because the web app builds the depot's CSV export in the page from those same transactions, for the filter's period only, so the CSV carries a subset of their fields, unlike the giro account's server-side export in [ADR 0006](./0006-deutsche-bank-through-its-csv-transaction-export.md).

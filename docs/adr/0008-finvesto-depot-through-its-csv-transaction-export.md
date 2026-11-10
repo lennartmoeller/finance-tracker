@@ -1,3 +1,7 @@
+---
+status: amended by ADR-0011
+---
+
 # finvesto depot through its CSV transaction export
 
 The finvesto adapter reads the depot from the portal's CSV transaction export, because one request returns the depot's whole history with every field the portal holds for a transaction, fees, taxes, cash distributions and the Vorabpauschale among them.
