@@ -109,6 +109,21 @@ function moved(value: string, direction: Direction): string | null {
   return value.startsWith("-") ? value.slice(1) : `-${value}`;
 }
 
+function decimalSum(values: string[]): string {
+  const scaleOf = (value: string) => value.split(".")[1]?.length ?? 0;
+  const scale = Math.max(...values.map(scaleOf));
+  const total = values.reduce(
+    (sum, value) =>
+      sum + BigInt(value.replace(".", "") + "0".repeat(scale - scaleOf(value))),
+    0n,
+  );
+  const digits = (total < 0n ? -total : total)
+    .toString()
+    .padStart(scale + 1, "0");
+  const whole = digits.slice(0, digits.length - scale);
+  return `${total < 0n ? "-" : ""}${whole}${scale ? `.${digits.slice(-scale)}` : ""}`;
+}
+
 function cashLeg(
   money: { amount: string; currency: string } | undefined,
   direction: Direction,
@@ -163,7 +178,7 @@ function fromTradeRepublic(
 ): NormalizedTransaction {
   return {
     date: data.date,
-    amount: data.amount,
+    amount: decimalSum([data.amount, data.fee, data.tax]),
     currency: data.currency,
     counterparty: data.counterparty_name || null,
     description: data.description || null,
