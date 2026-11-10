@@ -71,6 +71,7 @@ body {
     sans-serif;
 }
 
+/* Firefox caps a popup at 600px, so the list scrolls below the header instead of the whole popup. */
 #root {
   position: relative;
   display: flex;
@@ -78,6 +79,7 @@ body {
   max-height: 600px;
 }
 
+/* Firefox sizes a popup to its content, which leaves a short list no room for a dialog. */
 #root:has(.overlay) {
   min-height: 360px;
 }
