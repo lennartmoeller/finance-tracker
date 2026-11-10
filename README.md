@@ -1,7 +1,7 @@
 # Finance Tracker
 
 A single-user, self-hosted tracker that collects the transactions of its user's accounts, depots included, and stores them for the services that use them.
-So far it syncs the ING, Trade Republic and Deutsche Bank accounts, depots included, and stores their raw transactions.
+So far it syncs the ING, Trade Republic and Deutsche Bank accounts, depots included, and the finvesto depot, and stores their raw transactions.
 
 Its first service, the bank data service, consists of a backend with PostgreSQL and a Firefox extension that reads the transactions from the bank websites in the user's own sessions and is the service's only interface.
 Later services, such as finance logic and a frontend, consume the bank data service's API.

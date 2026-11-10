@@ -20,6 +20,7 @@ export default defineConfig({
       "https://app.traderepublic.com/*",
       "https://meine.deutsche-bank.de/*",
       "https://api.olb.deutsche-bank.de/*",
+      "https://portal.fnz.de/*",
     ],
     browser_specific_settings: {
       gecko: {

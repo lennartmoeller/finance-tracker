@@ -3,6 +3,7 @@ import { z } from "zod";
 import { bank } from "./bank.ts";
 import { deutscheBankRawTransactionV1 } from "./deutsche-bank.ts";
 import { deutscheBankDepotRawTransactionV1 } from "./deutsche-bank-depot.ts";
+import { finvestoRawTransactionV1 } from "./finvesto.ts";
 import { ingRawTransactionV1 } from "./ing.ts";
 import { tradeRepublicRawTransactionV1 } from "./trade-republic.ts";
 
@@ -38,6 +39,7 @@ const syncInput = z.discriminatedUnion("source", [
   sourceSync("Trade Republic", tradeRepublicRawTransactionV1),
   sourceSync("Deutsche Bank", deutscheBankRawTransactionV1),
   sourceSync("Deutsche Bank depot", deutscheBankDepotRawTransactionV1),
+  sourceSync("finvesto", finvestoRawTransactionV1),
 ]);
 
 export type SyncInput = z.infer<typeof syncInput>;
@@ -47,6 +49,7 @@ export const sourceBanks: Record<SyncInput["source"], Account["bank"]> = {
   "Trade Republic": "Trade Republic",
   "Deutsche Bank": "Deutsche Bank",
   "Deutsche Bank depot": "Deutsche Bank",
+  finvesto: "finvesto",
 };
 
 export const contract = {

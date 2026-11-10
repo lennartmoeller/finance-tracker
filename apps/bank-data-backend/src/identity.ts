@@ -10,6 +10,8 @@ export function identifyRawTransactions(
         identity: data.transaction_id,
         data,
       }));
+    case "finvesto":
+      return input.rawTransactions.map((data) => ({ identity: data[2], data }));
     case "ING":
       // Saldo and its currency are left out, because same-day bookings, and with them their running balances, may change order between exports.
       return hashed(input.rawTransactions, (data) => data.toSpliced(6, 2));
