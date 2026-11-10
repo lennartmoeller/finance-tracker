@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { currency } from "./currency.ts";
-
-const decimal = z.string().regex(/^-?\d+(\.\d+)?$/);
+import { decimal } from "./decimal.ts";
 
 export const tradeRepublicRawTransactionV1 = z.strictObject({
   datetime: z.iso.datetime(),

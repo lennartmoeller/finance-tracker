@@ -10,7 +10,7 @@ const transfer =
 const csv = `${header}\n${buy}\n${transfer}\n`;
 
 test("reads each row as an object keyed by the header, unquoting commas and quotes", () => {
-  const [first, second] = parseTradeRepublicCsv(csv);
+  const [first, second] = parseTradeRepublicCsv(csv, "cash");
   expect(first).toMatchObject({
     type: "BUY",
     symbol: "IE00BK5BQT80",
@@ -24,6 +24,12 @@ test("reads each row as an object keyed by the header, unquoting commas and quot
   });
 });
 
+test("keeps only the rows with an ISIN for the depot", () => {
+  expect(parseTradeRepublicCsv(csv, "depot")).toEqual([
+    parseTradeRepublicCsv(csv, "cash")[0],
+  ]);
+});
+
 test("rejects a changed header, an unquoted cell, a missing cell and a malformed amount", () => {
   for (const changed of [
     csv.replace('"mcc_code"', '"merchant_code"'),
@@ -31,6 +37,6 @@ test("rejects a changed header, an unquoted cell, a missing cell and a malformed
     csv.replace(',""\n', "\n"),
     csv.replace('"-500.00"', '"-500,00"'),
   ]) {
-    expect(() => parseTradeRepublicCsv(changed)).toThrow("format");
+    expect(() => parseTradeRepublicCsv(changed, "cash")).toThrow("format");
   }
 });
