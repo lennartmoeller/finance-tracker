@@ -5,12 +5,12 @@ import type { contract } from "./contract.ts";
 
 export function createApiClient(
   url: string,
-  token: string,
+  token?: string,
 ): ContractRouterClient<typeof contract> {
   return createORPCClient(
     new RPCLink({
       url,
-      headers: { authorization: `Bearer ${token}` },
+      headers: token === undefined ? {} : { authorization: `Bearer ${token}` },
       fetch: (request, init) =>
         fetch(request, init).catch(() => {
           throw new Error("Can't reach the backend.");

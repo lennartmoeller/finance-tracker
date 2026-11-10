@@ -1,9 +1,9 @@
 import { implement, ORPCError } from "@orpc/server";
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { contract, sourceBanks } from "@finance-tracker/bank-data-api/contract";
-import { identifyRawTransactions } from "./identity.ts";
-import { accounts, rawTransactions } from "./schema.ts";
+import { extractTransactions } from "./extraction.ts";
+import { accounts, transactions } from "./schema.ts";
 
 const accountNotFound = () =>
   new ORPCError("NOT_FOUND", { message: "The account does not exist." });
@@ -57,8 +57,8 @@ export function createRouter(db: NodePgDatabase, apiToken: string) {
       remove: os.account.remove.handler(({ input }) =>
         db.transaction(async (tx) => {
           await tx
-            .delete(rawTransactions)
-            .where(eq(rawTransactions.accountId, input.id));
+            .delete(transactions)
+            .where(eq(transactions.accountId, input.id));
           const [account] = await tx
             .delete(accounts)
             .where(eq(accounts.id, input.id))
@@ -79,7 +79,7 @@ export function createRouter(db: NodePgDatabase, apiToken: string) {
           throw new ORPCError("BAD_REQUEST", {
             message: `The account is a ${account.bank} account, not a ${sourceBanks[input.source]} account.`,
           });
-        const rows = identifyRawTransactions(input).map((row) => ({
+        const rows = extractTransactions(input).map((row) => ({
           ...row,
           accountId: account.id,
           source: input.source,
@@ -87,10 +87,10 @@ export function createRouter(db: NodePgDatabase, apiToken: string) {
         }));
         const imported = rows.length
           ? await tx
-              .insert(rawTransactions)
+              .insert(transactions)
               .values(rows)
               .onConflictDoNothing()
-              .returning({ id: rawTransactions.id })
+              .returning({ id: transactions.id })
           : [];
         return {
           imported: imported.length,
@@ -98,5 +98,13 @@ export function createRouter(db: NodePgDatabase, apiToken: string) {
         };
       }),
     ),
+    transaction: {
+      list: os.transaction.list.handler(() =>
+        db
+          .select()
+          .from(transactions)
+          .orderBy(desc(transactions.date), desc(transactions.id)),
+      ),
+    },
   });
 }

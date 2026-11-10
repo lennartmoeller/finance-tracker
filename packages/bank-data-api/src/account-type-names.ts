@@ -1,4 +1,4 @@
-import type { Account } from "@finance-tracker/bank-data-api/contract";
+import type { Account } from "./contract.ts";
 
 export const accountTypeNames: Record<Account["type"], string> = {
   giro: "Giro account",

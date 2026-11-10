@@ -1,5 +1,5 @@
 {
-  "id": "f2982833-166a-4d9f-8da2-3f2b74875801",
+  "id": "12b439e2-d0a5-4096-bd79-ddc73c579c09",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -25,6 +25,12 @@
             "cycle": false
           }
         },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
         "bank": {
           "name": "bank",
           "type": "text",
@@ -37,8 +43,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "iban": {
-          "name": "iban",
+        "number": {
+          "name": "number",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -54,18 +60,23 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "accounts_iban_unique": {
-          "name": "accounts_iban_unique",
+        "accounts_bank_number_unique": {
+          "name": "accounts_bank_number_unique",
           "nullsNotDistinct": false,
-          "columns": ["iban"]
+          "columns": ["bank", "number"]
+        },
+        "accounts_bank_name_unique": {
+          "name": "accounts_bank_name_unique",
+          "nullsNotDistinct": false,
+          "columns": ["bank", "name"]
         }
       },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.raw_transactions": {
-      "name": "raw_transactions",
+    "public.transactions": {
+      "name": "transactions",
       "schema": "",
       "columns": {
         "id": {
@@ -75,7 +86,7 @@
           "notNull": true,
           "identity": {
             "type": "always",
-            "name": "raw_transactions_id_seq",
+            "name": "transactions_id_seq",
             "schema": "public",
             "increment": "1",
             "startWith": "1",
@@ -114,13 +125,61 @@
           "type": "jsonb",
           "primaryKey": false,
           "notNull": true
+        },
+        "date": {
+          "name": "date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "amount": {
+          "name": "amount",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "currency": {
+          "name": "currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "counterparty": {
+          "name": "counterparty",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "isin": {
+          "name": "isin",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "security_name": {
+          "name": "security_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "quantity": {
+          "name": "quantity",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "raw_transactions_account_id_accounts_id_fk": {
-          "name": "raw_transactions_account_id_accounts_id_fk",
-          "tableFrom": "raw_transactions",
+        "transactions_account_id_accounts_id_fk": {
+          "name": "transactions_account_id_accounts_id_fk",
+          "tableFrom": "transactions",
           "tableTo": "accounts",
           "columnsFrom": ["account_id"],
           "columnsTo": ["id"],
@@ -130,8 +189,8 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "raw_transactions_accountId_identity_unique": {
-          "name": "raw_transactions_accountId_identity_unique",
+        "transactions_accountId_identity_unique": {
+          "name": "transactions_accountId_identity_unique",
           "nullsNotDistinct": false,
           "columns": ["account_id", "identity"]
         }

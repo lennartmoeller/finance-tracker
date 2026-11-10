@@ -1,6 +1,8 @@
 import {
+  date,
   integer,
   jsonb,
+  numeric,
   pgTable,
   text,
   timestamp,
@@ -27,17 +29,25 @@ export const accounts = pgTable(
   ],
 );
 
-export const rawTransactions = pgTable(
-  "raw_transactions",
+export const transactions = pgTable(
+  "transactions",
   {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
     accountId: integer()
       .notNull()
       .references(() => accounts.id),
-    source: text().notNull(),
+    source: text().$type<SyncInput["source"]>().notNull(),
     shapeVersion: integer().notNull(),
     identity: text().notNull(),
     data: jsonb().$type<SyncInput["rawTransactions"][number]>().notNull(),
+    date: date().notNull(),
+    amount: numeric(),
+    currency: text(),
+    counterparty: text(),
+    description: text(),
+    isin: text(),
+    securityName: text(),
+    quantity: numeric(),
   },
   (table) => [unique().on(table.accountId, table.identity)],
 );

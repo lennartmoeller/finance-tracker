@@ -1,6 +1,9 @@
 import { createHash } from "node:crypto";
 import type { SyncInput } from "@finance-tracker/bank-data-api/contract";
 
+export function identifyRawTransactions<I extends SyncInput>(
+  input: I,
+): { identity: string; data: I["rawTransactions"][number] }[];
 export function identifyRawTransactions(
   input: SyncInput,
 ): { identity: string; data: SyncInput["rawTransactions"][number] }[] {

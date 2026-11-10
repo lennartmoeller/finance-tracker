@@ -1,3 +1,7 @@
+---
+status: amended by ADR-0010
+---
+
 # Bank data service with the extension as its interface
 
 Reading, storing and delivering bank data form one service, the bank data service: a backend with its own PostgreSQL, and the Firefox extension, whose popup creates accounts, syncs them and shows each one's last sync.

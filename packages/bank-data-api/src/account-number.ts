@@ -47,3 +47,17 @@ export function accountNumberIssue(
     return `A ${bank} depot number has ${format.length.toString()} digits; this one has ${number.length.toString()}.`;
   return undefined;
 }
+
+export function groupAccountNumber(
+  number: string,
+  groups: readonly number[],
+): string {
+  const parts: string[] = [];
+  let start = 0;
+  for (const size of groups) {
+    if (start >= number.length) break;
+    parts.push(number.slice(start, start + size));
+    start += size;
+  }
+  return parts.join(" ");
+}
