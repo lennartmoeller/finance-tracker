@@ -106,7 +106,6 @@ sequenceDiagram
 - A sync reads one account and needs a bank session the user opened in the same Firefox, which banks end after a few minutes without activity.
 - A sync reads the full history the bank offers and relies on skipped identities for the overlap, so the extension keeps no state between syncs.
 - A mismatch means the bank changed its format and the adapter needs a new shape version.
-What each bank website exposes, and reference code for reading it, is collected in the [extension sources research](./research/extension-sources.md).
 
 ## Repository layout
 
