@@ -1,5 +1,6 @@
 import { oc } from "@orpc/contract";
 import { z } from "zod";
+import { accountNumberFormats, accountNumberIssue } from "./account-number.ts";
 import { bank } from "./bank.ts";
 import { deutscheBankRawTransactionV1 } from "./deutsche-bank.ts";
 import { deutscheBankDepotRawTransactionV1 } from "./deutsche-bank-depot.ts";
@@ -9,19 +10,33 @@ import { tradeRepublicRawTransactionV1 } from "./trade-republic.ts";
 
 const account = z.object({
   id: z.int(),
+  name: z
+    .string()
+    .trim()
+    .min(1, "Name the account.")
+    .max(40, "Use at most 40 characters."),
   bank,
   type: z.enum(["giro", "savings", "cash", "depot"]),
-  number: z.string().regex(/^[A-Z0-9]+$/, "Invalid account number"),
+  number: z.string(),
   lastSyncedAt: z.date().nullable(),
 });
 
 export type Account = z.infer<typeof account>;
 
-export const newAccount = account.pick({
-  bank: true,
-  type: true,
-  number: true,
-});
+export const newAccount = account
+  .pick({ name: true, bank: true, type: true, number: true })
+  .superRefine(({ bank, type, number }, context) => {
+    const format = accountNumberFormats[bank][type];
+    const issue = format
+      ? accountNumberIssue(bank, format, number)
+      : `The extension syncs no ${type} account at ${bank}.`;
+    if (issue)
+      context.addIssue({
+        code: "custom",
+        path: [format ? "number" : "type"],
+        message: issue,
+      });
+  });
 
 const sourceSync = <S extends string, T extends z.ZodType>(
   source: S,
@@ -56,6 +71,8 @@ export const contract = {
   account: {
     create: oc.input(newAccount).output(account),
     list: oc.output(z.array(account)),
+    rename: oc.input(account.pick({ id: true, name: true })),
+    remove: oc.input(account.pick({ id: true })),
   },
   sync: oc
     .input(syncInput)

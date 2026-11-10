@@ -38,6 +38,10 @@ _Avoid_: portfolio, securities account, brokerage account
 The number by which the bank identifies an account: its IBAN where it has one, otherwise the number the bank shows for it, such as a depot number.
 _Avoid_: account ID, IBAN (for every account)
 
+**Account name**:
+The name the user gives an account, unique among the accounts at its bank, by which the popup shows it.
+_Avoid_: label, nickname, alias
+
 **Opening balance**:
 The balance the user enters once for an account, which its transactions carry forward to the account's balance.
 _Avoid_: initial balance, starting balance

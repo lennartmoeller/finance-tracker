@@ -29,7 +29,7 @@ flowchart LR
 | Component | Owns | Leaves to others |
 | --- | --- | --- |
 | Backend | the API contract's implementation; validation, deduplication, raw storage and extraction; serving normalized transactions to consumers | state outside PostgreSQL; opening balances, balances and holdings |
-| Extension | one adapter per bank website; shape validation; the popup that creates accounts, lists them with their account number and last sync, and syncs each one | storing bank credentials |
+| Extension | one adapter per bank website; shape validation; the popup that creates, renames and removes accounts, lists them by bank with their last sync, and syncs each one | storing bank credentials |
 | PostgreSQL | accounts, raw transactions, normalized transactions | |
 
 The extension exists because a web page cannot read banking sites in the user's session: the same-origin policy and the banks' framing bans block it.
@@ -41,6 +41,7 @@ Why every account takes the extension is decided in [ADR 0003](./adr/0003-ingest
 - Each adapter reads one or more sources, such as Deutsche Bank's CSV export for the giro account and its JSON transactions for the depot.
 - Each source's raw data follows a versioned shape; a format change at the bank adds a new shape version beside the existing ones.
 - Every raw transaction is stored as JSON together with its source and the shape version it was validated against, and is never changed afterwards.
+- Removing an account deletes its raw transactions with it.
 - A shape version's definition and extraction stay in the code as long as stored raw data follows it.
 - Only booked transactions are imported, because pending ones change amount, date or ID when they book.
 - An account's raw transactions are what its source delivers for it, so a trade or dividend is a raw transaction of both the depot and the account it settles on, and extraction links the two.

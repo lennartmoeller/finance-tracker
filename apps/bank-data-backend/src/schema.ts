@@ -15,12 +15,16 @@ export const accounts = pgTable(
   "accounts",
   {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    name: text().notNull(),
     bank: text().$type<Account["bank"]>().notNull(),
     type: text().$type<Account["type"]>().notNull(),
     number: text().notNull(),
     lastSyncedAt: timestamp({ withTimezone: true }),
   },
-  (table) => [unique().on(table.bank, table.number)],
+  (table) => [
+    unique().on(table.bank, table.number),
+    unique().on(table.bank, table.name),
+  ],
 );
 
 export const rawTransactions = pgTable(
