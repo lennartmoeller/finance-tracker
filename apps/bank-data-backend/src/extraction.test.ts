@@ -70,7 +70,7 @@ test("a Deutsche Bank depot rejects the giro account's raw transactions", () => 
   ).toBeUndefined();
 });
 
-test("Deutsche Bank depot receipts add shares and dividends move none", () => {
+test("a Deutsche Bank depot receipt adds its cost and shares, and a dividend adds neither", () => {
   const transaction = (
     subType: DeutscheBankDepotRawTransactionV1["subType"],
     total: string,
@@ -95,16 +95,17 @@ test("Deutsche Bank depot receipts add shares and dividends move none", () => {
     ]),
   ).toMatchObject([
     {
-      amount: "-1714.50",
+      amount: "1714.50",
+      currency: "EUR",
       isin: "DE0000000001",
       securityName: "Muster AG",
       quantity: "15.00",
     },
-    { amount: "103.52", quantity: null },
+    { amount: null, currency: null, quantity: null },
   ]);
 });
 
-test("Trade Republic amounts include fees and taxes, trades move their signed shares, and dividends and cash rows move none", () => {
+test("Trade Republic cash amounts include fees and taxes, the depot takes a trade's opposite amount and no dividend, and trades move their signed shares", () => {
   const row = (
     type: string,
     shares: string,
@@ -136,20 +137,35 @@ test("Trade Republic amounts include fees and taxes, trades move their signed sh
     payment_reference: "",
     mcc_code: "",
   });
+  const securityRows = [
+    row("BUY", "2.0000000000", "-400.00", "-1.00"),
+    row("SELL", "-5.0000000000", "1006.10", "-1.00"),
+    row("DIVIDEND", "9.0779080000", "4.31", "", "-0.86"),
+  ];
   expect(
     extractTransactions({ bank: "Trade Republic", type: "cash" }, [
-      row("SELL", "-5.0000000000", "1006.10", "-1.00"),
-      row("DIVIDEND", "9.0779080000", "4.31", "", "-0.86"),
+      ...securityRows,
       row("TRANSFER_INBOUND", "", "500.000000"),
     ]),
   ).toMatchObject([
-    { amount: "1005.10", isin: "IE00BK5BQT80", quantity: "-5.0000000000" },
+    { amount: "-401.00", isin: "IE00BK5BQT80", quantity: "2.0000000000" },
+    { amount: "1005.10", quantity: "-5.0000000000" },
     { amount: "3.45", quantity: null },
     { amount: "500.000000", isin: null, quantity: null },
   ]);
+  expect(
+    extractTransactions(
+      { bank: "Trade Republic", type: "depot" },
+      securityRows,
+    ),
+  ).toMatchObject([
+    { amount: "401.00", currency: "EUR" },
+    { amount: "-1005.10" },
+    { amount: null, currency: null },
+  ]);
 });
 
-test("finvesto signs its unsigned payment by Umsatzart and leaves out what moved nothing", () => {
+test("a finvesto purchase adds its payment, and income and charges paid by selling shares add nothing", () => {
   const row = (
     kind: FinvestoRawTransactionV1[4],
     payment: string,
@@ -171,17 +187,17 @@ test("finvesto signs its unsigned payment by Umsatzart and leaves out what moved
     extractTransactions({ bank: "finvesto", type: "depot" }, [
       row("Kauf", "40", "0,334823"),
       row("Fondsertrag (Ausschüttung)", "3,6", "0"),
-      row("Entgeltbelastung Verkauf", "0", "-0,098047"),
+      row("Verkauf wegen Vorabpauschale", "1,2", "-0,098047"),
     ]),
   ).toMatchObject([
     {
       date: "2026-10-28",
-      amount: "-40",
+      amount: "40",
       currency: "EUR",
       securityName: "Global Fund",
       quantity: "0.334823",
     },
-    { amount: "3.6", quantity: null },
+    { amount: null, currency: null, quantity: null },
     { amount: null, currency: null, quantity: "-0.098047" },
   ]);
 });

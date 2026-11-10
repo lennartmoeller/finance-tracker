@@ -42,9 +42,17 @@ _Avoid_: account ID, IBAN (for every account)
 The name the user gives an account, unique among the accounts at its bank, by which the popup shows it.
 _Avoid_: label, nickname, alias
 
+**Balance**:
+The money a giro account, savings account or cash account holds, which its opening balance and its transactions add up to.
+_Avoid_: Saldo, account total
+
 **Opening balance**:
 The balance the user enters once for an account, which its transactions carry forward to the account's balance.
 _Avoid_: initial balance, starting balance
+
+**Invested money**:
+The money the user has put into a depot and not taken out: what its purchases cost, fees included, less what its sales paid out.
+_Avoid_: cost basis, net deposits, depot value
 
 **Session**:
 The user's logged-in visit to a bank website.
@@ -116,5 +124,5 @@ A service that reads transactions through the bank data service's API, such as t
 _Avoid_: client, downstream service
 
 **Transaction viewer**:
-The consumer that lists each account's normalized transactions beside their raw transactions, so the user can check the bank data service's data.
+The consumer that lists each account's normalized transactions beside their raw transactions, with the account's balance or, for a depot, its invested money, so the user can check the bank data service's data.
 _Avoid_: data quality frontend, inspector

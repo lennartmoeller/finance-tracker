@@ -3,6 +3,7 @@ import type {
   Account,
   NormalizedTransaction,
 } from "@finance-tracker/bank-data-api/contract";
+import { decimalSum } from "@finance-tracker/bank-data-api/decimal";
 import {
   deutscheBankDepotRawTransactionV1,
   type DeutscheBankDepotRawTransactionV1,
@@ -65,7 +66,7 @@ export function extractTransactions(
         tradeRepublicRawTransactionV1,
         rawTransactions,
         tradeRepublicIdentities,
-        fromTradeRepublic,
+        (row) => fromTradeRepublic(row, type),
       );
     case "finvesto":
       return read(
@@ -109,22 +110,7 @@ function moved(value: string, direction: Direction): string | null {
   return value.startsWith("-") ? value.slice(1) : `-${value}`;
 }
 
-function decimalSum(values: string[]): string {
-  const scaleOf = (value: string) => value.split(".")[1]?.length ?? 0;
-  const scale = Math.max(...values.map(scaleOf));
-  const total = values.reduce(
-    (sum, value) =>
-      sum + BigInt(value.replace(".", "") + "0".repeat(scale - scaleOf(value))),
-    0n,
-  );
-  const digits = (total < 0n ? -total : total)
-    .toString()
-    .padStart(scale + 1, "0");
-  const whole = digits.slice(0, digits.length - scale);
-  return `${total < 0n ? "-" : ""}${whole}${scale ? `.${digits.slice(-scale)}` : ""}`;
-}
-
-function cashLeg(
+function invested(
   money: { amount: string; currency: string } | undefined,
   direction: Direction,
 ): Pick<NormalizedTransaction, "amount" | "currency"> {
@@ -151,35 +137,44 @@ function fromGermanBooking(booking: {
   };
 }
 
-const deutscheBankDepotShares: Record<
+const deutscheBankDepotDirections: Record<
   DeutscheBankDepotRawTransactionV1["subType"],
-  Direction
+  { invested: Direction; shares: Direction }
 > = {
-  DIVIDEND_DISBURSEMENT: 0,
-  RECEIPT: 1,
+  DIVIDEND_DISBURSEMENT: { invested: 0, shares: 0 },
+  RECEIPT: { invested: -1, shares: 1 },
 };
 
 function fromDeutscheBankDepot(
   data: DeutscheBankDepotRawTransactionV1,
 ): NormalizedTransaction {
+  const directions = deutscheBankDepotDirections[data.subType];
   return {
     date: data.bookDate,
-    ...cashLeg(data.calculatedAmounts.totalAmountEuroCurrency, 1),
+    ...invested(
+      data.calculatedAmounts.totalAmountEuroCurrency,
+      directions.invested,
+    ),
     counterparty: null,
     description: data.subType,
     isin: data.security.isin,
     securityName: data.security.name,
-    quantity: moved(data.quantity, deutscheBankDepotShares[data.subType]),
+    quantity: moved(data.quantity, directions.shares),
   };
 }
 
 function fromTradeRepublic(
   data: TradeRepublicRawTransactionV1,
+  type: Account["type"],
 ): NormalizedTransaction {
-  return {
-    date: data.date,
+  const cash = {
     amount: decimalSum([data.amount, data.fee, data.tax]),
     currency: data.currency,
+  };
+  const trade = data.type === "BUY" || data.type === "SELL";
+  return {
+    date: data.date,
+    ...(type === "depot" ? invested(cash, trade ? -1 : 0) : cash),
     counterparty: data.counterparty_name || null,
     description: data.description || null,
     isin: data.symbol || null,
@@ -188,24 +183,23 @@ function fromTradeRepublic(
   };
 }
 
-// finvesto's Zahlungsbetrag is unsigned, so the Umsatzart tells whether the money left or reached the user.
-const finvestoCash: Record<FinvestoRawTransactionV1[4], Direction> = {
-  Kauf: -1,
-  "Wiederanlage Fondsertrag": -1,
-  "Fondsertrag (Ausschüttung)": 1,
-  "Verkauf wegen Vorabpauschale": 1,
-  Vorabpauschale: -1,
-  "Entgeltbelastung Verkauf": 1,
-  Entgeltermittlung: -1,
+const finvestoInvested: Record<FinvestoRawTransactionV1[4], Direction> = {
+  Kauf: 1,
+  "Wiederanlage Fondsertrag": 0,
+  "Fondsertrag (Ausschüttung)": 0,
+  "Verkauf wegen Vorabpauschale": 0,
+  Vorabpauschale: 0,
+  "Entgeltbelastung Verkauf": 0,
+  Entgeltermittlung: 0,
 };
 
 function fromFinvesto(row: FinvestoRawTransactionV1): NormalizedTransaction {
   const [kind, part] = [row[4], row[5]];
   return {
     date: `20${germanDate(row[3])}`,
-    ...cashLeg(
+    ...invested(
       { amount: germanDecimal(row[8]), currency: row[9] },
-      finvestoCash[kind],
+      finvestoInvested[kind],
     ),
     counterparty: null,
     description: part ? `${kind} · ${part}` : kind,
