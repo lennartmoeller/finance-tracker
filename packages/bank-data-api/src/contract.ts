@@ -13,7 +13,7 @@ const account = z.object({
     .min(1, "Name the account.")
     .max(40, "Use at most 40 characters."),
   bank,
-  type: z.enum(["giro", "savings", "cash", "depot"]),
+  type: z.enum(["cash", "depot"]),
   number: z.string(),
   lastSyncedAt: z.date().nullable(),
 });

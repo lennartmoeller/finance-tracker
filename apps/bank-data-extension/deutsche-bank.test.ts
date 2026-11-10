@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import {
-  parseDeutscheBankGiroCsv,
+  parseDeutscheBankCashCsv,
   parseDeutscheBankDepotJson,
 } from "./deutsche-bank.ts";
 
@@ -21,7 +21,7 @@ const csv = [
 ].join("\n");
 
 test("reads each row, dropping the preamble and the closing balance", () => {
-  const rows = parseDeutscheBankGiroCsv(csv, iban);
+  const rows = parseDeutscheBankCashCsv(csv, iban);
   expect(rows).toHaveLength(2);
   expect(rows[0]).toEqual([
     "3.11.2026",
@@ -46,7 +46,7 @@ test("reads each row, dropping the preamble and the closing balance", () => {
 });
 
 test("rejects another account's export, a changed header, a malformed amount and an extra cell", () => {
-  expect(() => parseDeutscheBankGiroCsv(csv, "DE02120300000000202051")).toThrow(
+  expect(() => parseDeutscheBankCashCsv(csv, "DE02120300000000202051")).toThrow(
     "another account",
   );
   for (const changed of [
@@ -54,7 +54,7 @@ test("rejects another account's export, a changed header, a malformed amount and
     csv.replace("NOTPROVIDED;;;;750", "NOTPROVIDED;;;;750.00"),
     csv.replace(";EUR\nKontostand", ";EUR;\nKontostand"),
   ]) {
-    expect(() => parseDeutscheBankGiroCsv(changed, iban)).toThrow("format");
+    expect(() => parseDeutscheBankCashCsv(changed, iban)).toThrow("format");
   }
 });
 

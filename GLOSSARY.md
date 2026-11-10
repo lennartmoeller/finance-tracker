@@ -15,20 +15,12 @@ A company where the user holds accounts, such as ING, Deutsche Bank, Trade Repub
 _Avoid_: institution, ASPSP, provider
 
 **Account**:
-A giro account, savings account, cash account or depot that the user holds at a bank.
+A cash account or depot that the user holds at a bank.
 _Avoid_: user account, login, product names
 
-**Giro account**:
-An account for everyday payments and transfers.
-_Avoid_: checking account, current account, Girokonto
-
-**Savings account**:
-An account that holds money for interest rather than for payments.
-_Avoid_: call money account, Tagesgeld account
-
 **Cash account**:
-A broker's account that holds the money not invested in its depot and settles the depot's trades.
-_Avoid_: clearing account, settlement account
+An account that holds money rather than securities, whether for payments, for interest or for settling a depot's trades.
+_Avoid_: giro account, savings account, checking account, current account, clearing account, settlement account
 
 **Depot**:
 An account that holds securities or fund shares.
@@ -36,14 +28,14 @@ _Avoid_: portfolio, securities account, brokerage account
 
 **Account number**:
 The number by which the bank identifies an account: its IBAN where it has one, otherwise the number the bank shows for it, such as a depot number.
-_Avoid_: account ID, IBAN (for every account)
+_Avoid_: account ID, identifier, IBAN (for every account)
 
 **Account name**:
 The name the user gives an account, unique among the accounts at its bank, by which the popup shows it.
 _Avoid_: label, nickname, alias
 
 **Balance**:
-The money a giro account, savings account or cash account holds, which its opening balance and its transactions add up to.
+The money a cash account holds, which its opening balance and its transactions add up to.
 _Avoid_: Saldo, account total
 
 **Opening balance**:

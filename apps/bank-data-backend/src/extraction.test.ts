@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import type { DeutscheBankGiroRawTransactionV1 } from "@finance-tracker/bank-data-api/deutsche-bank-giro";
+import type { DeutscheBankCashRawTransactionV1 } from "@finance-tracker/bank-data-api/deutsche-bank-cash";
 import type { DeutscheBankDepotRawTransactionV1 } from "@finance-tracker/bank-data-api/deutsche-bank-depot";
 import type { FinvestoRawTransactionV1 } from "@finance-tracker/bank-data-api/finvesto";
 import type { TradeRepublicRawTransactionV1 } from "@finance-tracker/bank-data-api/trade-republic";
@@ -7,7 +7,7 @@ import { extractTransactions } from "./extraction.ts";
 
 test("an ING booking keeps its German amount as a decimal and an empty counterparty as none", () => {
   expect(
-    extractTransactions({ bank: "ING", type: "giro" }, [
+    extractTransactions({ bank: "ING", type: "cash" }, [
       [
         "30.09.2026",
         "30.09.2026",
@@ -35,8 +35,8 @@ test("an ING booking keeps its German amount as a decimal and an empty counterpa
   ]);
 });
 
-const deutscheBankGiroBooking = Object.assign(
-  Array<string>(18).fill("") as DeutscheBankGiroRawTransactionV1,
+const deutscheBankCashBooking = Object.assign(
+  Array<string>(18).fill("") as DeutscheBankCashRawTransactionV1,
   {
     0: "3.5.2026",
     1: "3.5.2026",
@@ -49,8 +49,8 @@ const deutscheBankGiroBooking = Object.assign(
 
 test("a Deutsche Bank booking pads its date and keeps an amount without trailing zeros", () => {
   expect(
-    extractTransactions({ bank: "Deutsche Bank", type: "giro" }, [
-      deutscheBankGiroBooking,
+    extractTransactions({ bank: "Deutsche Bank", type: "cash" }, [
+      deutscheBankCashBooking,
     ]),
   ).toMatchObject([
     {
@@ -62,10 +62,10 @@ test("a Deutsche Bank booking pads its date and keeps an amount without trailing
   ]);
 });
 
-test("a Deutsche Bank depot rejects the giro account's raw transactions", () => {
+test("a Deutsche Bank depot rejects the cash account's raw transactions", () => {
   expect(
     extractTransactions({ bank: "Deutsche Bank", type: "depot" }, [
-      deutscheBankGiroBooking,
+      deutscheBankCashBooking,
     ]),
   ).toBeUndefined();
 });

@@ -41,7 +41,7 @@ Why every account takes the extension is decided in [ADR 0003](./adr/0003-ingest
 
 ## Raw data and shape versions
 
-- Each adapter reads one or more of its bank's exports, such as Deutsche Bank's CSV export for the giro account and its JSON transactions for the depot.
+- Each adapter reads one or more of its bank's exports, such as Deutsche Bank's CSV export for the cash account and its JSON transactions for the depot.
 - A raw transaction is read by its account's bank and account type, which never change, and by its shape version; shape versions count per bank and account type, and a format change within an export or a switch to another export adds one beside the existing ones; why no transaction stores a source is recorded in [ADR 0011](./adr/0011-raw-transactions-read-by-their-account.md).
 - Every raw transaction is stored as JSON together with the shape version it was validated against and its normalized transaction, and the raw JSON never changes afterwards.
 - Removing an account deletes its raw transactions with it.
