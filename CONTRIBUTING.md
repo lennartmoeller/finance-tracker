@@ -32,6 +32,7 @@ Name test files `*.test.ts` or `*.test.tsx`.
 ## Change the database schema
 
 Edit [`apps/bank-data-backend/src/schema.ts`](./apps/bank-data-backend/src/schema.ts) and run `pnpm --filter @finance-tracker/bank-data-backend exec drizzle-kit generate --name <change>`; the backend applies new migrations when it starts.
+Run the same command after changing the API contract's banks, account types or currency pattern, because the schema builds its constraints from them.
 Write a trigger by hand into the generated migration, because Drizzle's schema holds none.
 
 ## Check a change
