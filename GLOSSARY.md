@@ -1,6 +1,6 @@
 # Finance tracker
 
-A self-hosted system that collects the transactions of one user's accounts at several banks, stores them, and serves them to consumers.
+A self-hosted system that collects the transactions of one user's accounts at several banks, stores them, and lets the user view and manage them.
 
 ## Language
 
@@ -25,6 +25,10 @@ _Avoid_: giro account, savings account, checking account, current account, clear
 **Depot**:
 An account that holds securities or fund shares.
 _Avoid_: portfolio, securities account, brokerage account
+
+**Security**:
+A stock or fund whose shares a depot holds, identified by its ISIN.
+_Avoid_: asset, instrument, position
 
 **Account number**:
 The number by which the bank identifies an account: its IBAN where it has one, otherwise the number the bank shows for it, such as a depot number.
@@ -68,8 +72,28 @@ A transaction exactly as its bank delivered it, kept unchanged together with its
 _Avoid_: original transaction, import record
 
 **Normalized transaction**:
-A transaction in the system's own structure, extracted from a raw transaction.
+A transaction in the system's own structure, extracted from a raw transaction: a cash transaction or a depot transaction.
 _Avoid_: parsed transaction, cleaned transaction
+
+**Cash transaction**:
+A normalized transaction of a cash account: the money one transaction adds to or takes from its balance.
+_Avoid_: payment, booking, cash movement
+
+**Depot transaction**:
+A normalized transaction of a depot, which concerns one security and is a trade, a reinvestment, a distribution, or a fee or tax paid by selling shares.
+_Avoid_: position change, trade (for every depot transaction)
+
+**Trade**:
+A depot transaction that buys or sells shares of a security for money.
+_Avoid_: order, execution
+
+**Reinvestment**:
+A depot transaction that buys shares with a distribution that stays in the depot.
+_Avoid_: accumulation
+
+**Distribution**:
+A depot transaction in which a security pays income, such as a dividend, a fund's payout or a stock perk.
+_Avoid_: dividend (for every distribution), payout, income
 
 **Identity**:
 What makes two deliveries of a transaction the same transaction, always within one account.
@@ -78,7 +102,7 @@ _Avoid_: dedup key, fingerprint
 ### Ingestion
 
 **Adapter**:
-The part of the extension that reads one bank's transactions from the user's session.
+The part of the browser extension that reads one bank's transactions from the user's session.
 _Avoid_: scraper, connector, plugin
 
 **Shape version**:
@@ -105,16 +129,16 @@ _Avoid_: import (for the step)
 Turning a raw transaction into a normalized transaction.
 _Avoid_: parsing, mapping, normalization
 
-### Services
+### Apps
 
-**Bank data service**:
-The service that collects the transactions of the user's accounts from their banks' websites, stores them, and serves them to consumers as normalized transactions together with their raw transactions.
-_Avoid_: ingestion service, bank sync, importer
+**Backend**:
+The app that ingests syncs, stores all of the system's data in PostgreSQL, and serves it to the frontend and the browser extension.
+_Avoid_: bank data service, server
 
-**Consumer**:
-A service that reads transactions through the bank data service's API, such as the transaction viewer or a future finance logic backend.
-_Avoid_: client, downstream service
+**Frontend**:
+The web app in which the user views and manages the system's data, so far each account's normalized transactions beside their raw transactions, with the account's balance or, for a depot, its invested money.
+_Avoid_: transaction viewer, consumer, web UI
 
-**Transaction viewer**:
-The consumer that lists each account's normalized transactions beside their raw transactions, with the account's balance or, for a depot, its invested money, so the user can check the bank data service's data.
-_Avoid_: data quality frontend, inspector
+**Browser extension**:
+The Firefox extension whose adapters read transactions from the bank websites in the user's sessions, and whose popup creates, renames, removes and syncs accounts.
+_Avoid_: extension, add-on, plugin

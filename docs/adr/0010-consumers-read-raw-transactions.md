@@ -1,3 +1,7 @@
+---
+status: superseded by ADR-0014
+---
+
 # Consumers read raw transactions
 
 The backend's API serves each transaction's raw data beside its normalized transaction, because the first consumer, the transaction viewer, exists to let the user check extraction against what the bank delivered.

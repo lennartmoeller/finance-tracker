@@ -1,3 +1,7 @@
+---
+status: amended by ADR-0013
+---
+
 # Raw transactions read by their account
 
 A raw transaction is read by its account's bank and account type and by its shape version, and no transaction stores a source, because an account's bank and type never change and already decide which export its transactions come from.

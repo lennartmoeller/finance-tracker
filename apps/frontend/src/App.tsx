@@ -1,0 +1,232 @@
+import { useEffect, useState } from "react";
+import { CircleExclamationPoint, Inbox, Wallet } from "lucide-react";
+import {
+  accountNumberFormats,
+  groupAccountNumber,
+} from "@finance-tracker/shared/account-number";
+import { accountTypeNames } from "@finance-tracker/shared/account-type-names";
+import { bank as banks } from "@finance-tracker/shared/bank";
+import { bankLogos } from "@finance-tracker/shared/bank-logos";
+import { createApiClient, errorMessage } from "@finance-tracker/shared/client";
+import type { Account, Transaction } from "@finance-tracker/shared/contract";
+import { decimalSum } from "@finance-tracker/shared/decimal";
+import { freshness, lastSyncText } from "@finance-tracker/shared/last-sync";
+import { formatDate, TransactionTable } from "./TransactionTable.tsx";
+
+const api = createApiClient(`${location.origin}/rpc`);
+const count = new Intl.NumberFormat("en");
+const totalFormat = new Intl.NumberFormat("en", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+export function App() {
+  const [accounts, setAccounts] = useState<Account[]>();
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [error, setError] = useState("");
+  const [selectedId, setSelectedId] = useState<number>();
+
+  useEffect(() => {
+    Promise.all([api.account.list(), api.transaction.list()])
+      .then(([accountList, transactionList]) => {
+        setAccounts(accountList);
+        setTransactions(transactionList);
+      })
+      .catch((failure: unknown) => {
+        setError(errorMessage(failure));
+      });
+  }, []);
+
+  const groups = banks.options.map((bank) => ({
+    bank,
+    accounts: (accounts ?? [])
+      .filter((account) => account.bank === bank)
+      .sort((a, b) => a.name.localeCompare(b.name)),
+  }));
+  const selected =
+    accounts?.find((account) => account.id === selectedId) ??
+    groups.flatMap((group) => group.accounts)[0];
+  const ofAccount = (account: Account) =>
+    transactions.filter((transaction) => transaction.accountId === account.id);
+
+  return (
+    <div className="app">
+      <aside className="sidebar">
+        <div className="brand">
+          <h1>Finance Tracker</h1>
+        </div>
+        <nav className="account-groups">
+          {!accounts && !error
+            ? Array.from({ length: 6 }, (_, index) => (
+                <div className="skeleton-account" key={index}>
+                  <span className="skeleton" />
+                </div>
+              ))
+            : groups.map(
+                ({ bank, accounts: group }) =>
+                  group.length > 0 && (
+                    <section className="group" key={bank}>
+                      <h2 className="group-head">
+                        <img
+                          className="logo small"
+                          src={bankLogos[bank]}
+                          alt=""
+                        />
+                        {bank}
+                      </h2>
+                      <ul className="accounts">
+                        {group.map((account) => (
+                          <li key={account.id}>
+                            <button
+                              className="account"
+                              aria-current={account === selected}
+                              onClick={() => {
+                                setSelectedId(account.id);
+                              }}
+                            >
+                              <span>
+                                <span className="account-name">
+                                  {account.name}
+                                </span>
+                                <span className="account-type">
+                                  {accountTypeNames[account.type]}
+                                </span>
+                              </span>
+                              <span className="count">
+                                {count.format(ofAccount(account).length)}
+                              </span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                  ),
+              )}
+        </nav>
+      </aside>
+      <main className="main">
+        {error ? (
+          <div className="banner" role="alert">
+            <CircleExclamationPoint />
+            <span>{error}</span>
+          </div>
+        ) : !accounts ? (
+          <>
+            <div className="account-head">
+              <span className="skeleton heading" />
+            </div>
+            {Array.from({ length: 8 }, (_, index) => (
+              <div className="skeleton-row" key={index}>
+                <span className="skeleton" />
+                <span className="skeleton" />
+                <span className="skeleton" />
+                <span className="skeleton" />
+              </div>
+            ))}
+          </>
+        ) : !selected ? (
+          <Intro
+            icon={<Wallet />}
+            title="No accounts yet"
+            text="Add an account in the extension's popup and sync it."
+          />
+        ) : (
+          <AccountView account={selected} transactions={ofAccount(selected)} />
+        )}
+      </main>
+    </div>
+  );
+}
+
+function AccountView({
+  account,
+  transactions,
+}: {
+  account: Account;
+  transactions: Transaction[];
+}) {
+  const format = accountNumberFormats[account.bank][account.type];
+  const dates = transactions
+    .flatMap(({ cash, depot }) => (cash ?? depot)?.date ?? [])
+    .sort();
+  const [first, last] = [dates[0], dates.at(-1)];
+  const totals = new Map<string, string>();
+  for (const { cash, depot } of transactions) {
+    const counted = cash ?? (depot?.type === "trade" ? depot : null);
+    if (counted?.amount && counted.currency)
+      totals.set(
+        counted.currency,
+        decimalSum([totals.get(counted.currency) ?? "0", counted.amount]),
+      );
+  }
+  return (
+    <>
+      <div className="account-head">
+        <img className="logo medium" src={bankLogos[account.bank]} alt="" />
+        <div>
+          <h2>{account.name}</h2>
+          <div className="meta">
+            {accountTypeNames[account.type]} ·{" "}
+            <span className="mono">
+              {format
+                ? groupAccountNumber(account.number, format.groups)
+                : account.number}
+            </span>{" "}
+            · {count.format(transactions.length)} transactions ·{" "}
+            {first && last && (
+              <>
+                {formatDate(first)} – {formatDate(last)} ·{" "}
+              </>
+            )}
+            <span className={`dot ${freshness(account.lastSyncedAt)}`} />
+            {lastSyncText(account.lastSyncedAt)}
+          </div>
+        </div>
+        {totals.size > 0 && (
+          <div className="total">
+            <span className="total-label">
+              {account.type === "depot" ? "Invested" : "Balance"}
+            </span>
+            {[...totals].map(([currency, total]) => (
+              <span className="total-amount" key={currency}>
+                {totalFormat.format(Number(total))}
+                <span className="currency">{currency}</span>
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+      {transactions.length ? (
+        <TransactionTable
+          key={account.id}
+          account={account}
+          transactions={transactions}
+        />
+      ) : (
+        <Intro
+          icon={<Inbox />}
+          title="No transactions yet"
+          text="Sync this account in the extension's popup."
+        />
+      )}
+    </>
+  );
+}
+
+function Intro({
+  icon,
+  title,
+  text,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  text: string;
+}) {
+  return (
+    <div className="intro">
+      <div className="intro-icon">{icon}</div>
+      <p className="intro-title">{title}</p>
+      <p className="intro-text">{text}</p>
+    </div>
+  );
+}
