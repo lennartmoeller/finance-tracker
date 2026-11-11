@@ -1,27 +1,15 @@
 import type { Account } from "@finance-tracker/shared/contract";
 import { decimalSum } from "@finance-tracker/shared/decimal";
-import { balance, depotFigures, gain } from "./account-figures.ts";
 import { AccountName } from "./AccountName.tsx";
 import type { Data } from "./App.tsx";
-import { formatAmount, formatMoney, formatPercent } from "./format.ts";
+import { balance, depotFigures } from "./figures.ts";
+import { formatMoney } from "./format.ts";
+import { Gain } from "./Gain.tsx";
 import { Loaded } from "./Loaded.tsx";
 import { none } from "./none.tsx";
 import type { Scope } from "./Transactions.tsx";
 
 const total = (amounts: string[]) => decimalSum(["0", ...amounts]);
-
-function Gain({
-  marketValue,
-  invested,
-}: {
-  marketValue: string;
-  invested: string;
-}) {
-  const difference = gain(marketValue, invested);
-  return Number(invested)
-    ? `${formatAmount(difference, "EUR")} · ${formatPercent(Number(difference) / Number(invested))}`
-    : formatAmount(difference, "EUR");
-}
 
 export function Overview({
   data,
@@ -60,7 +48,10 @@ function Figures({
     .filter(({ type }) => type === "depot")
     .map((account) => ({
       account,
-      figures: depotFigures(ofAccount(account), data.prices),
+      figures: depotFigures(
+        ofAccount(account).flatMap(({ depot }) => depot ?? []),
+        data.prices,
+      ),
     }));
   const priced = depots.flatMap(({ figures }) =>
     figures && "marketValue" in figures ? [figures] : [],
@@ -70,7 +61,6 @@ function Figures({
   );
   const balances = total(cash.flatMap(({ balance }) => balance ?? []));
   const marketValue = total(priced.map(({ marketValue }) => marketValue));
-  const invested = total(priced.map(({ invested }) => invested));
   const card = (account: Account, content: React.ReactNode) => (
     <button
       key={account.id}
@@ -85,7 +75,7 @@ function Figures({
   );
 
   return (
-    <div className="overview">
+    <div className="page">
       <section className="card hero">
         <span className="hero-label">Total</span>
         <span className="hero-amount">
@@ -104,7 +94,10 @@ function Figures({
             <span>Gain</span>
             <strong>
               {priced.length ? (
-                <Gain marketValue={marketValue} invested={invested} />
+                <Gain
+                  amount={total(priced.map(({ gain }) => gain))}
+                  purchases={total(priced.map(({ purchases }) => purchases))}
+                />
               ) : (
                 none
               )}
@@ -112,7 +105,7 @@ function Figures({
           </div>
         </div>
         {unpriced.length > 0 && (
-          <span className="card-note">
+          <span className="note">
             Without {unpriced.join(", ")}, whose prices are missing.
           </span>
         )}
@@ -146,7 +139,7 @@ function Figures({
                       : none}
                   </span>
                   {figures && "unpriced" in figures && (
-                    <span className="card-note">
+                    <span className="note">
                       No price for {figures.unpriced.join(", ")}
                     </span>
                   )}
@@ -160,8 +153,8 @@ function Figures({
                       <dd>
                         {figures && "marketValue" in figures ? (
                           <Gain
-                            marketValue={figures.marketValue}
-                            invested={figures.invested}
+                            amount={figures.gain}
+                            purchases={figures.purchases}
                           />
                         ) : (
                           none
@@ -187,7 +180,7 @@ function Skeleton() {
     </div>
   );
   return (
-    <div className="overview">
+    <div className="page">
       {card(0)}
       <h2>Cash accounts</h2>
       <div className="cards">{[1, 2, 3, 4].map(card)}</div>
