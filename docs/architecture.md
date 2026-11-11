@@ -141,7 +141,7 @@ flowchart TD
 - `packages/shared` defines each procedure's name with its input and output schemas, and the typed client both call the backend with.
 - The backend implements the contract.
 - The frontend pulls every account's transactions with one `transaction.list` call and every stored price with one `price.list` call, without a cursor or push, because they are about 1,200 and 1,800 rows.
-- `transaction.list` serves every normalized transaction with its brand, and no raw transaction.
+- `transaction.list` serves every normalized transaction with its brand, newest first, and no raw transaction.
 - `price.fill` fills the prices every holding span lacks and answers how many it stored, or, after trying every security, fails with `BAD_GATEWAY` naming each security that failed and why.
 - The RPC library must support contract-first definitions, which rules out plain tRPC because it derives the contract from the implementation.
 
