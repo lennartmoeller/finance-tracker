@@ -127,6 +127,14 @@ _Avoid_: holding period, position
 What a depot's shares are worth: each held security's shares times its latest price.
 _Avoid_: depot value, current value, worth
 
+**Gain**:
+What a depot's market value exceeds its invested money by, negative where it falls short.
+_Avoid_: profit, return, performance
+
+**Total**:
+The money the user holds: the balances of all cash accounts plus the market values of all depots.
+_Avoid_: net worth, wealth, assets
+
 ### Ingestion
 
 **Adapter**:
@@ -164,7 +172,7 @@ The app that ingests syncs, stores all of the system's data in PostgreSQL, and s
 _Avoid_: bank data service, server
 
 **Frontend**:
-The web app in which the user views and manages the system's data, so far each account's normalized transactions beside their raw transactions, with the account's balance or, for a depot, its invested money and market value.
+The web app in which the user views and manages the system's data, so far an overview of the total and each account's balance or, for a depot, its invested money, market value and gain, and every normalized transaction.
 _Avoid_: transaction viewer, consumer, web UI
 
 **Browser extension**:

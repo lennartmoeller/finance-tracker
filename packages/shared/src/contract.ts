@@ -37,6 +37,10 @@ export const newAccount = account
       });
   });
 
+const rawTransaction = z.json();
+
+export type RawTransaction = z.infer<typeof rawTransaction>;
+
 const cashTransaction = z.object({
   date: z.iso.date(),
   amount: decimal,
@@ -64,8 +68,6 @@ export type DepotTransaction = z.infer<typeof depotTransaction>;
 const transaction = z.object({
   id: z.int(),
   accountId: z.int(),
-  shapeVersion: z.int(),
-  data: z.json(),
   cash: cashTransaction.nullable(),
   depot: depotTransaction.nullable(),
   brand: z.object({ name: z.string(), logo: z.string().nullable() }).nullable(),
@@ -93,7 +95,7 @@ export const contract = {
       z.object({
         accountId: z.int(),
         shapeVersion: z.literal(1),
-        rawTransactions: z.array(z.json()),
+        rawTransactions: z.array(rawTransaction),
       }),
     )
     .output(z.object({ imported: z.int(), skipped: z.int() })),

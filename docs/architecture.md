@@ -13,7 +13,7 @@ flowchart LR
   onvista["onvista"]
   extension -- "reads the logged-in session" --> websites
   extension -- "accounts, raw transactions" --> backend
-  frontend -- "accounts, normalized and raw transactions" --> backend
+  frontend -- "accounts, normalized transactions, prices" --> backend
   backend --> postgres
   backend -- "brand domains, ISINs" --> logodev
   backend -- "ISINs" --> onvista
@@ -26,14 +26,14 @@ flowchart LR
 - The backend's outbound services are Logo.dev, which receives brand domains and ISINs to return their logos, and onvista, which receives ISINs to return their daily prices; neither sees transaction data.
 - The backend downloads each logo once through Logo.dev's API and stores it, because Logo.dev's terms allow storing what its API returns but only embedding what its CDN serves.
 - The backend serves stored logos at `/logos/<id>` beside its oRPC API, because an `<img>` loads a URL and cannot call a procedure.
-- The frontend shows each raw transaction beside its normalized transaction, or marked as not extracted where it has none, so the user can check extraction against what the bank delivered.
+- The frontend shows normalized transactions and the figures that add up from them, and no raw transaction, as [ADR 0016](./adr/0016-the-frontend-shows-normalized-data-only.md) decides.
 
 ## Components
 
 | Component | Owns | Leaves to others |
 | --- | --- | --- |
 | Backend | the API contract's implementation; validation, deduplication, raw storage and extraction; every piece of data the system stores, logos downloaded from Logo.dev and prices from onvista included | reading bank websites |
-| Frontend | the interface in which the user views and manages everything, so far each account with its normalized and raw transactions and its balance, or for a depot its invested money and market value | reading bank websites |
+| Frontend | the interface in which the user views and manages everything, so far an overview of each account's balance, or for a depot its invested money, market value and gain, and every normalized transaction | reading bank websites |
 | Browser extension | one adapter per bank website; shape validation; the popup that creates, renames and removes accounts, lists them by bank with their last sync, and syncs each one | storing bank credentials |
 | PostgreSQL | the tables of the [data model](./data-model.md) and the rules that keep their data sound | |
 
@@ -121,7 +121,7 @@ flowchart TD
   subgraph apps["apps/"]
     extension["browser-extension<br/>bank website adapters, popup"]
     backend["backend<br/>contract implementation, ingest, extraction and identity, price fill, schema"]
-    frontend["frontend<br/>accounts with their normalized and raw transactions"]
+    frontend["frontend<br/>overview and normalized transactions, mock mode"]
   end
   subgraph packages["packages/"]
     shared["shared<br/>contract: procedures with input and output schemas; typed client; versioned raw shapes per bank and account type; bank logos and account wording for interfaces"]
@@ -141,7 +141,7 @@ flowchart TD
 - `packages/shared` defines each procedure's name with its input and output schemas, and the typed client both call the backend with.
 - The backend implements the contract.
 - The frontend pulls every account's transactions with one `transaction.list` call and every stored price with one `price.list` call, without a cursor or push, because they are about 1,200 and 1,800 rows.
-- `transaction.list` serves every raw transaction with its cash or depot transaction, or with neither where extraction yields none.
+- `transaction.list` serves every normalized transaction with its brand, and no raw transaction.
 - `price.fill` fills the prices every holding span lacks and answers how many it stored, or, after trying every security, fails with `BAD_GATEWAY` naming each security that failed and why.
 - The RPC library must support contract-first definitions, which rules out plain tRPC because it derives the contract from the implementation.
 

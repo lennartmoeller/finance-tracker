@@ -18,7 +18,7 @@ import {
   accountType,
   type Account,
   type DepotTransaction,
-  type Transaction,
+  type RawTransaction,
 } from "@finance-tracker/shared/contract";
 import { currencyPattern } from "@finance-tracker/shared/currency";
 
@@ -68,7 +68,7 @@ export const transactions = pgTable(
       .references(() => accounts.id, { onDelete: "cascade" }),
     shapeVersion: integer().notNull(),
     identity: text().notNull(),
-    data: jsonb().$type<Transaction["data"]>().notNull(),
+    data: jsonb().$type<RawTransaction>().notNull(),
   },
   (table) => [
     unique().on(table.accountId, table.identity),

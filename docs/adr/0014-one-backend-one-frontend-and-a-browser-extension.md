@@ -1,3 +1,7 @@
+---
+status: amended by ADR-0016
+---
+
 # One backend, one frontend and a browser extension
 
 The finance tracker is one system of three apps in one repository, built and extended together: the backend with its PostgreSQL, the frontend and the browser extension.

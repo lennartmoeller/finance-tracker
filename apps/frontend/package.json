@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite"
+    "dev": "vite",
+    "mock": "vite --mode mock"
   },
   "dependencies": {
     "@finance-tracker/shared": "workspace:*",

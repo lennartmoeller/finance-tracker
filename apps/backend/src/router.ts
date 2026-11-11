@@ -1,5 +1,13 @@
 import { implement, ORPCError } from "@orpc/server";
-import { and, desc, eq, isNotNull, sql, type SQLWrapper } from "drizzle-orm";
+import {
+  and,
+  desc,
+  eq,
+  isNotNull,
+  or,
+  sql,
+  type SQLWrapper,
+} from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { contract, type Account } from "@finance-tracker/shared/contract";
@@ -172,7 +180,8 @@ export function createRouter(
         const securityLogo = alias(logos, "security_logo");
         const rows = await db
           .select({
-            transaction: transactions,
+            id: transactions.id,
+            accountId: transactions.accountId,
             cash: cashTransactions,
             depot: depotTransactions,
             security: securities,
@@ -197,13 +206,28 @@ export function createRouter(
             ),
           )
           .leftJoinLateral(brand, sql`true`)
+          .where(
+            or(
+              isNotNull(cashTransactions.transactionId),
+              isNotNull(depotTransactions.transactionId),
+            ),
+          )
           .orderBy(
-            sql`coalesce(${cashTransactions.date}, ${depotTransactions.date}) desc nulls last`,
+            sql`coalesce(${cashTransactions.date}, ${depotTransactions.date}) desc`,
             desc(transactions.id),
           );
         return rows.map(
-          ({ transaction, cash, depot, security, securityLogoId, brand }) => ({
-            ...transaction,
+          ({
+            id,
+            accountId,
+            cash,
+            depot,
+            security,
+            securityLogoId,
+            brand,
+          }) => ({
+            id,
+            accountId,
             cash,
             depot: depot &&
               security && {

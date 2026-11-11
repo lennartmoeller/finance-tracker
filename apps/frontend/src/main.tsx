@@ -1,10 +1,32 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { createApiClient } from "@finance-tracker/shared/client";
 import { App } from "./App.tsx";
 import "./style.css";
 
-createRoot(document.getElementById("root") as HTMLElement).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+const root = createRoot(document.getElementById("root") as HTMLElement);
+
+if (import.meta.env.MODE === "mock")
+  void import("./mock/Mock.tsx").then(({ Mock }) => {
+    root.render(
+      <StrictMode>
+        <Mock />
+      </StrictMode>,
+    );
+  });
+else {
+  const api = createApiClient(`${location.origin}/rpc`);
+  const load = async () => {
+    const [accounts, transactions, prices] = await Promise.all([
+      api.account.list(),
+      api.transaction.list(),
+      api.price.list(),
+    ]);
+    return { accounts, transactions, prices };
+  };
+  root.render(
+    <StrictMode>
+      <App load={load} />
+    </StrictMode>,
+  );
+}
