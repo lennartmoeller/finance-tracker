@@ -71,17 +71,17 @@ export async function fillPrices(db: NodePgDatabase) {
   )) {
     try {
       for (const { from, to } of spansOfSecurity) {
+        const earliestPrice = shifted(from, -daysBeforeFirstPrice);
         const [latest] = await db
           .select({ date: max(prices.date) })
           .from(prices)
-          .where(and(eq(prices.isin, isin), between(prices.date, from, to)));
+          .where(
+            and(eq(prices.isin, isin), between(prices.date, earliestPrice, to)),
+          );
         const last = latest?.date;
         if (last && !weekdayAfter(last, to)) continue;
         const fetched = (
-          await fetchPrices(
-            isin,
-            last ? shifted(last, 1) : shifted(from, -daysBeforeFirstPrice),
-          )
+          await fetchPrices(isin, last ? shifted(last, 1) : earliestPrice)
         ).filter(({ date }) => date <= to);
         const firstMissing = fetched.findLastIndex(({ date }) => date <= from);
         const missing = fetched.slice(Math.max(firstMissing, 0));
