@@ -73,6 +73,14 @@ const transaction = z.object({
 
 export type Transaction = z.infer<typeof transaction>;
 
+const price = z.object({
+  isin: z.string(),
+  date: z.iso.date(),
+  price: decimal,
+});
+
+export type Price = z.infer<typeof price>;
+
 export const contract = {
   account: {
     create: oc.input(newAccount).output(account),
@@ -91,5 +99,9 @@ export const contract = {
     .output(z.object({ imported: z.int(), skipped: z.int() })),
   transaction: {
     list: oc.output(z.array(transaction)),
+  },
+  price: {
+    fill: oc.output(z.object({ stored: z.int() })),
+    list: oc.output(z.array(price)),
   },
 };

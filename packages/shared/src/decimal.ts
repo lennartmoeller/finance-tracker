@@ -25,6 +25,14 @@ export function decimalSum(values: string[]): string {
   );
 }
 
+export function decimalProduct(factor: string, other: string): string {
+  const [factorScale, otherScale] = [scaleOf(factor), scaleOf(other)];
+  return unscaled(
+    scaled(factor, factorScale) * scaled(other, otherScale),
+    factorScale + otherScale,
+  );
+}
+
 // Zeros beyond the cents go, but sub-cent digits stay, so the database's two-decimal check rejects them instead of a rounding hiding them.
 export function cents(value: string): string {
   const [whole, fraction = ""] = value.split(".");

@@ -16,6 +16,7 @@
 - `pnpm --filter @finance-tracker/browser-extension dev` opens a Firefox with the browser extension loaded until that Firefox closes.
 - `pnpm --filter @finance-tracker/frontend dev` serves the frontend on <http://localhost:5173>, reading the backend on port 3000.
 - The browser extension's popup asks for the `API_TOKEN` once.
+- `curl -X POST http://localhost:3000/rpc/price/fill -H "Authorization: Bearer $API_TOKEN" -H 'Content-Type: application/json' -d '{}'`, with `API_TOKEN` set in the shell, fills the prices of the securities held up to yesterday and answers how many it stored; call it after a sync and whenever market values should catch up.
 
 ## Add a workspace
 
@@ -38,7 +39,7 @@ Write a trigger by hand into the generated migration, because Drizzle's schema h
 ## Check a change
 
 Run `pnpm check`, the quality gate; the [`CI` workflow](./.github/workflows/ci.yml) runs the same command and a CodeQL analysis.
-Tests run without a database or Logo.dev, so `pnpm check` and CI need neither PostgreSQL nor a Logo.dev key; what rests on them is checked by hand: skipping known raw transactions by the unique constraint on account and identity, rejecting rows by the [database rules](./docs/data-model.md#database-rules), and downloading, storing and serving logos.
+Tests run without a database, Logo.dev or onvista, so `pnpm check` and CI need neither PostgreSQL nor a Logo.dev key; what rests on them is checked by hand: skipping known raw transactions by the unique constraint on account and identity, rejecting rows by the [database rules](./docs/data-model.md#database-rules), downloading, storing and serving logos, and filling prices.
 
 - Fix formatting with `pnpm exec prettier --write .` and autofixable lint findings with `pnpm exec eslint --fix .`.
 - Delete what knip reports as unused instead of ignoring it.

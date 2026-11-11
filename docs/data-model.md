@@ -11,6 +11,7 @@ erDiagram
   brands |o..o{ cash_transactions : "names by pattern"
   brands |o..o| logos : "pictured by domain"
   securities |o--o| logos : "pictured by ISIN"
+  securities ||--o{ prices : "priced by"
 
   accounts {
     integer id PK
@@ -63,6 +64,11 @@ erDiagram
     text currency "optional, with amount"
     text description "optional"
   }
+  prices {
+    text isin PK, FK
+    date date PK "a trading day"
+    numeric price "in EUR"
+  }
 ```
 
 Every column is required unless the diagram marks it optional, and an optional column without a value is `NULL`.
@@ -99,6 +105,14 @@ A security holds the fullest name a bank delivered for its ISIN: finvesto's befo
 - Every read of the transactions first downloads the logo of each domain and ISIN without a `logos` row; a row without image records that Logo.dev knows no logo, and a failed download stores nothing, so the next read retries.
 - A brand whose domain changes finds no logo until the next read downloads the new domain's, and the old domain's row stays unused.
 
+## Prices
+
+- `price.fill` stores the [price](../GLOSSARY.md#prices) of every LS Exchange trading day of each holding span, as [ADR 0015](./adr/0015-security-prices-from-onvista.md) decides, so days between two spans of a security have none.
+- A span's prices start at the last trading day on or before its first day, so a span that starts on a weekend or holiday has a price to carry forward, and the span of a security still held runs through yesterday, because only a finished day has a close.
+- A reader takes a security's latest price on or before a day, because weekends and holidays have no price.
+- A fill requests only the days after a span's last stored price and none for a span without a weekday after it, and never rewrites a stored price.
+- A price keeps the decimals onvista delivers, such as LS Exchange's half-cent ticks.
+
 ## Database rules
 
 The database enforces each of these, so no writer can store a row that breaks one; the [schema](../apps/backend/src/schema.ts) holds the constraints and the [migration](../apps/backend/drizzle/0000_init.sql) the triggers.
@@ -112,4 +126,5 @@ The database enforces each of these, so no writer can store a row that breaks on
 - A currency is three capital letters, and an ISIN is two letters, nine letters or digits, and one digit.
 - A brand's name and domain are each unique, its domain is a lowercase bare hostname such as `rossmann.de`, and its pattern is a valid regular expression that does not match the empty string, so no brand matches every counterparty.
 - A logo has exactly one of a domain, in a brand's format, and the ISIN of a known security, each unique, and its image and `etag` are set together.
+- A price is of a known security on a weekday, above 0, and the only one of its security that day.
 - A text column never holds an empty string, so `NULL` is the only way to hold no value.

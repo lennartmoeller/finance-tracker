@@ -68,6 +68,15 @@ CREATE TABLE "logos" (
 	CONSTRAINT "logos_etag_filled" CHECK ("logos"."etag" <> '')
 );
 --> statement-breakpoint
+CREATE TABLE "prices" (
+	"isin" text NOT NULL,
+	"date" date NOT NULL,
+	"price" numeric NOT NULL,
+	CONSTRAINT "prices_isin_date_pk" PRIMARY KEY("isin","date"),
+	CONSTRAINT "prices_price_positive" CHECK ("prices"."price" > 0),
+	CONSTRAINT "prices_date_weekday" CHECK (extract(isodow from "prices"."date") < 6)
+);
+--> statement-breakpoint
 CREATE TABLE "securities" (
 	"isin" text PRIMARY KEY NOT NULL,
 	"name" text NOT NULL,
@@ -91,6 +100,7 @@ ALTER TABLE "cash_transactions" ADD CONSTRAINT "cash_transactions_transaction_id
 ALTER TABLE "depot_transactions" ADD CONSTRAINT "depot_transactions_transaction_id_transactions_id_fk" FOREIGN KEY ("transaction_id") REFERENCES "public"."transactions"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "depot_transactions" ADD CONSTRAINT "depot_transactions_isin_securities_isin_fk" FOREIGN KEY ("isin") REFERENCES "public"."securities"("isin") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "logos" ADD CONSTRAINT "logos_isin_securities_isin_fk" FOREIGN KEY ("isin") REFERENCES "public"."securities"("isin") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "prices" ADD CONSTRAINT "prices_isin_securities_isin_fk" FOREIGN KEY ("isin") REFERENCES "public"."securities"("isin") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "transactions" ADD CONSTRAINT "transactions_account_id_accounts_id_fk" FOREIGN KEY ("account_id") REFERENCES "public"."accounts"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE FUNCTION "require_account_type"() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN

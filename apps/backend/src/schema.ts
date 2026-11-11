@@ -7,6 +7,7 @@ import {
   jsonb,
   numeric,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   unique,
@@ -89,6 +90,22 @@ export const securities = pgTable(
     ),
     check("securities_name_filled", filled(table.name)),
     check("securities_named_by_known", oneOf(table.namedBy, bank.options)),
+  ],
+);
+
+export const prices = pgTable(
+  "prices",
+  {
+    isin: text()
+      .notNull()
+      .references(() => securities.isin),
+    date: date().notNull(),
+    price: numeric().notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.isin, table.date] }),
+    check("prices_price_positive", sql`${table.price} > 0`),
+    check("prices_date_weekday", sql`extract(isodow from ${table.date}) < 6`),
   ],
 );
 
