@@ -113,6 +113,20 @@ _Avoid_: merchant, vendor
 The case-insensitive regular expression the user gives a brand, which decides the counterparties that belong to it.
 _Avoid_: rule, brand rule, regex
 
+### Prices
+
+**Price**:
+The close of one share of a security on LS Exchange on one trading day, in EUR.
+_Avoid_: quote, rate, Kurs
+
+**Holding span**:
+A stretch of days at whose end the user's depots together hold shares of a security, from the first such day to the last before they hold none.
+_Avoid_: holding period, position
+
+**Market value**:
+What a depot's shares are worth: each held security's shares times its latest price.
+_Avoid_: depot value, current value, worth
+
 ### Ingestion
 
 **Adapter**:
@@ -150,7 +164,7 @@ The app that ingests syncs, stores all of the system's data in PostgreSQL, and s
 _Avoid_: bank data service, server
 
 **Frontend**:
-The web app in which the user views and manages the system's data, so far each account's normalized transactions beside their raw transactions, with the account's balance or, for a depot, its invested money.
+The web app in which the user views and manages the system's data, so far each account's normalized transactions beside their raw transactions, with the account's balance or, for a depot, its invested money and market value.
 _Avoid_: transaction viewer, consumer, web UI
 
 **Browser extension**:

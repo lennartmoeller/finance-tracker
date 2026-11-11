@@ -8,9 +8,14 @@ import { accountTypeNames } from "@finance-tracker/shared/account-type-names";
 import { bank as banks } from "@finance-tracker/shared/bank";
 import { bankLogos } from "@finance-tracker/shared/bank-logos";
 import { createApiClient, errorMessage } from "@finance-tracker/shared/client";
-import type { Account, Transaction } from "@finance-tracker/shared/contract";
+import type {
+  Account,
+  Price,
+  Transaction,
+} from "@finance-tracker/shared/contract";
 import { decimalSum } from "@finance-tracker/shared/decimal";
 import { freshness, lastSyncText } from "@finance-tracker/shared/last-sync";
+import { marketValue } from "./market-value.ts";
 import { formatDate, TransactionTable } from "./TransactionTable.tsx";
 
 const api = createApiClient(`${location.origin}/rpc`);
@@ -23,14 +28,16 @@ const totalFormat = new Intl.NumberFormat("en", {
 export function App() {
   const [accounts, setAccounts] = useState<Account[]>();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [prices, setPrices] = useState<Price[]>([]);
   const [error, setError] = useState("");
   const [selectedId, setSelectedId] = useState<number>();
 
   useEffect(() => {
-    Promise.all([api.account.list(), api.transaction.list()])
-      .then(([accountList, transactionList]) => {
+    Promise.all([api.account.list(), api.transaction.list(), api.price.list()])
+      .then(([accountList, transactionList, priceList]) => {
         setAccounts(accountList);
         setTransactions(transactionList);
+        setPrices(priceList);
       })
       .catch((failure: unknown) => {
         setError(errorMessage(failure));
@@ -131,7 +138,11 @@ export function App() {
             text="Add an account in the extension's popup and sync it."
           />
         ) : (
-          <AccountView account={selected} transactions={ofAccount(selected)} />
+          <AccountView
+            account={selected}
+            transactions={ofAccount(selected)}
+            prices={prices}
+          />
         )}
       </main>
     </div>
@@ -141,9 +152,11 @@ export function App() {
 function AccountView({
   account,
   transactions,
+  prices,
 }: {
   account: Account;
   transactions: Transaction[];
+  prices: Price[];
 }) {
   const format = accountNumberFormats[account.bank][account.type];
   const dates = transactions
@@ -159,6 +172,8 @@ function AccountView({
         decimalSum([totals.get(counted.currency) ?? "0", counted.amount]),
       );
   }
+  const value =
+    account.type === "depot" ? marketValue(transactions, prices) : undefined;
   return (
     <>
       <div className="account-head">
@@ -183,16 +198,42 @@ function AccountView({
           </div>
         </div>
         {totals.size > 0 && (
-          <div className="total">
-            <span className="total-label">
-              {account.type === "depot" ? "Invested" : "Balance"}
-            </span>
-            {[...totals].map(([currency, total]) => (
-              <span className="total-amount" key={currency}>
-                {totalFormat.format(Number(total))}
-                <span className="currency">{currency}</span>
+          <div className="totals">
+            <div className="total">
+              <span className="total-label">
+                {account.type === "depot" ? "Invested" : "Balance"}
               </span>
-            ))}
+              {[...totals].map(([currency, total]) => (
+                <span className="total-amount" key={currency}>
+                  {totalFormat.format(Number(total))}
+                  <span className="currency">{currency}</span>
+                </span>
+              ))}
+            </div>
+            {value && (
+              <div className="total">
+                {value.unpriced ? (
+                  <>
+                    <span className="total-label">Value</span>
+                    <span className="total-note">
+                      No price for {value.unpriced.join(", ")}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="total-label">
+                      {value.pricedOn
+                        ? `Value as of ${formatDate(value.pricedOn)}`
+                        : "Value"}
+                    </span>
+                    <span className="total-amount">
+                      {totalFormat.format(Number(value.amount))}
+                      <span className="currency">EUR</span>
+                    </span>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>

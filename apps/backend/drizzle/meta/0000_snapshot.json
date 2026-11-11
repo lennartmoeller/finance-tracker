@@ -433,6 +433,61 @@
       },
       "isRLSEnabled": false
     },
+    "public.prices": {
+      "name": "prices",
+      "schema": "",
+      "columns": {
+        "isin": {
+          "name": "isin",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "date": {
+          "name": "date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "price": {
+          "name": "price",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "prices_isin_securities_isin_fk": {
+          "name": "prices_isin_securities_isin_fk",
+          "tableFrom": "prices",
+          "tableTo": "securities",
+          "columnsFrom": ["isin"],
+          "columnsTo": ["isin"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "prices_isin_date_pk": {
+          "name": "prices_isin_date_pk",
+          "columns": ["isin", "date"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "prices_price_positive": {
+          "name": "prices_price_positive",
+          "value": "\"prices\".\"price\" > 0"
+        },
+        "prices_date_weekday": {
+          "name": "prices_date_weekday",
+          "value": "extract(isodow from \"prices\".\"date\") < 6"
+        }
+      },
+      "isRLSEnabled": false
+    },
     "public.securities": {
       "name": "securities",
       "schema": "",

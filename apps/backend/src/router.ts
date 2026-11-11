@@ -5,12 +5,14 @@ import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { contract, type Account } from "@finance-tracker/shared/contract";
 import { extractTransactions } from "./extraction.ts";
 import { fetchMissingLogos, logoPath } from "./logos.ts";
+import { fillPrices } from "./prices.ts";
 import {
   accounts,
   brands,
   cashTransactions,
   depotTransactions,
   logos,
+  prices,
   transactions,
   securities,
 } from "./schema.ts";
@@ -213,6 +215,10 @@ export function createRouter(
           }),
         );
       }),
+    },
+    price: {
+      fill: os.price.fill.handler(() => fillPrices(db)),
+      list: os.price.list.handler(() => db.select().from(prices)),
     },
   });
 }
