@@ -22,7 +22,6 @@ The run uses two checkouts of one repository, and the maintainer prepares both b
 - **The empty house** is a linked worktree of that clone, on a branch from the default branch that the maintainer emptied, and the session runs in it.
   The maintainer removed what they want rewritten and kept what they consider good, always including the agent instructions and skills, because the skill and the rules load from there.
   What they kept is already good: adjust it if necessary, but do not rewrite it.
-- Everything else enters the empty house by being written anew, never by copying.
 
 What to keep is the maintainer's call, so never empty a checkout yourself.
 Stop and ask the maintainer to fix the setup when the session runs on the default branch, no checkout is on the default branch, or the original's tree is not clean.
@@ -66,7 +65,7 @@ Keep the plan and any notes in a git-ignored `planning-empty-house/` directory a
 Reference it from nothing outside it and leave its deletion to the maintainer.
 
 1. **Plan.**
-   Write the idea down first: per capability, what it does, the contract it serves and the facts its implementation must respect.
+   Write the idea down first: what the maintainer wants, and per capability what it does, the contract it serves and the facts its implementation must respect.
    Design from it with the biggest things first, because they decide the most: architecture, levels such as a core and units that each own one feature, integration or module, ownership and repository structure.
    Then take the biggest thing left, again and again, and end with details such as writing functions better, with documentation last.
    Close by holding the original against the plan: each of its behaviors and facts is in the plan or dropped with the reason and the rule it serves.
@@ -76,27 +75,24 @@ Reference it from nothing outside it and leave its deletion to the maintainer.
 3. **Critique.**
    Let a subagent critique the plan: does it break a rule, a preference of the maintainer or the target structure, does it copy a form of the original that the idea does not justify, and does it hide a technical risk?
    Include the preference check, because a critique of technical risk alone lets a plan that overrides the maintainer pass.
+   Revise the plan by its findings.
 4. **Build.**
-   Write the contract that units follow first, then implement the units in parallel, one subagent per unit folder, each with the rules and its folder as its whole scope.
+   Write the interface that units follow first, then implement the units in parallel, one subagent per unit folder, each with the rules and its folder as its whole scope.
    Subagents do not see this skill, so give each its unit's idea from the plan as its spec, and tell it to read the original only for facts, never to copy or translate its code.
    Run the quality gate only yourself, because parallel runs collide on shared resources such as a database.
-5. **Review.**
+5. **Document.**
+   Write the documentation once the code exists, so that every statement is true of the new code.
+   Every kind of overview artifact the original has, such as a diagram or an index, returns, drawn from the new code, and reasons are linked to where the decisions live instead of copied.
+   Where the repository records decisions, resolve or flag every claim that the rewrite made stale.
+6. **Review.**
    Let a second subagent review code and docs against the rules, and fix its findings.
-
-## Documentation
-
-Write the documentation last, when the code exists, so that every statement is true of the new code.
-Give each file the role the repository's rules define, and keep a procedure that several files need in one home that the others link to.
-Carry over each overview artifact and check it against the new code: every element of every diagram must exist in the code, and reasons are linked to where the decisions live instead of copied.
-Where the repository records decisions, fold update chains into the current truth, resolve or flag every claim that the rewrite made stale, and end smaller than you started.
 
 ## Finish
 
-1. Run the repository's canonical quality gate, and build what the repository ships, such as a package or an image, if the environment allows it.
-2. Prove the promises of the target structure on a scratch copy that you delete afterwards, for example by removing one leaf unit's folder, searching the core for unit names and showing that the gate still passes.
-3. Check that no rule is violated.
-4. Check `git log HEAD..<default branch>` for commits that reached the original after the empty house branched off, and re-apply their intent in the empty house, keeping the version and changelog of the default branch.
-5. Leave everything uncommitted.
+1. Check `git log HEAD..<default branch>` for commits that reached the original after the empty house branched off, and re-apply their intent in the empty house, keeping the version and changelog of the default branch.
+2. Run the repository's canonical quality gate, and build what the repository ships, such as a package or an image, if the environment allows it.
+3. Prove the promises of the target structure on a scratch copy that you delete afterwards, for example by removing one leaf unit's folder, searching the core for unit names and showing that the gate still passes.
+4. Leave everything uncommitted.
 
 Report in this order and keep it short:
 
