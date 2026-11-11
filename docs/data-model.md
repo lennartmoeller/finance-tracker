@@ -8,6 +8,7 @@ erDiagram
   transactions ||--o| cash_transactions : "extracts to"
   transactions ||--o| depot_transactions : "extracts to"
   securities ||--o{ depot_transactions : "appears in"
+  brands |o..o{ cash_transactions : "names by pattern"
 
   accounts {
     integer id PK
@@ -36,6 +37,12 @@ erDiagram
     text currency
     text counterparty "optional"
     text description "optional"
+  }
+  brands {
+    integer id PK "creation order"
+    text name "unique"
+    text pattern
+    text domain "unique"
   }
   depot_transactions {
     integer transaction_id PK, FK
@@ -72,6 +79,11 @@ A security holds the fullest name a bank delivered for its ISIN: finvesto's befo
 - A depot's shares of a security add up from the quantities of its depot transactions.
 - A depot's [invested money](./adr/0012-depot-amounts-as-invested-money.md) adds up from the amounts of its trades alone, because a distribution's amount is income.
 
+## Brands
+
+- The user inserts brands into `brands` by hand, each with its name, its website's domain and a pattern in PostgreSQL's regular expression dialect.
+- A cash transaction's brand is the earliest-created brand whose pattern matches its counterparty regardless of letter case, found anew on every read, so a brand covers the whole history from the moment it is stored.
+
 ## Database rules
 
 The database enforces each of these, so no writer can store a row that breaks one; the [schema](../apps/backend/src/schema.ts) holds the constraints and the [migration](../apps/backend/drizzle/0000_init.sql) the triggers.
@@ -83,4 +95,5 @@ The database enforces each of these, so no writer can store a row that breaks on
 - A cash or depot transaction's amount has exactly two decimals, so a bank's sub-cent amount fails its sync instead of being rounded.
 - A security is named by a bank the system knows.
 - A currency is three capital letters, and an ISIN is two letters, nine letters or digits, and one digit.
+- A brand's name and domain are each unique, its domain is a lowercase bare hostname such as `rossmann.de`, and its pattern is a valid regular expression that does not match the empty string, so no brand matches every counterparty.
 - A text column never holds an empty string, so `NULL` is the only way to hold no value.

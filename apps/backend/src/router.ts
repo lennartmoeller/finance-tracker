@@ -5,6 +5,7 @@ import { contract, type Account } from "@finance-tracker/shared/contract";
 import { extractTransactions } from "./extraction.ts";
 import {
   accounts,
+  brands,
   cashTransactions,
   depotTransactions,
   transactions,
@@ -147,12 +148,20 @@ export function createRouter(db: NodePgDatabase, apiToken: string) {
     ),
     transaction: {
       list: os.transaction.list.handler(async () => {
+        const brand = db
+          .select({ name: brands.name })
+          .from(brands)
+          .where(sql`${cashTransactions.counterparty} ~* ${brands.pattern}`)
+          .orderBy(brands.id)
+          .limit(1)
+          .as("brand");
         const rows = await db
           .select({
             transaction: transactions,
             cash: cashTransactions,
             depot: depotTransactions,
             security: securities,
+            brand: { name: brand.name },
           })
           .from(transactions)
           .leftJoin(
@@ -164,14 +173,16 @@ export function createRouter(db: NodePgDatabase, apiToken: string) {
             eq(depotTransactions.transactionId, transactions.id),
           )
           .leftJoin(securities, eq(securities.isin, depotTransactions.isin))
+          .leftJoinLateral(brand, sql`true`)
           .orderBy(
             sql`coalesce(${cashTransactions.date}, ${depotTransactions.date}) desc nulls last`,
             desc(transactions.id),
           );
-        return rows.map(({ transaction, cash, depot, security }) => ({
+        return rows.map(({ transaction, cash, depot, security, brand }) => ({
           ...transaction,
           cash,
           depot: depot && security && { ...depot, securityName: security.name },
+          brand,
         }));
       }),
     },

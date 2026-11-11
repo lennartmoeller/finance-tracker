@@ -67,6 +67,7 @@ const transaction = z.object({
   data: z.json(),
   cash: cashTransaction.nullable(),
   depot: depotTransaction.nullable(),
+  brand: z.object({ name: z.string() }).nullable(),
 });
 
 export type Transaction = z.infer<typeof transaction>;

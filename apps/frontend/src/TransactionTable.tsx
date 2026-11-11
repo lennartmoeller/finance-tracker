@@ -46,6 +46,7 @@ export function TransactionTable({
           <tr>
             <th />
             <th>Date</th>
+            {!ofDepot && <th>Brand</th>}
             <th>{ofDepot ? "Security" : "Counterparty"}</th>
             {ofDepot && <th>Type</th>}
             <th>Description</th>
@@ -72,6 +73,7 @@ export function TransactionTable({
                   <td className="date">
                     {normalized ? formatDate(normalized.date) : none}
                   </td>
+                  {!ofDepot && <td>{transaction.brand?.name ?? none}</td>}
                   <td>
                     {depot ? (
                       <>
@@ -118,7 +120,7 @@ export function TransactionTable({
                 </tr>
                 {open.has(transaction.id) && (
                   <tr className="raw">
-                    <td colSpan={ofDepot ? 7 : 5}>
+                    <td colSpan={ofDepot ? 7 : 6}>
                       <RawTransaction
                         account={account}
                         transaction={transaction}

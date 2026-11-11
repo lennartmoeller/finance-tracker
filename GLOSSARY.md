@@ -99,6 +99,20 @@ _Avoid_: dividend (for every distribution), payout, income
 What makes two deliveries of a transaction the same transaction, always within one account.
 _Avoid_: dedup key, fingerprint
 
+**Counterparty**:
+The person or company on the other side of a cash transaction, as its bank names it, such as `VISA ROSSMANN <store number>`.
+_Avoid_: payee, payer, merchant, recipient
+
+### Brands
+
+**Brand**:
+The company behind counterparties, identified by its website's domain, whose name stands for them, such as "Uber Eats" for `VISA UBER *EATS HELP.UBER.C`.
+_Avoid_: merchant, vendor
+
+**Pattern**:
+The case-insensitive regular expression the user gives a brand, which decides the counterparties that belong to it.
+_Avoid_: rule, brand rule, regex
+
 ### Ingestion
 
 **Adapter**:

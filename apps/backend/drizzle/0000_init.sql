@@ -13,6 +13,18 @@ CREATE TABLE "accounts" (
 	CONSTRAINT "accounts_number_filled" CHECK ("accounts"."number" <> '')
 );
 --> statement-breakpoint
+CREATE TABLE "brands" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "brands_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"name" text NOT NULL,
+	"pattern" text NOT NULL,
+	"domain" text NOT NULL,
+	CONSTRAINT "brands_name_unique" UNIQUE("name"),
+	CONSTRAINT "brands_domain_unique" UNIQUE("domain"),
+	CONSTRAINT "brands_name_filled" CHECK ("brands"."name" <> ''),
+	CONSTRAINT "brands_pattern_valid" CHECK (not ('' ~* "brands"."pattern")),
+	CONSTRAINT "brands_domain_format" CHECK ("brands"."domain" ~ '^([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$')
+);
+--> statement-breakpoint
 CREATE TABLE "cash_transactions" (
 	"transaction_id" integer PRIMARY KEY NOT NULL,
 	"date" date NOT NULL,

@@ -158,3 +158,22 @@ export const depotTransactions = pgTable(
     ];
   },
 );
+
+export const brands = pgTable(
+  "brands",
+  {
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    name: text().notNull().unique(),
+    pattern: text().notNull(),
+    domain: text().notNull().unique(),
+  },
+  (table) => [
+    check("brands_name_filled", filled(table.name)),
+    // PostgreSQL raises on an invalid pattern, and a pattern that matches the empty string matches every counterparty.
+    check("brands_pattern_valid", sql`not ('' ~* ${table.pattern})`),
+    check(
+      "brands_domain_format",
+      matches(table.domain, "^([a-z0-9]([a-z0-9-]*[a-z0-9])?\\.)+[a-z]{2,}$"),
+    ),
+  ],
+);
