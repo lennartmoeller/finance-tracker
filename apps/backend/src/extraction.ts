@@ -85,7 +85,7 @@ export function extractTransactions(
 
 interface Extracted {
   cash?: CashTransaction;
-  depot?: DepotTransaction;
+  depot?: Omit<DepotTransaction, "securityLogo">;
 }
 
 function read<T>(

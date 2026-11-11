@@ -18,6 +18,7 @@ services:
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres
       API_TOKEN: ${API_TOKEN:?Set API_TOKEN in .env}
+      LOGO_DEV_SECRET_KEY: ${LOGO_DEV_SECRET_KEY:?Set LOGO_DEV_SECRET_KEY in .env}
     ports:
       - 127.0.0.1:3000:3000
     depends_on:

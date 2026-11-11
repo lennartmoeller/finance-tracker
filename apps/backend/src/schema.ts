@@ -1,6 +1,7 @@
 import { sql, type SQL } from "drizzle-orm";
 import {
   check,
+  customType,
   date,
   integer,
   jsonb,
@@ -29,6 +30,13 @@ const oneOf = (column: AnyPgColumn, values: readonly string[]) =>
   sql`${column} in (${sql.raw(values.map((value) => `'${value}'`).join(", "))})`;
 
 const inCents = (column: AnyPgColumn) => sql`scale(${column}) = 2`;
+
+const setTogether = (column: AnyPgColumn, other: AnyPgColumn) =>
+  sql`(${column} is null) = (${other} is null)`;
+
+const domainFormat = "^([a-z0-9]([a-z0-9-]*[a-z0-9])?\\.)+[a-z]{2,}$";
+
+const bytea = customType<{ data: Buffer }>({ dataType: () => "bytea" });
 
 export const accounts = pgTable(
   "accounts",
@@ -148,7 +156,7 @@ export const depotTransactions = pgTable(
       check("depot_transactions_amount_in_cents", inCents(table.amount)),
       check(
         "depot_transactions_currency_with_amount",
-        sql`(${table.amount} is null) = (${table.currency} is null)`,
+        setTogether(table.amount, table.currency),
       ),
       check(
         "depot_transactions_currency_format",
@@ -157,4 +165,42 @@ export const depotTransactions = pgTable(
       check("depot_transactions_description_filled", filled(table.description)),
     ];
   },
+);
+
+export const brands = pgTable(
+  "brands",
+  {
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    name: text().notNull().unique(),
+    pattern: text().notNull(),
+    domain: text().notNull().unique(),
+  },
+  (table) => [
+    check("brands_name_filled", filled(table.name)),
+    // PostgreSQL raises on an invalid pattern, and a pattern that matches the empty string matches every counterparty.
+    check("brands_pattern_valid", sql`not ('' ~* ${table.pattern})`),
+    check("brands_domain_format", matches(table.domain, domainFormat)),
+  ],
+);
+
+export const logos = pgTable(
+  "logos",
+  {
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    domain: text().unique(),
+    isin: text()
+      .unique()
+      .references(() => securities.isin),
+    image: bytea(),
+    etag: text(),
+  },
+  (table) => [
+    check(
+      "logos_one_identifier",
+      sql`(${table.domain} is null) <> (${table.isin} is null)`,
+    ),
+    check("logos_domain_format", matches(table.domain, domainFormat)),
+    check("logos_etag_with_image", setTogether(table.image, table.etag)),
+    check("logos_etag_filled", filled(table.etag)),
+  ],
 );

@@ -21,7 +21,6 @@
   --danger-text: #b42318;
   --success: #15803d;
   --focus: rgba(24, 24, 27, 0.14);
-  --logo-shadow: 0 1px 3px rgba(0, 0, 0, 0.14), 0 1px 1px rgba(0, 0, 0, 0.06);
   --shadow: 0 12px 32px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08);
   --backdrop: rgba(24, 24, 27, 0.28);
   color-scheme: light dark;
@@ -51,7 +50,6 @@
     --danger-text: #ff9592;
     --success: #4ade80;
     --focus: rgba(244, 244, 245, 0.18);
-    --logo-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
     --shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
     --backdrop: rgba(0, 0, 0, 0.5);
   }
@@ -272,7 +270,6 @@ button {
   flex: none;
   object-fit: contain;
   background: #fff;
-  box-shadow: var(--logo-shadow);
 }
 
 .logo.small {

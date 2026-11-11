@@ -23,6 +23,30 @@ export const formatDate = (date: string) =>
 
 const none = <span className="empty-field">—</span>;
 
+function Named({
+  name,
+  logo,
+  children,
+}: {
+  name: string;
+  logo: string | null;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="named">
+      {logo ? (
+        <img className="logo small" src={logo} alt="" />
+      ) : (
+        <span className="logo small letter">{name[0]}</span>
+      )}
+      <div>
+        {name}
+        {children}
+      </div>
+    </div>
+  );
+}
+
 export function TransactionTable({
   account,
   transactions,
@@ -46,6 +70,7 @@ export function TransactionTable({
           <tr>
             <th />
             <th>Date</th>
+            {!ofDepot && <th>Brand</th>}
             <th>{ofDepot ? "Security" : "Counterparty"}</th>
             {ofDepot && <th>Type</th>}
             <th>Description</th>
@@ -72,12 +97,23 @@ export function TransactionTable({
                   <td className="date">
                     {normalized ? formatDate(normalized.date) : none}
                   </td>
+                  {!ofDepot && (
+                    <td>
+                      {transaction.brand ? (
+                        <Named {...transaction.brand} />
+                      ) : (
+                        none
+                      )}
+                    </td>
+                  )}
                   <td>
                     {depot ? (
-                      <>
-                        {depot.securityName}
+                      <Named
+                        name={depot.securityName}
+                        logo={depot.securityLogo}
+                      >
                         <span className="isin">{depot.isin}</span>
-                      </>
+                      </Named>
                     ) : (
                       (cash?.counterparty ?? none)
                     )}
@@ -118,7 +154,7 @@ export function TransactionTable({
                 </tr>
                 {open.has(transaction.id) && (
                   <tr className="raw">
-                    <td colSpan={ofDepot ? 7 : 5}>
+                    <td colSpan={ofDepot ? 7 : 6}>
                       <RawTransaction
                         account={account}
                         transaction={transaction}

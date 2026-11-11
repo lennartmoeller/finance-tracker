@@ -1,12 +1,16 @@
 import { implement, ORPCError } from "@orpc/server";
-import { desc, eq, sql, type SQLWrapper } from "drizzle-orm";
+import { and, desc, eq, isNotNull, sql, type SQLWrapper } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { contract, type Account } from "@finance-tracker/shared/contract";
 import { extractTransactions } from "./extraction.ts";
+import { fetchMissingLogos, logoPath } from "./logos.ts";
 import {
   accounts,
+  brands,
   cashTransactions,
   depotTransactions,
+  logos,
   transactions,
   securities,
 } from "./schema.ts";
@@ -42,11 +46,15 @@ async function withoutConflict<T>(query: Promise<T>): Promise<T> {
   }
 }
 
-export function createRouter(db: NodePgDatabase, apiToken: string) {
+export function createRouter(
+  db: NodePgDatabase,
+  authorization: string,
+  logoDevSecretKey: string,
+) {
   const os = implement(contract)
     .$context<{ authorization: string | undefined }>()
     .use(({ context, next }) => {
-      if (context.authorization !== `Bearer ${apiToken}`)
+      if (context.authorization !== authorization)
         throw new ORPCError("UNAUTHORIZED");
       return next();
     });
@@ -147,12 +155,27 @@ export function createRouter(db: NodePgDatabase, apiToken: string) {
     ),
     transaction: {
       list: os.transaction.list.handler(async () => {
+        await fetchMissingLogos(db, logoDevSecretKey);
+        const brand = db
+          .select({ name: brands.name, logoId: logos.id })
+          .from(brands)
+          .leftJoin(
+            logos,
+            and(eq(logos.domain, brands.domain), isNotNull(logos.image)),
+          )
+          .where(sql`${cashTransactions.counterparty} ~* ${brands.pattern}`)
+          .orderBy(brands.id)
+          .limit(1)
+          .as("brand");
+        const securityLogo = alias(logos, "security_logo");
         const rows = await db
           .select({
             transaction: transactions,
             cash: cashTransactions,
             depot: depotTransactions,
             security: securities,
+            securityLogoId: securityLogo.id,
+            brand: { name: brand.name, logoId: brand.logoId },
           })
           .from(transactions)
           .leftJoin(
@@ -164,15 +187,31 @@ export function createRouter(db: NodePgDatabase, apiToken: string) {
             eq(depotTransactions.transactionId, transactions.id),
           )
           .leftJoin(securities, eq(securities.isin, depotTransactions.isin))
+          .leftJoin(
+            securityLogo,
+            and(
+              eq(securityLogo.isin, securities.isin),
+              isNotNull(securityLogo.image),
+            ),
+          )
+          .leftJoinLateral(brand, sql`true`)
           .orderBy(
             sql`coalesce(${cashTransactions.date}, ${depotTransactions.date}) desc nulls last`,
             desc(transactions.id),
           );
-        return rows.map(({ transaction, cash, depot, security }) => ({
-          ...transaction,
-          cash,
-          depot: depot && security && { ...depot, securityName: security.name },
-        }));
+        return rows.map(
+          ({ transaction, cash, depot, security, securityLogoId, brand }) => ({
+            ...transaction,
+            cash,
+            depot: depot &&
+              security && {
+                ...depot,
+                securityName: security.name,
+                securityLogo: logoPath(securityLogoId),
+              },
+            brand: brand && { name: brand.name, logo: logoPath(brand.logoId) },
+          }),
+        );
       }),
     },
   });

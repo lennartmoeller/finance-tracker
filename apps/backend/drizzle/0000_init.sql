@@ -13,6 +13,18 @@ CREATE TABLE "accounts" (
 	CONSTRAINT "accounts_number_filled" CHECK ("accounts"."number" <> '')
 );
 --> statement-breakpoint
+CREATE TABLE "brands" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "brands_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"name" text NOT NULL,
+	"pattern" text NOT NULL,
+	"domain" text NOT NULL,
+	CONSTRAINT "brands_name_unique" UNIQUE("name"),
+	CONSTRAINT "brands_domain_unique" UNIQUE("domain"),
+	CONSTRAINT "brands_name_filled" CHECK ("brands"."name" <> ''),
+	CONSTRAINT "brands_pattern_valid" CHECK (not ('' ~* "brands"."pattern")),
+	CONSTRAINT "brands_domain_format" CHECK ("brands"."domain" ~ '^([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$')
+);
+--> statement-breakpoint
 CREATE TABLE "cash_transactions" (
 	"transaction_id" integer PRIMARY KEY NOT NULL,
 	"date" date NOT NULL,
@@ -42,6 +54,20 @@ CREATE TABLE "depot_transactions" (
 	CONSTRAINT "depot_transactions_description_filled" CHECK ("depot_transactions"."description" <> '')
 );
 --> statement-breakpoint
+CREATE TABLE "logos" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "logos_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"domain" text,
+	"isin" text,
+	"image" "bytea",
+	"etag" text,
+	CONSTRAINT "logos_domain_unique" UNIQUE("domain"),
+	CONSTRAINT "logos_isin_unique" UNIQUE("isin"),
+	CONSTRAINT "logos_one_identifier" CHECK (("logos"."domain" is null) <> ("logos"."isin" is null)),
+	CONSTRAINT "logos_domain_format" CHECK ("logos"."domain" ~ '^([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$'),
+	CONSTRAINT "logos_etag_with_image" CHECK (("logos"."image" is null) = ("logos"."etag" is null)),
+	CONSTRAINT "logos_etag_filled" CHECK ("logos"."etag" <> '')
+);
+--> statement-breakpoint
 CREATE TABLE "securities" (
 	"isin" text PRIMARY KEY NOT NULL,
 	"name" text NOT NULL,
@@ -64,6 +90,7 @@ CREATE TABLE "transactions" (
 ALTER TABLE "cash_transactions" ADD CONSTRAINT "cash_transactions_transaction_id_transactions_id_fk" FOREIGN KEY ("transaction_id") REFERENCES "public"."transactions"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "depot_transactions" ADD CONSTRAINT "depot_transactions_transaction_id_transactions_id_fk" FOREIGN KEY ("transaction_id") REFERENCES "public"."transactions"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "depot_transactions" ADD CONSTRAINT "depot_transactions_isin_securities_isin_fk" FOREIGN KEY ("isin") REFERENCES "public"."securities"("isin") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "logos" ADD CONSTRAINT "logos_isin_securities_isin_fk" FOREIGN KEY ("isin") REFERENCES "public"."securities"("isin") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "transactions" ADD CONSTRAINT "transactions_account_id_accounts_id_fk" FOREIGN KEY ("account_id") REFERENCES "public"."accounts"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE FUNCTION "require_account_type"() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN

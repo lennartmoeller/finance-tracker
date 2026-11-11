@@ -9,23 +9,28 @@ flowchart LR
   frontend["Frontend"]
   backend["Backend"]
   postgres[("PostgreSQL")]
+  logodev["Logo.dev"]
   extension -- "reads the logged-in session" --> websites
   extension -- "accounts, raw transactions" --> backend
   frontend -- "accounts, normalized and raw transactions" --> backend
   backend --> postgres
+  backend -- "brand domains, ISINs" --> logodev
 ```
 
 - One user owns all data; the system manages no users and no permissions.
 - The system never sees bank credentials, because the browser extension reads only sessions the user opened.
 - Transaction data enters only through the browser extension.
 - The frontend and the browser extension reach data only through the backend's API, never from its database.
+- The backend's one outbound service is Logo.dev, which receives brand domains and ISINs to return their logos and never sees transaction data.
+- The backend downloads each logo once through Logo.dev's API and stores it, because Logo.dev's terms allow storing what its API returns but only embedding what its CDN serves.
+- The backend serves stored logos at `/logos/<id>` beside its oRPC API, because an `<img>` loads a URL and cannot call a procedure.
 - The frontend shows each raw transaction beside its normalized transaction, or marked as not extracted where it has none, so the user can check extraction against what the bank delivered.
 
 ## Components
 
 | Component | Owns | Leaves to others |
 | --- | --- | --- |
-| Backend | the API contract's implementation; validation, deduplication, raw storage and extraction; every piece of data the system stores | reading bank websites |
+| Backend | the API contract's implementation; validation, deduplication, raw storage and extraction; every piece of data the system stores, logos downloaded from Logo.dev included | reading bank websites |
 | Frontend | the interface in which the user views and manages everything, so far each account with its normalized and raw transactions and its balance or invested money | reading bank websites |
 | Browser extension | one adapter per bank website; shape validation; the popup that creates, renames and removes accounts, lists them by bank with their last sync, and syncs each one | storing bank credentials |
 | PostgreSQL | the tables of the [data model](./data-model.md) and the rules that keep their data sound | |
