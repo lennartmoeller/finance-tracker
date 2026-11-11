@@ -1,6 +1,6 @@
 # Data model
 
-The backend stores each transaction once with its raw transaction, gives cash accounts and depots a table each for the normalized transactions extracted from it, and lets the database itself reject data that makes no sense; why is recorded in [ADR 0013](./adr/0013-normalized-transactions-per-account-type-checked-by-the-database.md).
+The backend stores each transaction once with its raw transaction, gives cash accounts and depots a table each for the normalized transactions extracted from it, and lets the database itself reject data that makes no sense; why is recorded in [the context](../context/transactions.md#normalized-transactions-per-account-type-checked-by-the-database).
 
 ```mermaid
 erDiagram
@@ -49,8 +49,8 @@ erDiagram
   }
   logos {
     integer id PK
-    text domain "unique, or an isin"
-    text isin FK "unique, or a domain"
+    text domain "optional, unique, instead of an isin"
+    text isin FK "optional, unique, instead of a domain"
     bytea image "optional: a 256-pixel PNG"
     text etag "optional, with image"
   }
@@ -79,7 +79,7 @@ A security holds the fullest name a bank delivered for its ISIN: finvesto's befo
 - A normalized transaction belongs to the account of its transaction, so a trade's cash side is a cash transaction of the account that paid, wherever [its bank delivers one](./architecture.md#raw-data-and-shape-versions).
 - A raw transaction is extracted to at most one normalized transaction, and one that moves neither money nor shares, such as finvesto's notice of a charge, to none.
 - A cash transaction's amount is the change of the balance, fees and taxes included, and its date the day the balance changed, such as a card purchase's booking date rather than its purchase date.
-- A normalized transaction's counterparty and description hold its bank's text as delivered, such as ING's `VISA ` prefix or the line breaks in its remittance text, so tidying them is not extraction's job.
+- Extraction takes a normalized transaction's counterparty and description from its bank's text without tidying them, so ING's `VISA ` prefix and the line breaks in its remittance text stay.
 
 ## Depot transaction types
 
@@ -92,7 +92,7 @@ A security holds the fullest name a bank delivered for its ISIN: finvesto's befo
 | `distribution` | income a security pays, such as a dividend, a fund distribution or a stock perk | `NULL` | above 0: what was paid, after taxes |
 
 - A depot's shares of a security add up from the quantities of its depot transactions.
-- A depot's [invested money](./adr/0012-depot-amounts-as-invested-money.md) adds up from the amounts of its trades alone, because a distribution's amount is income.
+- A depot's [invested money](../context/transactions.md#depot-amounts-as-invested-money) adds up from the amounts of its trades alone, because a distribution's amount is income.
 
 ## Brands
 
@@ -107,7 +107,7 @@ A security holds the fullest name a bank delivered for its ISIN: finvesto's befo
 
 ## Prices
 
-- `price.fill` stores the [price](../GLOSSARY.md#prices) of every LS Exchange trading day of each holding span, as [ADR 0015](./adr/0015-security-prices-from-onvista.md) decides, so days between two spans of a security have none.
+- `price.fill` stores the [price](../../GLOSSARY.md#prices) of every LS Exchange trading day of each holding span, as [the context](../context/prices.md#security-prices-from-onvista) records, so days between two spans of a security have none.
 - A span's prices start at the last trading day on or before its first day, so a span that starts on a weekend or holiday has a price to carry forward, and the span of a security still held runs through yesterday, because only a finished day has a close.
 - A reader takes a security's latest price on or before a day, because weekends and holidays have no price.
 - A fill requests only the days after a span's last stored price and none for a span without a weekday after it, and never rewrites a stored price.
@@ -115,12 +115,12 @@ A security holds the fullest name a bank delivered for its ISIN: finvesto's befo
 
 ## Database rules
 
-The database enforces each of these, so no writer can store a row that breaks one; the [schema](../apps/backend/src/schema.ts) holds the constraints and the [migration](../apps/backend/drizzle/0000_init.sql) the triggers.
+The database enforces each of these, so no writer can store a row that breaks one; the [schema](../../apps/backend/src/schema.ts) holds the constraints and the [migration](../../apps/backend/drizzle/0000_init.sql) the triggers.
 
 - A depot transaction has one of the five types, its quantity and amount follow that type as the [types table](#depot-transaction-types) states, and it has a currency exactly when it has an amount.
 - A trigger lets a cash transaction reference only a cash account's transaction and a depot transaction only a depot's, so no transaction has both.
 - A trigger keeps a row of `transactions` unchanged, so a raw transaction stays as its bank delivered it.
-- An account's type is cash or depot and its bank one the system knows, and a trigger keeps both unchanged, because [they decide how its raw transactions are read](./adr/0011-raw-transactions-read-by-their-account.md).
+- An account's type is cash or depot and its bank one the system knows, and a trigger keeps both unchanged, because [they decide how its raw transactions are read](../context/ingestion.md#raw-transactions-read-by-their-account).
 - A cash or depot transaction's amount has exactly two decimals, so a bank's sub-cent amount fails its sync instead of being rounded.
 - A security is named by a bank the system knows.
 - A currency is three capital letters, and an ISIN is two letters, nine letters or digits, and one digit.

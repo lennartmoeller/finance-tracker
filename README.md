@@ -7,9 +7,9 @@ It consists of three apps: a backend with PostgreSQL that stores all data, a fro
 
 ## Further reading
 
-- [Architecture](./docs/architecture.md): the apps, their data flows, repository layout, hosting and security.
-- [Data model](./docs/data-model.md): the database's tables, how they connect, and the rules the database enforces.
-- [Decision records](./docs/adr/): why the system is built as it is, including why every account is read from its bank's website.
+- [Architecture](./docs/contract/architecture.md): the apps, their data flows, repository layout, hosting and security.
+- [Data model](./docs/contract/data-model.md): the database's tables, how they connect, and the rules the database enforces.
+- [Context](./docs/context/index.md): why the system is built as it is, including why every account is read from its bank's website.
 - [Glossary](./GLOSSARY.md): the domain terms every doc and issue uses.
 - [Contributing](./CONTRIBUTING.md): local setup, running the system, the quality gate, browser extension releases and dependency updates.
 

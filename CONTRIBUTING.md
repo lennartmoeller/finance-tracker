@@ -21,7 +21,7 @@
 
 ## Add a workspace
 
-Each app under `apps/` and each shared package under `packages/` is a pnpm workspace, laid out as the [architecture](./docs/architecture.md#repository-layout) describes.
+Each app under `apps/` and each shared package under `packages/` is a pnpm workspace, laid out as the [architecture](./docs/contract/architecture.md#repository-layout) describes.
 The first change of a component creates its directory with:
 
 - a `package.json` with `"name": "@finance-tracker/<directory>"`, `"private": true` and `"type": "module"`;
@@ -39,8 +39,8 @@ Write a trigger by hand into the generated migration, because Drizzle's schema h
 
 ## Check a change
 
-Run `pnpm check`, the quality gate; the [`CI` workflow](./.github/workflows/ci.yml) runs the same command and a CodeQL analysis.
-Tests run without a database, Logo.dev or onvista, so `pnpm check` and CI need neither PostgreSQL nor a Logo.dev key; what rests on them is checked by hand: skipping known raw transactions by the unique constraint on account and identity, rejecting rows by the [database rules](./docs/data-model.md#database-rules), downloading, storing and serving logos, and filling prices.
+Run `pnpm check`, the quality gate; the [`CI` workflow](./.github/workflows/ci.yml) runs the same command, a CodeQL analysis and Keep the Why's linter on [`docs/context/`](./docs/context/index.md).
+Tests run without a database, Logo.dev or onvista, so `pnpm check` and CI need neither PostgreSQL nor a Logo.dev key; what rests on them is checked by hand: skipping known raw transactions by the unique constraint on account and identity, rejecting rows by the [database rules](./docs/contract/data-model.md#database-rules), downloading, storing and serving logos, and filling prices.
 
 - Fix formatting with `pnpm exec prettier --write .` and autofixable lint findings with `pnpm exec eslint --fix .`.
 - Delete what knip reports as unused instead of ignoring it.
