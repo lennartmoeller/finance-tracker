@@ -5,58 +5,64 @@
 1. Install the Node.js version in [`.nvmrc`](./.nvmrc), for example with `nvm install` or `fnm install`.
 2. Install pnpm with `npm install --global pnpm`; any pnpm version switches itself to the one pinned in the `packageManager` field of [`package.json`](./package.json).
 3. Run `pnpm install`.
-4. Install a Docker-compatible container runtime with Compose, such as Docker Desktop, or Colima with the standalone `docker-compose`, which spells this guide's `docker compose` with a hyphen.
-5. Create a `.env` in the repository root with `API_TOKEN=<a random secret>`, `DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres` and `LOGO_DEV_SECRET_KEY=<the secret key from your Logo.dev dashboard>`; Compose reads the token and the key from it, the frontend's dev server the token, and the backend's dev server all three.
+4. Install a Docker-compatible container runtime with Compose, such as Docker Desktop, or Colima with the standalone `docker-compose`.
+5. Copy [`.env.example`](./.env.example) to `.env` and fill in its empty values.
 6. Install each Claude Code plugin enabled in [`.claude/settings.json`](./.claude/settings.json) with `claude plugin install <plugin>@<marketplace> --scope project`, because Claude Code enables these plugins for every clone but does not download them.
 
 ## Run the system
 
-- `docker compose up -d --build` runs PostgreSQL and the backend on <http://localhost:3000>, as [`compose.yaml`](./compose.yaml) defines them.
-- For development, run `docker compose up -d postgres`, then `pnpm --filter @finance-tracker/backend dev`.
-- `pnpm --filter @finance-tracker/browser-extension dev` opens a Firefox with the browser extension loaded until that Firefox closes.
-- `pnpm --filter @finance-tracker/frontend dev` serves the frontend on <http://localhost:5173>, reading the backend on port 3000.
-- `pnpm --filter @finance-tracker/frontend mock` serves the frontend in its mock mode, on generated fake data without backend, with a bar that switches the data state and the theme.
-- The browser extension's popup asks for the `API_TOKEN` once.
-- `curl -X POST http://localhost:3000/rpc/price/fill -H "Authorization: Bearer $API_TOKEN" -H 'Content-Type: application/json' -d '{}'`, with `API_TOKEN` set in the shell, fills the prices of the securities held up to yesterday and answers how many it stored; call it after a sync and whenever market values should catch up.
+### For use
 
-## Add a workspace
+```sh
+# Start PostgreSQL and the backend on http://localhost:3000
+docker compose up -d --build
 
-Each app lives in `apps/<app>` and code that more than one app uses in `packages/shared`, each a pnpm workspace, and no app depends on another.
-The first change of a component creates its directory with:
+# Serve the frontend on http://localhost:5173, reading the backend on port 3000
+pnpm --filter @finance-tracker/frontend dev
 
-- a `package.json` with `"name": "@finance-tracker/<directory>"`, `"private": true` and `"type": "module"`;
-- a `tsconfig.json` that extends `../../tsconfig.base.json`, sets the module resolution, `lib`, `jsx` and `types` its runtime needs, and includes every TypeScript file of the workspace, config files too, because type-aware linting rejects TypeScript files outside every `tsconfig.json`.
+# Fill the prices of the securities held up to yesterday
+curl -X POST http://localhost:3000/rpc/price/fill -H "Authorization: Bearer $API_TOKEN" -H 'Content-Type: application/json' -d '{}'
+```
 
-Depend on a shared package with `"@finance-tracker/<package>": "workspace:*"`.
-Add an external dependency with `pnpm add --filter @finance-tracker/<directory> <dependency>`, which pins its exact version.
-Name test files `*.test.ts` or `*.test.tsx`.
+Install the browser extension from a [release](#release-the-browser-extension).
+
+### For development
+
+Development keeps the frontend's dev server and swaps the backend container and the released extension for dev servers that reload on every change.
+
+```sh
+# Run PostgreSQL alone and the backend's dev server
+docker compose up -d postgres
+pnpm --filter @finance-tracker/backend dev
+
+# Open a Firefox with the browser extension loaded until that Firefox closes
+pnpm --filter @finance-tracker/browser-extension dev
+
+# Serve the frontend in its mock mode, on generated fake data without backend, with a bar that switches the data state and the theme
+pnpm --filter @finance-tracker/frontend mock
+```
 
 ## Change the database schema
 
-Edit [`apps/backend/src/schema.ts`](./apps/backend/src/schema.ts) and run `pnpm --filter @finance-tracker/backend exec drizzle-kit generate --name <change>`; the backend applies new migrations when it starts.
-Run the same command after changing the API contract's banks, account types or currency pattern, because the schema builds its constraints from them.
-Write a trigger by hand into the generated migration, because Drizzle's schema holds none.
+A change to the API contract's banks, account types or currency pattern changes the schema too, because [`schema.ts`](./apps/backend/src/schema.ts) builds its constraints from them.
+Drizzle's schema holds no triggers, so the migrations carry them as hand-written SQL.
+
+Until the first release, [`0000_init.sql`](./apps/backend/drizzle/0000_init.sql) stays the only migration, and a schema change replaces it:
+
+1. Delete `apps/backend/drizzle` and run `pnpm --filter @finance-tracker/backend exec drizzle-kit generate --name init`.
+2. Append the triggers of the previous `0000_init.sql` and restore the previous `when` in `meta/_journal.json`, because the backend applies a migration only when its `when` is newer than that of the last migration it applied.
+3. Back up the local database with `pg_dump` and bring it to the new schema in one hand-written SQL transaction, which keeps its data without re-syncing every account.
+4. Check that `pg_dump --schema-only` of the local database equals that of a fresh database built from the new migration.
+
+After the first release, add a migration per change with `pnpm --filter @finance-tracker/backend exec drizzle-kit generate --name <change>` instead.
 
 ## Check a change
 
-Run `pnpm check`, the quality gate; the [`CI` workflow](./.github/workflows/ci.yml) runs the same command, a CodeQL analysis and Keep the Why's linter on [`docs/context/`](./docs/context/index.md).
-Tests run without a database, Logo.dev or onvista, so `pnpm check` and CI need neither PostgreSQL nor a Logo.dev key; what rests on them is checked by hand: skipping known raw transactions by the unique constraint on account and identity, rejecting rows by the database's [constraints](./apps/backend/src/schema.ts) and [triggers](./apps/backend/drizzle/0000_init.sql), downloading, storing and serving logos, and filling prices.
+```sh
+# Run the quality gate
+pnpm check
 
-- Fix formatting with `pnpm exec prettier --write .` and autofixable lint findings with `pnpm exec eslint --fix .`.
-- Delete what knip reports as unused instead of ignoring it.
-- Prettier leaves Markdown alone; Markdown follows the [`markdown-authoring` skill](./.claude/skills/markdown-authoring/SKILL.md).
-
-## Release the browser extension
-
-Release Firefox installs only add-ons Mozilla signed, so each release is signed as unlisted on addons.mozilla.org, which keeps it private.
-
-1. Raise `version` in [`apps/browser-extension/package.json`](./apps/browser-extension/package.json).
-2. Set `WEB_EXT_API_KEY` and `WEB_EXT_API_SECRET` to the credentials from addons.mozilla.org's API key page.
-3. Run `pnpm --filter @finance-tracker/browser-extension sign`.
-4. Open the signed `.xpi` from `apps/browser-extension/.output/signed` in Firefox to install it.
-
-## Dependency updates
-
-[Dependabot](./.github/dependabot.yml) opens the update pull requests and holds every ignored version with its reason.
-Update Node.js in `.nvmrc` to the version Dependabot sets in the [`Dockerfile`](./Dockerfile), and pnpm in the `packageManager` field of `package.json`, by hand, because Dependabot tracks neither.
-Claude Code updates the plugins enabled in `.claude/settings.json` itself, because a project cannot pin plugin versions.
+# Fix formatting and autofixable lint findings
+pnpm exec prettier --write .
+pnpm exec eslint --fix .
+```

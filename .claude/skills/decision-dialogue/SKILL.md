@@ -1,6 +1,7 @@
 ---
 name: decision-dialogue
 description: Do a Q&A with a user to refine an idea into an actionable plan. Use whenever the user wants to do a Q&A.
+disable-model-invocation: true
 ---
 
 # Decision dialogue
@@ -35,7 +36,7 @@ description: Do a Q&A with a user to refine an idea into an actionable plan. Use
    - **Request changes**: change the plan before confirming it.
 2. On a change request, apply it through the question loop, then ask again.
 3. On either confirmation, set the plan's status to approved with today's date.
-4. To implement here, invoke the `implement-plan` skill with the planning directory.
+4. To implement here, follow the [`implement-plan` skill](../implement-plan/SKILL.md) with the planning directory.
 5. To hand over, first make the planning directory self-contained: move everything only this session knows into it, such as research results, probe output, the user's statements and scratchpad files, until a new session that reads only the directory and the repository lacks nothing.
    Then tell the user to run `/implement-plan <NNNN>` with the directory's number in a new session.
 

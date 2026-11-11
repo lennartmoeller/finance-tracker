@@ -4,4 +4,3 @@ dist/
 .output/
 .wxt/
 .env
-.claude/worktrees/
