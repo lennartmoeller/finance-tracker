@@ -45,10 +45,9 @@ Follow this order:
 2. The rules bind without exception: what the maintainer typed after the command, the agent and contributor instructions, and the skills.
    When the new layout changes the mechanism of a rule, reword the rule.
    Never invert a rule, and drop one only when the thing it governs no longer exists.
-   List every rewording and every drop in the report.
 3. Recorded decisions, wherever the repository keeps them, bind by their reason.
    When the reason is what the maintainer wants, it is a preference and stays.
-   When the reason is technical or the agent's, reverse the decision only if the rewrite is clearly simpler, record the reversal where the decisions live and list it in the report.
+   When the reason is technical or the agent's, reverse the decision only if the rewrite is clearly simpler, record the reversal where the decisions live.
 4. Everything else is open.
 
 ## Facts from the original, form from the idea
@@ -56,7 +55,6 @@ Follow this order:
 Read the original for facts: what it does, the external contract, and the knowledge its code holds that nothing else records, such as a provider quirk or an edge case found in production.
 Take no form from it: its architecture, levels, folder structure, internal names and code shape are outcomes of the history, not of the idea.
 A form that a rule or a preference of the maintainer asks for belongs to the idea, so it stays.
-Design the target from the idea alone, and only then hold the original against it, to find facts the design missed, never to borrow its shape.
 A design that ends up resembling the original is fine when it got there from the idea.
 
 ## Stages
@@ -77,7 +75,7 @@ Reference it from nothing outside it and leave its deletion to the maintainer.
    Include the preference check, because a critique of technical risk alone lets a plan that overrides the maintainer pass.
    Revise the plan by its findings.
 4. **Build.**
-   Write the interface that units follow first, then implement the units in parallel, one subagent per unit folder, each with the rules and its folder as its whole scope.
+   Write everything outside the units yourself first, including the interface they follow, then implement the units in parallel, one subagent per unit folder, each with the rules and its folder as its whole scope.
    Subagents do not see this skill, so give each its unit's idea from the plan as its spec, and tell it to read the original only for facts, never to copy or translate its code.
    Run the quality gate only yourself, because parallel runs collide on shared resources such as a database.
 5. **Document.**
@@ -97,5 +95,5 @@ Reference it from nothing outside it and leave its deletion to the maintainer.
 Report in this order and keep it short:
 
 1. A table of before and after for files, production code lines by language, tests and test lines, docs lines and decision-record lines, measured with one scope that includes untracked files.
-2. The decisions you reversed and the rules you reworded or dropped, each with its reason, and behavior that changed despite the contract.
+2. The decisions you reversed and the rules you reworded or dropped, each with its reason, and behavior that changed despite the external contract.
 3. What needs the maintainer's action and the risks that remain.
