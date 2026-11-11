@@ -5,9 +5,9 @@ description: Update `docs/contract/`, the system's binding architecture overview
 
 # Contract authoring
 
-`docs/contract/` is the contract between the user and the agent: what the system promises, how its components keep each promise, and why each part of it exists.
-From it alone, a reader judges whether a change keeps the system's promises, without reading code.
-"Contract" always means this directory; the oRPC procedures are the API contract, never the bare contract.
+`docs/contract/` is an architectural overview over the whole project.
+Humans use it to understand and review the architecture of the project.
+It can also be viewed as a contract between the coding agent, who owns the code, and the human who owns `docs/contract`.
 
 ## Depth
 
