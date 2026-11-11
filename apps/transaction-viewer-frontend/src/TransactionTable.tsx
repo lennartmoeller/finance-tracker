@@ -33,7 +33,7 @@ export function TransactionTable({
   account: Account;
   transactions: Transaction[];
 }) {
-  const depot = account.type === "depot";
+  const ofDepot = account.type === "depot";
   const [open, setOpen] = useState<ReadonlySet<number>>(new Set());
   const toggle = (id: number) => {
     setOpen((current) => {
@@ -49,73 +49,89 @@ export function TransactionTable({
           <tr>
             <th />
             <th>Date</th>
-            <th>{depot ? "Security" : "Counterparty"}</th>
+            <th>{ofDepot ? "Security" : "Counterparty"}</th>
+            {ofDepot && <th>Type</th>}
             <th>Description</th>
-            {depot && <th className="num">Quantity</th>}
+            {ofDepot && <th className="num">Quantity</th>}
             <th className="num">Amount</th>
           </tr>
         </thead>
         <tbody>
-          {transactions.map((transaction) => (
-            <Fragment key={transaction.id}>
-              <tr
-                className={open.has(transaction.id) ? "tx open" : "tx"}
-                aria-expanded={open.has(transaction.id)}
-                onClick={() => {
-                  toggle(transaction.id);
-                }}
-              >
-                <td>
-                  <ChevronRight className="chevron" />
-                </td>
-                <td className="date">{formatDate(transaction.date)}</td>
-                <td>
-                  {depot ? (
-                    transaction.securityName ? (
+          {transactions.map((transaction) => {
+            const { cash, depot } = transaction;
+            const normalized = cash ?? depot;
+            return (
+              <Fragment key={transaction.id}>
+                <tr
+                  className={open.has(transaction.id) ? "tx open" : "tx"}
+                  aria-expanded={open.has(transaction.id)}
+                  onClick={() => {
+                    toggle(transaction.id);
+                  }}
+                >
+                  <td>
+                    <ChevronRight className="chevron" />
+                  </td>
+                  <td className="date">
+                    {normalized ? formatDate(normalized.date) : none}
+                  </td>
+                  <td>
+                    {depot ? (
                       <>
-                        {transaction.securityName}
-                        <span className="isin">{transaction.isin}</span>
+                        {depot.securityName}
+                        <span className="isin">{depot.isin}</span>
+                      </>
+                    ) : (
+                      (cash?.counterparty ?? none)
+                    )}
+                  </td>
+                  {ofDepot && (
+                    <td>
+                      {depot ? (
+                        <span className="chip">{depot.type}</span>
+                      ) : (
+                        none
+                      )}
+                    </td>
+                  )}
+                  <td className="description">
+                    {normalized ? (
+                      (normalized.description ?? none)
+                    ) : (
+                      <span className="empty-field">Not extracted</span>
+                    )}
+                  </td>
+                  {ofDepot && (
+                    <td className="num">
+                      {depot?.quantity
+                        ? quantityFormat.format(Number(depot.quantity))
+                        : none}
+                    </td>
+                  )}
+                  <td className="num">
+                    {normalized?.amount ? (
+                      <>
+                        {amountFormat.format(Number(normalized.amount))}
+                        <span className="currency">{normalized.currency}</span>
                       </>
                     ) : (
                       none
-                    )
-                  ) : (
-                    (transaction.counterparty ?? none)
-                  )}
-                </td>
-                <td className="description">
-                  {transaction.description ?? none}
-                </td>
-                {depot && (
-                  <td className="num">
-                    {transaction.quantity === null
-                      ? none
-                      : quantityFormat.format(Number(transaction.quantity))}
-                  </td>
-                )}
-                <td className="num">
-                  {transaction.amount === null ? (
-                    none
-                  ) : (
-                    <>
-                      {amountFormat.format(Number(transaction.amount))}
-                      <span className="currency">{transaction.currency}</span>
-                    </>
-                  )}
-                </td>
-              </tr>
-              {open.has(transaction.id) && (
-                <tr className="raw">
-                  <td colSpan={depot ? 6 : 5}>
-                    <RawTransaction
-                      account={account}
-                      transaction={transaction}
-                    />
+                    )}
                   </td>
                 </tr>
-              )}
-            </Fragment>
-          ))}
+                {open.has(transaction.id) && (
+                  <tr className="raw">
+                    <td colSpan={ofDepot ? 7 : 5}>
+                      <RawTransaction
+                        account={account}
+                        transaction={transaction}
+                      />
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
+            );
+          })}
         </tbody>
       </table>
     </div>

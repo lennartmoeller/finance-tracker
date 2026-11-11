@@ -23,14 +23,13 @@ test("an ING booking keeps its German amount as a decimal and an empty counterpa
     ]),
   ).toMatchObject([
     {
-      date: "2026-09-30",
-      amount: "-1234.50",
-      currency: "EUR",
-      counterparty: null,
-      description: "Abschluss per 30.09.2026",
-      isin: null,
-      securityName: null,
-      quantity: null,
+      cash: {
+        date: "2026-09-30",
+        amount: "-1234.50",
+        currency: "EUR",
+        counterparty: null,
+        description: "Abschluss per 30.09.2026",
+      },
     },
   ]);
 });
@@ -54,10 +53,12 @@ test("a Deutsche Bank booking pads its date and keeps an amount without trailing
     ]),
   ).toMatchObject([
     {
-      date: "2026-05-03",
-      amount: "-100.8",
-      counterparty: "Max Mustermann",
-      description: "Umbuchung",
+      cash: {
+        date: "2026-05-03",
+        amount: "-100.8",
+        counterparty: "Max Mustermann",
+        description: "Umbuchung",
+      },
     },
   ]);
 });
@@ -70,7 +71,7 @@ test("a Deutsche Bank depot rejects the cash account's raw transactions", () => 
   ).toBeUndefined();
 });
 
-test("a Deutsche Bank depot receipt adds its cost and shares, and a dividend adds neither", () => {
+test("a Deutsche Bank depot receipt is a trade with its cost and shares, and a dividend a distribution with what it paid", () => {
   const transaction = (
     subType: DeutscheBankDepotRawTransactionV1["subType"],
     total: string,
@@ -95,17 +96,27 @@ test("a Deutsche Bank depot receipt adds its cost and shares, and a dividend add
     ]),
   ).toMatchObject([
     {
-      amount: "1714.50",
-      currency: "EUR",
-      isin: "DE0000000001",
-      securityName: "Muster AG",
-      quantity: "15.00",
+      depot: {
+        isin: "DE0000000001",
+        securityName: "Muster AG",
+        type: "trade",
+        quantity: "15.00",
+        amount: "1714.50",
+        currency: "EUR",
+      },
     },
-    { amount: null, currency: null, quantity: null },
+    {
+      depot: {
+        type: "distribution",
+        quantity: null,
+        amount: "103.52",
+        currency: "EUR",
+      },
+    },
   ]);
 });
 
-test("Trade Republic cash amounts include fees and taxes, the depot takes a trade's opposite amount and no dividend, and trades move their signed shares", () => {
+test("Trade Republic cash amounts include fees and taxes, and the depot takes a trade's opposite amount with its signed shares and a dividend as a distribution", () => {
   const row = (
     type: string,
     shares: string,
@@ -148,10 +159,10 @@ test("Trade Republic cash amounts include fees and taxes, the depot takes a trad
       row("TRANSFER_INBOUND", "", "500.000000"),
     ]),
   ).toMatchObject([
-    { amount: "-401.00", isin: "IE00BK5BQT80", quantity: "2.0000000000" },
-    { amount: "1005.10", quantity: "-5.0000000000" },
-    { amount: "3.45", quantity: null },
-    { amount: "500.000000", isin: null, quantity: null },
+    { cash: { amount: "-401.00", currency: "EUR" } },
+    { cash: { amount: "1005.10" } },
+    { cash: { amount: "3.45" } },
+    { cash: { amount: "500.000000" } },
   ]);
   expect(
     extractTransactions(
@@ -159,13 +170,21 @@ test("Trade Republic cash amounts include fees and taxes, the depot takes a trad
       securityRows,
     ),
   ).toMatchObject([
-    { amount: "401.00", currency: "EUR" },
-    { amount: "-1005.10" },
-    { amount: null, currency: null },
+    {
+      depot: {
+        isin: "IE00BK5BQT80",
+        type: "trade",
+        quantity: "2.0000000000",
+        amount: "401.00",
+        currency: "EUR",
+      },
+    },
+    { depot: { type: "trade", quantity: "-5.0000000000", amount: "-1005.10" } },
+    { depot: { type: "distribution", quantity: null, amount: "3.45" } },
   ]);
 });
 
-test("a finvesto purchase adds its payment, and income and charges paid by selling shares add nothing", () => {
+test("a finvesto purchase is a trade, a distribution carries what it paid, a sale for a tax only its shares, and a notice yields no normalized transaction", () => {
   const row = (
     kind: FinvestoRawTransactionV1[4],
     payment: string,
@@ -183,21 +202,33 @@ test("a finvesto purchase adds its payment, and income and charges paid by selli
       10: shares,
     });
   };
-  expect(
-    extractTransactions({ bank: "finvesto", type: "depot" }, [
-      row("Kauf", "40", "0,334823"),
-      row("Fondsertrag (Ausschüttung)", "3,6", "0"),
-      row("Verkauf wegen Vorabpauschale", "1,2", "-0,098047"),
-    ]),
-  ).toMatchObject([
-    {
-      date: "2026-10-28",
-      amount: "40",
-      currency: "EUR",
-      securityName: "Global Fund",
-      quantity: "0.334823",
-    },
-    { amount: null, currency: null, quantity: null },
-    { amount: null, currency: null, quantity: "-0.098047" },
+  const extracted = extractTransactions({ bank: "finvesto", type: "depot" }, [
+    row("Kauf", "40", "0,334823"),
+    row("Fondsertrag (Ausschüttung)", "3,6", "0"),
+    row("Verkauf wegen Vorabpauschale", "1,2", "-0,098047"),
+    row("Vorabpauschale", "0", "0"),
   ]);
+  expect(extracted).toMatchObject([
+    {
+      depot: {
+        date: "2026-10-28",
+        securityName: "Global Fund",
+        type: "trade",
+        quantity: "0.334823",
+        amount: "40",
+        currency: "EUR",
+      },
+    },
+    { depot: { type: "distribution", quantity: null, amount: "3.6" } },
+    {
+      depot: {
+        type: "tax",
+        quantity: "-0.098047",
+        amount: null,
+        currency: null,
+      },
+    },
+    {},
+  ]);
+  expect(extracted?.[3]).not.toHaveProperty("depot");
 });

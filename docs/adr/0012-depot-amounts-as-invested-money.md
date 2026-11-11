@@ -1,3 +1,7 @@
+---
+status: amended by ADR-0013
+---
+
 # Depot amounts as invested money
 
 A depot transaction's amount is the change in the money invested in the depot, seen from the depot, so a purchase adds what it cost, fees included, and a sale subtracts what it paid out.

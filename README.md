@@ -9,6 +9,7 @@ A second service, the transaction viewer, reads the bank data service's API to s
 ## Further reading
 
 - [Architecture](./docs/architecture.md): the bank data service's components, data flows, repository layout, hosting and security.
+- [Data model](./docs/data-model.md): the database's tables, how they connect, and the rules the database enforces.
 - [Decision records](./docs/adr/): why the system is built as it is, including why every account is read from its bank's website.
 - [Glossary](./GLOSSARY.md): the domain terms every doc and issue uses.
 - [Contributing](./CONTRIBUTING.md): local setup, running the system, the quality gate, extension releases and dependency updates.

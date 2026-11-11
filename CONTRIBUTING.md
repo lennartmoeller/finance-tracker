@@ -32,11 +32,12 @@ Name test files `*.test.ts` or `*.test.tsx`.
 ## Change the database schema
 
 Edit [`apps/bank-data-backend/src/schema.ts`](./apps/bank-data-backend/src/schema.ts) and run `pnpm --filter @finance-tracker/bank-data-backend exec drizzle-kit generate --name <change>`; the backend applies new migrations when it starts.
+Write a trigger by hand into the generated migration, because Drizzle's schema holds none.
 
 ## Check a change
 
 Run `pnpm check`, the quality gate; the [`CI` workflow](./.github/workflows/ci.yml) runs the same command and a CodeQL analysis.
-Tests run without a database, so `pnpm check` and CI need no PostgreSQL; skipping known raw transactions rests on the database's unique constraint on account and identity and is checked by hand.
+Tests run without a database, so `pnpm check` and CI need no PostgreSQL; what rests on the database is checked by hand: skipping known raw transactions by the unique constraint on account and identity, and rejecting rows by the [database rules](./docs/data-model.md#database-rules).
 
 - Fix formatting with `pnpm exec prettier --write .` and autofixable lint findings with `pnpm exec eslint --fix .`.
 - Delete what knip reports as unused instead of ignoring it.

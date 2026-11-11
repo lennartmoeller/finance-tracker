@@ -5,6 +5,8 @@ import { bank } from "./bank.ts";
 import { currency } from "./currency.ts";
 import { decimal } from "./decimal.ts";
 
+export const accountType = z.enum(["cash", "depot"]);
+
 const account = z.object({
   id: z.int(),
   name: z
@@ -13,7 +15,7 @@ const account = z.object({
     .min(1, "Name the account.")
     .max(40, "Use at most 40 characters."),
   bank,
-  type: z.enum(["cash", "depot"]),
+  type: accountType,
   number: z.string(),
   lastSyncedAt: z.date().nullable(),
 });
@@ -35,24 +37,36 @@ export const newAccount = account
       });
   });
 
-const normalizedTransaction = z.object({
+const cashTransaction = z.object({
   date: z.iso.date(),
-  amount: decimal.nullable(),
-  currency: currency.nullable(),
+  amount: decimal,
+  currency,
   counterparty: z.string().nullable(),
   description: z.string().nullable(),
-  isin: z.string().nullable(),
-  securityName: z.string().nullable(),
-  quantity: decimal.nullable(),
 });
 
-export type NormalizedTransaction = z.infer<typeof normalizedTransaction>;
+export type CashTransaction = z.infer<typeof cashTransaction>;
 
-const transaction = normalizedTransaction.extend({
+const depotTransaction = z.object({
+  date: z.iso.date(),
+  isin: z.string(),
+  securityName: z.string(),
+  type: z.enum(["trade", "reinvestment", "fee", "tax", "distribution"]),
+  quantity: decimal.nullable(),
+  amount: decimal.nullable(),
+  currency: currency.nullable(),
+  description: z.string().nullable(),
+});
+
+export type DepotTransaction = z.infer<typeof depotTransaction>;
+
+const transaction = z.object({
   id: z.int(),
   accountId: z.int(),
   shapeVersion: z.int(),
   data: z.json(),
+  cash: cashTransaction.nullable(),
+  depot: depotTransaction.nullable(),
 });
 
 export type Transaction = z.infer<typeof transaction>;

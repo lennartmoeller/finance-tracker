@@ -26,6 +26,10 @@ _Avoid_: giro account, savings account, checking account, current account, clear
 An account that holds securities or fund shares.
 _Avoid_: portfolio, securities account, brokerage account
 
+**Security**:
+A stock or fund whose shares a depot holds, identified by its ISIN.
+_Avoid_: asset, instrument, position
+
 **Account number**:
 The number by which the bank identifies an account: its IBAN where it has one, otherwise the number the bank shows for it, such as a depot number.
 _Avoid_: account ID, identifier, IBAN (for every account)
@@ -68,8 +72,28 @@ A transaction exactly as its bank delivered it, kept unchanged together with its
 _Avoid_: original transaction, import record
 
 **Normalized transaction**:
-A transaction in the system's own structure, extracted from a raw transaction.
+A transaction in the system's own structure, extracted from a raw transaction: a cash transaction or a depot transaction.
 _Avoid_: parsed transaction, cleaned transaction
+
+**Cash transaction**:
+A normalized transaction of a cash account: the money one transaction adds to or takes from its balance.
+_Avoid_: payment, booking, cash movement
+
+**Depot transaction**:
+A normalized transaction of a depot, which concerns one security and is a trade, a reinvestment, a distribution, or a fee or tax paid by selling shares.
+_Avoid_: position change, trade (for every depot transaction)
+
+**Trade**:
+A depot transaction that buys or sells shares of a security for money.
+_Avoid_: order, execution
+
+**Reinvestment**:
+A depot transaction that buys shares with a distribution that stays in the depot.
+_Avoid_: accumulation
+
+**Distribution**:
+A depot transaction in which a security pays income, such as a dividend, a fund's payout or a stock perk.
+_Avoid_: dividend (for every distribution), payout, income
 
 **Identity**:
 What makes two deliveries of a transaction the same transaction, always within one account.

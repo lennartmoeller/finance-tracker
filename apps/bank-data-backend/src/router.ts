@@ -1,9 +1,15 @@
 import { implement, ORPCError } from "@orpc/server";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { contract } from "@finance-tracker/bank-data-api/contract";
 import { extractTransactions } from "./extraction.ts";
-import { accounts, transactions } from "./schema.ts";
+import {
+  accounts,
+  cashTransactions,
+  depotTransactions,
+  transactions,
+  securities,
+} from "./schema.ts";
 
 const accountNotFound = () =>
   new ORPCError("NOT_FOUND", { message: "The account does not exist." });
@@ -54,18 +60,13 @@ export function createRouter(db: NodePgDatabase, apiToken: string) {
         );
         if (!account) throw accountNotFound();
       }),
-      remove: os.account.remove.handler(({ input }) =>
-        db.transaction(async (tx) => {
-          await tx
-            .delete(transactions)
-            .where(eq(transactions.accountId, input.id));
-          const [account] = await tx
-            .delete(accounts)
-            .where(eq(accounts.id, input.id))
-            .returning();
-          if (!account) throw accountNotFound();
-        }),
-      ),
+      remove: os.account.remove.handler(async ({ input }) => {
+        const [account] = await db
+          .delete(accounts)
+          .where(eq(accounts.id, input.id))
+          .returning();
+        if (!account) throw accountNotFound();
+      }),
     },
     sync: os.sync.handler(({ input }) =>
       db.transaction(async (tx) => {
@@ -80,31 +81,77 @@ export function createRouter(db: NodePgDatabase, apiToken: string) {
           throw new ORPCError("BAD_REQUEST", {
             message: `The raw transactions don't match ${account.bank} ${account.type} shape version ${input.shapeVersion.toString()}.`,
           });
-        const rows = extracted.map((row) => ({
-          ...row,
-          accountId: account.id,
-          shapeVersion: input.shapeVersion,
-        }));
-        const imported = rows.length
+        const imported = extracted.length
           ? await tx
               .insert(transactions)
-              .values(rows)
+              .values(
+                extracted.map(({ identity, data }) => ({
+                  accountId: account.id,
+                  shapeVersion: input.shapeVersion,
+                  identity,
+                  data,
+                })),
+              )
               .onConflictDoNothing()
-              .returning({ id: transactions.id })
+              .returning()
           : [];
+        const ids = new Map(imported.map(({ identity, id }) => [identity, id]));
+        const cash = [];
+        const depot = [];
+        for (const row of extracted) {
+          const transactionId = ids.get(row.identity);
+          if (transactionId === undefined) continue;
+          if (row.cash) cash.push({ transactionId, ...row.cash });
+          if (row.depot) depot.push({ transactionId, ...row.depot });
+        }
+        if (cash.length) await tx.insert(cashTransactions).values(cash);
+        if (depot.length) {
+          await tx
+            .insert(securities)
+            .values(
+              depot.map(({ isin, securityName }) => ({
+                isin,
+                name: securityName,
+              })),
+            )
+            .onConflictDoNothing();
+          await tx.insert(depotTransactions).values(depot);
+        }
         return {
           imported: imported.length,
-          skipped: rows.length - imported.length,
+          skipped: extracted.length - imported.length,
         };
       }),
     ),
     transaction: {
-      list: os.transaction.list.handler(() =>
-        db
-          .select()
+      list: os.transaction.list.handler(async () => {
+        const rows = await db
+          .select({
+            transaction: transactions,
+            cash: cashTransactions,
+            depot: depotTransactions,
+            security: securities,
+          })
           .from(transactions)
-          .orderBy(desc(transactions.date), desc(transactions.id)),
-      ),
+          .leftJoin(
+            cashTransactions,
+            eq(cashTransactions.transactionId, transactions.id),
+          )
+          .leftJoin(
+            depotTransactions,
+            eq(depotTransactions.transactionId, transactions.id),
+          )
+          .leftJoin(securities, eq(securities.isin, depotTransactions.isin))
+          .orderBy(
+            sql`coalesce(${cashTransactions.date}, ${depotTransactions.date}) desc nulls last`,
+            desc(transactions.id),
+          );
+        return rows.map(({ transaction, cash, depot, security }) => ({
+          ...transaction,
+          cash,
+          depot: depot && security && { ...depot, securityName: security.name },
+        }));
+      }),
     },
   });
 }

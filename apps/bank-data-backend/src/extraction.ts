@@ -1,7 +1,8 @@
 import type { z } from "zod";
 import type {
   Account,
-  NormalizedTransaction,
+  CashTransaction,
+  DepotTransaction,
 } from "@finance-tracker/bank-data-api/contract";
 import { decimalSum } from "@finance-tracker/bank-data-api/decimal";
 import {
@@ -78,21 +79,22 @@ export function extractTransactions(
   }
 }
 
+interface Extracted {
+  cash?: CashTransaction;
+  depot?: DepotTransaction;
+}
+
 function read<T>(
   shape: z.ZodType<T>,
   rawTransactions: unknown[],
   identify: (rawTransactions: T[]) => { identity: string; data: T }[],
-  extract: (data: T) => NormalizedTransaction,
+  extract: (data: T) => Extracted,
 ) {
   const parsed = shape.array().safeParse(rawTransactions);
   return parsed.success
     ? identify(parsed.data).map((row) => ({ ...row, ...extract(row.data) }))
     : undefined;
 }
-
-type Direction = -1 | 0 | 1;
-
-const noSecurity = { isin: null, securityName: null, quantity: null };
 
 const germanDecimal = (text: string) =>
   text.replaceAll(".", "").replace(",", ".");
@@ -104,20 +106,21 @@ const germanDate = (text: string) =>
     .map((part) => part.padStart(2, "0"))
     .join("-");
 
-function moved(value: string, direction: Direction): string | null {
-  if (direction === 0 || Number(value) === 0) return null;
-  if (direction === 1) return value;
-  return value.startsWith("-") ? value.slice(1) : `-${value}`;
-}
+const negated = (value: string) =>
+  value.startsWith("-") ? value.slice(1) : `-${value}`;
 
-function invested(
+function ofType(
+  type: DepotTransaction["type"],
+  shares: string,
   money: { amount: string; currency: string } | undefined,
-  direction: Direction,
-): Pick<NormalizedTransaction, "amount" | "currency"> {
-  const amount = money && moved(money.amount, direction);
-  return money && amount
-    ? { amount, currency: money.currency }
-    : { amount: null, currency: null };
+): Pick<DepotTransaction, "type" | "quantity" | "amount" | "currency"> {
+  const paid = type === "trade" || type === "distribution" ? money : undefined;
+  return {
+    type,
+    quantity: type === "distribution" ? null : shares,
+    amount: paid?.amount ?? null,
+    currency: paid?.currency ?? null,
+  };
 }
 
 function fromGermanBooking(booking: {
@@ -126,85 +129,109 @@ function fromGermanBooking(booking: {
   currency: string;
   counterparty: string;
   description: string;
-}): NormalizedTransaction {
+}): Extracted {
   return {
-    date: germanDate(booking.date),
-    amount: germanDecimal(booking.amount),
-    currency: booking.currency,
-    counterparty: booking.counterparty || null,
-    description: booking.description || null,
-    ...noSecurity,
+    cash: {
+      date: germanDate(booking.date),
+      amount: germanDecimal(booking.amount),
+      currency: booking.currency,
+      counterparty: booking.counterparty || null,
+      description: booking.description || null,
+    },
   };
 }
 
-const deutscheBankDepotDirections: Record<
+const deutscheBankDepotTypes: Record<
   DeutscheBankDepotRawTransactionV1["subType"],
-  { invested: Direction; shares: Direction }
+  DepotTransaction["type"]
 > = {
-  DIVIDEND_DISBURSEMENT: { invested: 0, shares: 0 },
-  RECEIPT: { invested: -1, shares: 1 },
+  DIVIDEND_DISBURSEMENT: "distribution",
+  RECEIPT: "trade",
 };
 
 function fromDeutscheBankDepot(
   data: DeutscheBankDepotRawTransactionV1,
-): NormalizedTransaction {
-  const directions = deutscheBankDepotDirections[data.subType];
+): Extracted {
+  const type = deutscheBankDepotTypes[data.subType];
+  const total = data.calculatedAmounts.totalAmountEuroCurrency;
   return {
-    date: data.bookDate,
-    ...invested(
-      data.calculatedAmounts.totalAmountEuroCurrency,
-      directions.invested,
-    ),
-    counterparty: null,
-    description: data.subType,
-    isin: data.security.isin,
-    securityName: data.security.name,
-    quantity: moved(data.quantity, directions.shares),
+    depot: {
+      date: data.bookDate,
+      isin: data.security.isin,
+      securityName: data.security.name,
+      ...ofType(
+        type,
+        data.quantity,
+        total && type === "trade"
+          ? { ...total, amount: negated(total.amount) }
+          : total,
+      ),
+      description: data.subType,
+    },
   };
 }
 
 function fromTradeRepublic(
   data: TradeRepublicRawTransactionV1,
   type: Account["type"],
-): NormalizedTransaction {
-  const cash = {
-    amount: decimalSum([data.amount, data.fee, data.tax]),
-    currency: data.currency,
-  };
+): Extracted {
+  const amount = decimalSum([data.amount, data.fee, data.tax]);
+  const description = data.description || null;
+  if (type === "cash")
+    return {
+      cash: {
+        date: data.date,
+        amount,
+        currency: data.currency,
+        counterparty: data.counterparty_name || null,
+        description,
+      },
+    };
   const trade = data.type === "BUY" || data.type === "SELL";
   return {
-    date: data.date,
-    ...(type === "depot" ? invested(cash, trade ? -1 : 0) : cash),
-    counterparty: data.counterparty_name || null,
-    description: data.description || null,
-    isin: data.symbol || null,
-    securityName: data.name || null,
-    quantity: moved(data.shares, data.type === "DIVIDEND" ? 0 : 1),
+    depot: {
+      date: data.date,
+      isin: data.symbol,
+      securityName: data.name,
+      ...ofType(trade ? "trade" : "distribution", data.shares, {
+        amount: trade ? negated(amount) : amount,
+        currency: data.currency,
+      }),
+      description,
+    },
   };
 }
 
-const finvestoInvested: Record<FinvestoRawTransactionV1[4], Direction> = {
-  Kauf: 1,
-  "Wiederanlage Fondsertrag": 0,
-  "Fondsertrag (Ausschüttung)": 0,
-  "Verkauf wegen Vorabpauschale": 0,
-  Vorabpauschale: 0,
-  "Entgeltbelastung Verkauf": 0,
-  Entgeltermittlung: 0,
+const notice = undefined;
+
+const finvestoTypes: Record<
+  FinvestoRawTransactionV1[4],
+  DepotTransaction["type"] | typeof notice
+> = {
+  Kauf: "trade",
+  "Wiederanlage Fondsertrag": "reinvestment",
+  "Fondsertrag (Ausschüttung)": "distribution",
+  "Verkauf wegen Vorabpauschale": "tax",
+  Vorabpauschale: notice,
+  "Entgeltbelastung Verkauf": "fee",
+  Entgeltermittlung: notice,
 };
 
-function fromFinvesto(row: FinvestoRawTransactionV1): NormalizedTransaction {
+function fromFinvesto(row: FinvestoRawTransactionV1): Extracted {
   const [kind, part] = [row[4], row[5]];
-  return {
-    date: `20${germanDate(row[3])}`,
-    ...invested(
-      { amount: germanDecimal(row[8]), currency: row[9] },
-      finvestoInvested[kind],
-    ),
-    counterparty: null,
-    description: part ? `${kind} · ${part}` : kind,
-    isin: row[7],
-    securityName: row[6],
-    quantity: moved(germanDecimal(row[10]), 1),
-  };
+  const type = finvestoTypes[kind];
+  return type
+    ? {
+        depot: {
+          date: `20${germanDate(row[3])}`,
+          isin: row[7],
+          securityName: row[6],
+          ...ofType(type, germanDecimal(row[10]), {
+            amount: germanDecimal(row[8]),
+            currency: row[9],
+          }),
+          description: part ? `${kind} · ${part}` : kind,
+        },
+      }
+    : {};
 }

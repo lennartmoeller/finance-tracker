@@ -156,12 +156,19 @@ function AccountView({
   transactions: Transaction[];
 }) {
   const format = accountNumberFormats[account.bank][account.type];
-  const dates = transactions.map((transaction) => transaction.date).sort();
+  const dates = transactions
+    .flatMap(({ cash, depot }) => (cash ?? depot)?.date ?? [])
+    .sort();
   const [first, last] = [dates[0], dates.at(-1)];
   const totals = new Map<string, string>();
-  for (const { amount, currency } of transactions)
-    if (amount !== null && currency !== null)
-      totals.set(currency, decimalSum([totals.get(currency) ?? "0", amount]));
+  for (const { cash, depot } of transactions) {
+    const counted = cash ?? (depot?.type === "trade" ? depot : null);
+    if (counted?.amount && counted.currency)
+      totals.set(
+        counted.currency,
+        decimalSum([totals.get(counted.currency) ?? "0", counted.amount]),
+      );
+  }
   return (
     <>
       <div className="account-head">

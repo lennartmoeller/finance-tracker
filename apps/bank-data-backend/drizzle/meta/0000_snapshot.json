@@ -1,5 +1,5 @@
 {
-  "id": "12b439e2-d0a5-4096-bd79-ddc73c579c09",
+  "id": "06b8b63a-1e7d-4e0b-bc6b-420d95b41e42",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -72,7 +72,227 @@
         }
       },
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "accounts_name_filled": {
+          "name": "accounts_name_filled",
+          "value": "\"accounts\".\"name\" <> ''"
+        },
+        "accounts_bank_known": {
+          "name": "accounts_bank_known",
+          "value": "\"accounts\".\"bank\" in ('Deutsche Bank', 'finvesto', 'ING', 'Trade Republic')"
+        },
+        "accounts_type_known": {
+          "name": "accounts_type_known",
+          "value": "\"accounts\".\"type\" in ('cash', 'depot')"
+        },
+        "accounts_number_filled": {
+          "name": "accounts_number_filled",
+          "value": "\"accounts\".\"number\" <> ''"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.cash_transactions": {
+      "name": "cash_transactions",
+      "schema": "",
+      "columns": {
+        "transaction_id": {
+          "name": "transaction_id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "date": {
+          "name": "date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "amount": {
+          "name": "amount",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "currency": {
+          "name": "currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "counterparty": {
+          "name": "counterparty",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "cash_transactions_transaction_id_transactions_id_fk": {
+          "name": "cash_transactions_transaction_id_transactions_id_fk",
+          "tableFrom": "cash_transactions",
+          "tableTo": "transactions",
+          "columnsFrom": ["transaction_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "cash_transactions_currency_format": {
+          "name": "cash_transactions_currency_format",
+          "value": "\"cash_transactions\".\"currency\" ~ '^[A-Z]{3}$'"
+        },
+        "cash_transactions_counterparty_filled": {
+          "name": "cash_transactions_counterparty_filled",
+          "value": "\"cash_transactions\".\"counterparty\" <> ''"
+        },
+        "cash_transactions_description_filled": {
+          "name": "cash_transactions_description_filled",
+          "value": "\"cash_transactions\".\"description\" <> ''"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.depot_transactions": {
+      "name": "depot_transactions",
+      "schema": "",
+      "columns": {
+        "transaction_id": {
+          "name": "transaction_id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "date": {
+          "name": "date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "isin": {
+          "name": "isin",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "quantity": {
+          "name": "quantity",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "amount": {
+          "name": "amount",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "currency": {
+          "name": "currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "depot_transactions_transaction_id_transactions_id_fk": {
+          "name": "depot_transactions_transaction_id_transactions_id_fk",
+          "tableFrom": "depot_transactions",
+          "tableTo": "transactions",
+          "columnsFrom": ["transaction_id"],
+          "columnsTo": ["id"],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "depot_transactions_isin_securities_isin_fk": {
+          "name": "depot_transactions_isin_securities_isin_fk",
+          "tableFrom": "depot_transactions",
+          "tableTo": "securities",
+          "columnsFrom": ["isin"],
+          "columnsTo": ["isin"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "depot_transactions_fields_of_type": {
+          "name": "depot_transactions_fields_of_type",
+          "value": "((\"depot_transactions\".\"type\" = 'trade' and \"depot_transactions\".\"quantity\" <> 0 and sign(\"depot_transactions\".\"amount\") = sign(\"depot_transactions\".\"quantity\")) or (\"depot_transactions\".\"type\" = 'reinvestment' and \"depot_transactions\".\"quantity\" > 0 and \"depot_transactions\".\"amount\" is null) or (\"depot_transactions\".\"type\" = 'fee' and \"depot_transactions\".\"quantity\" < 0 and \"depot_transactions\".\"amount\" is null) or (\"depot_transactions\".\"type\" = 'tax' and \"depot_transactions\".\"quantity\" < 0 and \"depot_transactions\".\"amount\" is null) or (\"depot_transactions\".\"type\" = 'distribution' and \"depot_transactions\".\"quantity\" is null and \"depot_transactions\".\"amount\" > 0)) is true"
+        },
+        "depot_transactions_currency_with_amount": {
+          "name": "depot_transactions_currency_with_amount",
+          "value": "(\"depot_transactions\".\"amount\" is null) = (\"depot_transactions\".\"currency\" is null)"
+        },
+        "depot_transactions_currency_format": {
+          "name": "depot_transactions_currency_format",
+          "value": "\"depot_transactions\".\"currency\" ~ '^[A-Z]{3}$'"
+        },
+        "depot_transactions_description_filled": {
+          "name": "depot_transactions_description_filled",
+          "value": "\"depot_transactions\".\"description\" <> ''"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.securities": {
+      "name": "securities",
+      "schema": "",
+      "columns": {
+        "isin": {
+          "name": "isin",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "securities_isin_format": {
+          "name": "securities_isin_format",
+          "value": "\"securities\".\"isin\" ~ '^[A-Z]{2}[A-Z0-9]{9}[0-9]$'"
+        },
+        "securities_name_filled": {
+          "name": "securities_name_filled",
+          "value": "\"securities\".\"name\" <> ''"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.transactions": {
@@ -119,54 +339,6 @@
           "type": "jsonb",
           "primaryKey": false,
           "notNull": true
-        },
-        "date": {
-          "name": "date",
-          "type": "date",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "amount": {
-          "name": "amount",
-          "type": "numeric",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "currency": {
-          "name": "currency",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "counterparty": {
-          "name": "counterparty",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "isin": {
-          "name": "isin",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "security_name": {
-          "name": "security_name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "quantity": {
-          "name": "quantity",
-          "type": "numeric",
-          "primaryKey": false,
-          "notNull": false
         }
       },
       "indexes": {},
@@ -177,7 +349,7 @@
           "tableTo": "accounts",
           "columnsFrom": ["account_id"],
           "columnsTo": ["id"],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -190,7 +362,12 @@
         }
       },
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "transactions_identity_filled": {
+          "name": "transactions_identity_filled",
+          "value": "\"transactions\".\"identity\" <> ''"
+        }
+      },
       "isRLSEnabled": false
     }
   },

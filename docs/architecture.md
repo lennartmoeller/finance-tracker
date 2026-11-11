@@ -25,7 +25,7 @@ flowchart LR
 - The system never sees bank credentials, because the extension reads only sessions the user opened.
 - Transaction data enters only through the extension.
 - Consumers read transactions only through the backend's API, never from the service's database.
-- The transaction viewer shows each normalized transaction beside its raw transaction, so the user can check extraction against what the bank delivered.
+- The transaction viewer shows each raw transaction beside its normalized transaction, or marked as not extracted where it has none, so the user can check extraction against what the bank delivered.
 
 ## Components
 
@@ -33,7 +33,7 @@ flowchart LR
 | --- | --- | --- |
 | Backend | the API contract's implementation; validation, deduplication, raw storage and extraction; serving transactions to consumers | state outside PostgreSQL; opening balances, balances and holdings |
 | Extension | one adapter per bank website; shape validation; the popup that creates, renames and removes accounts, lists them by bank with their last sync, and syncs each one | storing bank credentials |
-| PostgreSQL | accounts; transactions, each row holding a raw transaction and its normalized transaction | |
+| PostgreSQL | the tables of the [data model](./data-model.md) and the rules that keep their data sound | |
 
 The extension exists because a web page cannot read banking sites in the user's session: the same-origin policy and the banks' framing bans block it.
 Why the extension is the service's only interface, and consumers own balances, is recorded in [ADR 0005](./adr/0005-bank-data-service-with-the-extension-as-its-interface.md); why consumers may read raw transactions too, in [ADR 0010](./adr/0010-consumers-read-raw-transactions.md).
@@ -43,23 +43,22 @@ Why every account takes the extension is decided in [ADR 0003](./adr/0003-ingest
 
 - Each adapter reads one or more of its bank's exports, such as Deutsche Bank's CSV export for the cash account and its JSON transactions for the depot.
 - A raw transaction is read by its account's bank and account type, which never change, and by its shape version; shape versions count per bank and account type, and a format change within an export or a switch to another export adds one beside the existing ones; why no transaction stores a source is recorded in [ADR 0011](./adr/0011-raw-transactions-read-by-their-account.md).
-- Every raw transaction is stored as JSON together with the shape version it was validated against and its normalized transaction, and the raw JSON never changes afterwards.
-- Removing an account deletes its raw transactions with it.
+- Every raw transaction is stored as JSON together with the shape version it was validated against, and never changes afterwards.
+- Removing an account deletes its raw transactions and their normalized transactions with it.
 - A shape version's definition and extraction stay in the code as long as stored raw data follows it.
 - Only booked transactions are imported, because pending ones change amount, date or ID when they book.
-- An account's raw transactions are what its bank delivers for it, so a trade or dividend is a raw transaction of both the depot and the account it settles on; a trade carries opposite amounts in the two, so it cancels when adding up across accounts, and a dividend counts only in the account it settles on.
+- An account's raw transactions are what its bank delivers for it, so a trade or dividend is a raw transaction of both the depot and the account it settles on; a trade carries opposite amounts in the two, so it cancels when adding up across accounts, and a dividend is income in the depot and money on the account it settles on.
 - A transaction's identity is the bank's own ID where the raw transaction carries one, otherwise a hash of stable fields with an occurrence counter for identical same-day entries; identities are always scoped to the account.
 - Extraction turns a raw transaction into a normalized transaction and handles each bank's quirks.
 - The type codes extraction depends on, such as the Deutsche Bank depot's `subType`, belong to their shape version, so an unknown code is a shape mismatch rather than a wrong normalized transaction.
 - Re-extracting normalized data from stored raw data stays possible by design and is built only once needed.
-- Database columns live in the backend's schema.
+- The [data model](./data-model.md) shows the tables and the rules the database enforces, and their columns live in the backend's schema.
 
 ## Normalized transactions
 
-- A normalized transaction carries a date, an amount with its currency, a counterparty and a description wherever the raw transaction has one.
+- A normalized transaction is a cash transaction or a depot transaction, and the [data model](./data-model.md#normalized-transactions) states what each holds.
 - Its date is the booking date where the raw transaction has one, otherwise the transaction date.
-- A depot transaction also carries the security's ISIN and name and the signed change in shares, which stays empty when no shares moved, such as for a dividend.
-- A depot transaction's amount is the change in the money invested in the depot: a purchase adds what it cost, fees included, a sale subtracts what it paid out, and income, its reinvestment and charges paid by selling shares get none, as [ADR 0012](./adr/0012-depot-amounts-as-invested-money.md) records; every other account's amount is the cash the transaction moved.
+- Its counterparty and description are filled wherever the raw transaction has one.
 - A normalized transaction carries no balance, because consumers derive an account's balance or a depot's invested money and holdings from its transactions.
 
 ## Ingestion
@@ -71,7 +70,7 @@ flowchart TD
     validate["Validate against the account's shape version"] --> extract["Extract the normalized transaction"]
     extract --> known{"Identity already stored?"}
     known -- "yes" --> skip["Skip"]
-    known -- "no" --> store[("Store raw JSON with shape version and normalized transaction")]
+    known -- "no" --> store[("Store the raw transaction, and its normalized transaction and security where it has them")]
   end
 ```
 
@@ -140,6 +139,7 @@ flowchart TD
 - `packages/bank-data-api` defines each procedure's name with its input and output schemas, and the typed client both call the backend with.
 - The backend implements the contract.
 - Consumers pull every account's transactions with one `transaction.list` call, without a cursor or push, because the whole history is about 1,200 rows.
+- `transaction.list` serves every raw transaction with its cash or depot transaction, or with neither where extraction yields none.
 - The RPC library must support contract-first definitions, which rules out plain tRPC because it derives the contract from the implementation.
 
 ## Hosting and security
