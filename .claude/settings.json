@@ -1,5 +1,26 @@
 {
   "enabledPlugins": {
-    "mattpocock-skills@claude-plugins-official": true
+    "keep-the-why@keep-the-why": true
+  },
+  "extraKnownMarketplaces": {
+    "keep-the-why": {
+      "source": {
+        "source": "github",
+        "repo": "oliver-zehentleitner/keep-the-why",
+        "sparsePaths": [".claude-plugin", "skills"]
+      }
+    }
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"This project uses the keep-the-why skill. Invoke the keep-the-why:keep-the-why skill (Skill tool) now, before doing anything else in this session, whatever the first request is about.\"}}'"
+          }
+        ]
+      }
+    ]
   }
 }

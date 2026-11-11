@@ -26,7 +26,7 @@ flowchart LR
 - The backend's outbound services are Logo.dev, which receives brand domains and ISINs to return their logos, and onvista, which receives ISINs to return their daily prices; neither sees transaction data.
 - The backend downloads each logo once through Logo.dev's API and stores it, because Logo.dev's terms allow storing what its API returns but only embedding what its CDN serves.
 - The backend serves stored logos at `/logos/<id>` beside its oRPC API, because an `<img>` loads a URL and cannot call a procedure.
-- The frontend shows normalized transactions and the figures that add up from them, and no raw transaction, as [ADR 0016](./adr/0016-the-frontend-shows-normalized-data-only.md) decides.
+- The frontend shows normalized transactions and the figures that add up from them, and no raw transaction, as [the context](../context/apps.md#the-frontend-shows-normalized-data-only) records.
 
 ## Components
 
@@ -38,13 +38,13 @@ flowchart LR
 | PostgreSQL | the tables of the [data model](./data-model.md) and the rules that keep their data sound | |
 
 The browser extension exists because a web page cannot read banking sites in the user's session: the same-origin policy and the banks' framing bans block it.
-Why the system is these three apps is recorded in [ADR 0014](./adr/0014-one-backend-one-frontend-and-a-browser-extension.md).
-Why every account takes the browser extension is decided in [ADR 0003](./adr/0003-ingestion-through-the-extension-only.md).
+Why the system is these three apps is recorded in [the context](../context/apps.md#one-backend-one-frontend-and-a-browser-extension).
+Why every account takes the browser extension is recorded in [the context](../context/ingestion.md#ingestion-through-the-extension-only).
 
 ## Raw data and shape versions
 
 - Each adapter reads one or more of its bank's exports, such as Deutsche Bank's CSV export for the cash account and its JSON transactions for the depot.
-- A raw transaction is read by its account's bank and account type, which never change, and by its shape version; shape versions count per bank and account type, and a format change within an export or a switch to another export adds one beside the existing ones; why no transaction stores a source is recorded in [ADR 0011](./adr/0011-raw-transactions-read-by-their-account.md).
+- A raw transaction is read by its account's bank and account type, which never change, and by its shape version; shape versions count per bank and account type, and a format change within an export or a switch to another export adds one beside the existing ones; why no transaction stores a source is recorded in [the context](../context/ingestion.md#raw-transactions-read-by-their-account).
 - Every raw transaction is stored as JSON together with the shape version it was validated against, and never changes afterwards.
 - Removing an account deletes its raw transactions and their normalized transactions with it.
 - A shape version's definition and extraction stay in the code as long as stored raw data follows it.
@@ -120,11 +120,11 @@ sequenceDiagram
 flowchart TD
   subgraph apps["apps/"]
     extension["browser-extension<br/>bank website adapters, popup"]
-    backend["backend<br/>contract implementation, ingest, extraction and identity, price fill, schema"]
+    backend["backend<br/>API contract implementation, ingest, extraction and identity, price fill, schema"]
     frontend["frontend<br/>overview and normalized transactions, mock mode"]
   end
   subgraph packages["packages/"]
-    shared["shared<br/>contract: procedures with input and output schemas; typed client; versioned raw shapes per bank and account type; bank logos and account wording for interfaces"]
+    shared["shared<br/>API contract: procedures with input and output schemas; typed client; versioned raw shapes per bank and account type; bank logos and account wording for interfaces"]
   end
   extension --> shared
   backend --> shared
@@ -137,13 +137,13 @@ flowchart TD
 ## API contract
 
 - The browser extension and the frontend call the backend through contract-first typed RPC.
-- The API serves these two apps alone and changes together with them, without versioning or compatibility promises, as [ADR 0014](./adr/0014-one-backend-one-frontend-and-a-browser-extension.md) decides.
+- The API serves these two apps alone and changes together with them, without versioning or compatibility promises, as [the context](../context/apps.md#one-backend-one-frontend-and-a-browser-extension) records.
 - `packages/shared` defines each procedure's name with its input and output schemas, and the typed client both call the backend with.
-- The backend implements the contract.
+- The backend implements the API contract.
 - The frontend pulls every account's transactions with one `transaction.list` call and every stored price with one `price.list` call, without a cursor or push, because they are about 1,200 and 1,800 rows.
 - `transaction.list` serves every normalized transaction with its brand, newest first, and no raw transaction.
 - `price.fill` fills the prices every holding span lacks and answers how many it stored, or, after trying every security, fails with `BAD_GATEWAY` naming each security that failed and why.
-- The RPC library must support contract-first definitions, which rules out plain tRPC because it derives the contract from the implementation.
+- The RPC library must support contract-first definitions, which rules out plain tRPC because it derives the API contract from the implementation.
 
 ## Hosting and security
 
