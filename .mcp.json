@@ -2,10 +2,7 @@
   "mcpServers": {
     "firefox-devtools": {
       "command": "pnpm",
-      "args": [
-        "exec",
-        "firefox-devtools-mcp"
-      ]
+      "args": ["exec", "firefox-devtools-mcp"]
     },
     "logo-dev": {
       "type": "http",

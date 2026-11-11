@@ -7,16 +7,14 @@ description: Do a Q&A with a user to refine an idea into an actionable plan. Use
 
 ## Establish the record
 
-1. Read the user's request, relevant evidence, and existing planning documents before asking questions.
-2. At the start of each new Q&A, create a fresh `planning-<task>` directory directly under the repository root and reuse it throughout that Q&A.
-3. Add a `.gitignore` containing only `*` to that directory so all its contents, including `.gitignore`, are ignored by Git; never stage or commit the directory.
-4. Treat the directory as temporary, keep all planning artifacts inside it, add no references to it in files outside it, and leave its deletion to the user.
-5. Create the following files using the available information, marking proposals as provisional and unknowns as open:
-  - `DECISIONS.md`: Records choices, rationale, and approvals.
-  - `GOAL.md`: Desired future state, guiding principles, scope, and success criteria.
-  - `INVENTORY.md`: Verified current state and sources, with assumptions clearly labeled.
-  - `PLAN.md`: Proposed or approved steps, dependencies, and validation.
-  - `QUESTIONS.md`: Ranks unresolved questions and choices by impact and prerequisites.
+1. Read the user's request, relevant evidence, and the existing directories under `docs/planning/` before asking questions.
+2. At the start of each new Q&A, run this skill's `scripts/setup.sh <task title>` with task title in kebab-case, and reuse the planning directory it prints throughout that Q&A.
+3. Fill the files the script created from the available information, in each template's sections and entry formats, marking proposals as provisional and unknowns as open:
+   - `GOAL.md`: the whole idea at a high level, written for a product owner to confirm it was understood: the desired state, its scope and guiding principles, and success criteria they can observe, free of implementation detail.
+   - `INVENTORY.md`: the verified current state and its sources.
+   - `QUESTIONS.md`: the unresolved questions and choices.
+   - `DECISIONS.md`: every choice made, with its rationale.
+   - `PLAN.md`: the detailed technical implementation of `GOAL.md` without retelling it: the coding principle most at risk and how the design guards against it, every step with the files, data and interfaces it touches, and the technical checks that prove the success criteria.
 
 ## Resolve the questions
 
@@ -28,10 +26,23 @@ description: Do a Q&A with a user to refine an idea into an actionable plan. Use
    Give the user the context and tradeoffs needed to decide, append `(recommended)` to the end of an answer option when you clearly prefer it, and wait for their answer.
 4. After each answer, remove a resolved item from `QUESTIONS.md`, record a decision and its rationale in `DECISIONS.md` or a factual answer in `INVENTORY.md`, update affected planning files, and reprioritize questions before asking again.
 5. Keep deferred or unanswered questions under `QUESTIONS.md` and repeat until every material question and decision is resolved.
-6. After all questions are resolved, present the final decisions and plan to the user for confirmation.
 
-## When updating files
+## Hand over the plan
 
+1. Present the final goal, decisions and plan, and ask with the interactive question tool how to proceed, offering these options:
+   - **Confirm and implement**: implement the plan in this session.
+   - **Confirm and write an implementation prompt**: hand the plan to a new session.
+   - **Request changes**: change the plan before confirming it.
+2. On a change request, apply it through the question loop, then ask again.
+3. On either confirmation, set the plan's status to approved with today's date.
+4. For an implementation prompt, first make the planning directory self-contained: move everything only this session knows into it, such as research results, probe output, the user's statements and scratchpad files, until a new session that reads only the directory and the repository lacks nothing.
+   Then write `IMPLEMENTATION_PROMPT.md` into the directory from this skill's `templates/IMPLEMENTATION_PROMPT.md`, and give the user its path.
+
+## Working rules
+
+- Make the planning directory your home for this Q&A: keep every artifact of the work in it rather than in the session scratchpad, add whatever serves the work beside the template files, such as notes, code drafts, scripts, probe results, gathered data or mockups, and reference other planning directories wherever that helps.
+- Keep everything under `docs/planning/` local: never stage or commit it, and leave it in place once the work is done.
+- Write everything outside `docs/planning/` to stand on its own: carry a decision's substance in full into its proper home, and leave out every path, link and mention that only the planning files explain, such as decision numbers, plan step names or "as agreed in the Q&A", in docs, code comments, commits, issues and pull requests.
 - Label assumptions clearly, better yet create an open question in `QUESTIONS.md` instead.
 - Give each fact one home.
 - Cite sources where available.

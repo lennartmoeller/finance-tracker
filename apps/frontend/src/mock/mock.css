@@ -1,0 +1,38 @@
+.mock-bar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  height: 38px;
+  padding: 0 14px;
+  border-bottom: 1px dashed light-dark(#e9d98a, #5c5124);
+  background: light-dark(#fff8db, #2b2716);
+  color: light-dark(#6b5900, #e6d48a);
+  font-size: 12px;
+}
+
+.mock-bar strong {
+  margin-right: 6px;
+}
+
+.mock-choice {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 7px;
+  background: rgba(127, 110, 20, 0.12);
+}
+
+.mock-choice button {
+  padding: 3px 9px;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.mock-choice button[aria-pressed="true"] {
+  background: var(--bg);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+  color: var(--text);
+}

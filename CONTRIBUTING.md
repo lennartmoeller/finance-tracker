@@ -15,6 +15,7 @@
 - For development, run `docker compose up -d postgres`, then `pnpm --filter @finance-tracker/backend dev`.
 - `pnpm --filter @finance-tracker/browser-extension dev` opens a Firefox with the browser extension loaded until that Firefox closes.
 - `pnpm --filter @finance-tracker/frontend dev` serves the frontend on <http://localhost:5173>, reading the backend on port 3000.
+- `pnpm --filter @finance-tracker/frontend mock` serves the frontend in its mock mode, on generated fake data without backend, with a bar that switches the data state and the theme.
 - The browser extension's popup asks for the `API_TOKEN` once.
 - `curl -X POST http://localhost:3000/rpc/price/fill -H "Authorization: Bearer $API_TOKEN" -H 'Content-Type: application/json' -d '{}'`, with `API_TOKEN` set in the shell, fills the prices of the securities held up to yesterday and answers how many it stored; call it after a sync and whenever market values should catch up.
 
