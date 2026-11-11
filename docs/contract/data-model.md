@@ -1,17 +1,15 @@
 # Data model
 
-The backend stores each transaction once with its raw transaction, gives cash accounts and depots a table each for the normalized transactions extracted from it, and lets the database itself reject data that makes no sense; why is recorded in [the context](../context/transactions.md#normalized-transactions-per-account-type-checked-by-the-database).
-
 ```mermaid
 erDiagram
-  accounts ||--o{ transactions : "has"
+  accounts ||--o{ transactions : "holds"
   transactions ||--o| cash_transactions : "extracts to"
   transactions ||--o| depot_transactions : "extracts to"
   securities ||--o{ depot_transactions : "appears in"
-  brands |o..o{ cash_transactions : "names by pattern"
-  brands |o..o| logos : "pictured by domain"
-  securities |o--o| logos : "pictured by ISIN"
   securities ||--o{ prices : "priced by"
+  securities |o--o| logos : "pictured by ISIN"
+  brands |o..o| logos : "pictured by domain"
+  brands |o..o{ cash_transactions : "matches by pattern"
 
   accounts {
     integer id PK
@@ -28,11 +26,6 @@ erDiagram
     text identity "unique per account"
     jsonb data "the raw transaction"
   }
-  securities {
-    text isin PK
-    text name
-    text named_by "the bank whose name it holds"
-  }
   cash_transactions {
     integer transaction_id PK, FK
     date date
@@ -40,6 +33,26 @@ erDiagram
     text currency
     text counterparty "optional"
     text description "optional"
+  }
+  depot_transactions {
+    integer transaction_id PK, FK
+    date date
+    text isin FK
+    text type "trade, reinvestment, fee, tax or distribution"
+    numeric quantity "optional, by type"
+    numeric amount "optional, by type"
+    text currency "optional, with amount"
+    text description "optional"
+  }
+  securities {
+    text isin PK
+    text name
+    text named_by "the bank whose name it holds"
+  }
+  prices {
+    text isin PK, FK
+    date date PK "a trading day"
+    numeric price "in EUR"
   }
   brands {
     integer id PK "creation order"
@@ -54,77 +67,8 @@ erDiagram
     bytea image "optional: a 256-pixel PNG"
     text etag "optional, with image"
   }
-  depot_transactions {
-    integer transaction_id PK, FK
-    date date
-    text isin FK
-    text type
-    numeric quantity "optional, by type"
-    numeric amount "optional, by type"
-    text currency "optional, with amount"
-    text description "optional"
-  }
-  prices {
-    text isin PK, FK
-    date date PK "a trading day"
-    numeric price "in EUR"
-  }
 ```
 
-Every column is required unless the diagram marks it optional, and an optional column without a value is `NULL`.
-A security holds the fullest name a bank delivered for its ISIN: finvesto's before Deutsche Bank's before Trade Republic's.
-
-## Normalized transactions
-
-- A normalized transaction belongs to the account of its transaction, so a trade's cash side is a cash transaction of the account that paid, wherever [its bank delivers one](./architecture.md#raw-data-and-shape-versions).
-- A raw transaction is extracted to at most one normalized transaction, and one that moves neither money nor shares, such as finvesto's notice of a charge, to none.
-- A cash transaction's amount is the change of the balance, fees and taxes included, and its date the day the balance changed, such as a card purchase's booking date rather than its purchase date.
-- Extraction takes a normalized transaction's counterparty and description from its bank's text without tidying them, so ING's `VISA ` prefix and the line breaks in its remittance text stay.
-
-## Depot transaction types
-
-| Type | Holds | `quantity` | `amount` |
-| --- | --- | --- | --- |
-| `trade` | a buy or a sale | not 0: above for a buy, below for a sale | the quantity's sign: what the buy cost, fees included, or what the sale paid out |
-| `reinvestment` | shares bought with a distribution that stays in the depot | above 0 | `NULL` |
-| `fee` | shares sold to pay a fee | below 0 | `NULL` |
-| `tax` | shares sold to pay a tax | below 0 | `NULL` |
-| `distribution` | income a security pays, such as a dividend, a fund distribution or a stock perk | `NULL` | above 0: what was paid, after taxes |
-
-- A depot's shares of a security add up from the quantities of its depot transactions.
-- A depot's [invested money](../context/transactions.md#depot-amounts-as-invested-money) adds up from the amounts of its trades alone, because a distribution's amount is income.
-
-## Brands
-
-- The user inserts brands into `brands` by hand, each with its name, its website's domain and a pattern in PostgreSQL's regular expression dialect.
-- A cash transaction's brand is the earliest-created brand whose pattern matches its counterparty regardless of letter case, found anew on every read, so a brand covers the whole history from the moment it is stored.
-
-## Logos
-
-- A logo belongs to what Logo.dev was asked for, a brand's domain or a security's ISIN, so a brand finds its logo by its domain and a security by its ISIN.
-- Every read of the transactions first downloads the logo of each domain and ISIN without a `logos` row; a row without image records that Logo.dev knows no logo, and a failed download stores nothing, so the next read retries.
-- A brand whose domain changes finds no logo until the next read downloads the new domain's, and the old domain's row stays unused.
-
-## Prices
-
-- `price.fill` stores the [price](../../GLOSSARY.md#prices) of every LS Exchange trading day of each holding span, as [the context](../context/prices.md#security-prices-from-onvista) records, so days between two spans of a security have none.
-- A span's prices start at the last trading day on or before its first day, so a span that starts on a weekend or holiday has a price to carry forward, and the span of a security still held runs through yesterday, because only a finished day has a close.
-- A reader takes a security's latest price on or before a day, because weekends and holidays have no price.
-- A fill requests only the days after a span's last stored price and none for a span without a weekday after it, and never rewrites a stored price.
-- A price keeps the decimals onvista delivers, such as LS Exchange's half-cent ticks.
-
-## Database rules
-
-The database enforces each of these, so no writer can store a row that breaks one; the [schema](../../apps/backend/src/schema.ts) holds the constraints and the [migration](../../apps/backend/drizzle/0000_init.sql) the triggers.
-
-- A depot transaction has one of the five types, its quantity and amount follow that type as the [types table](#depot-transaction-types) states, and it has a currency exactly when it has an amount.
-- A trigger lets a cash transaction reference only a cash account's transaction and a depot transaction only a depot's, so no transaction has both.
-- A trigger keeps a row of `transactions` unchanged, so a raw transaction stays as its bank delivered it.
-- An account's type is cash or depot and its bank one the system knows, and a trigger keeps both unchanged, because [they decide how its raw transactions are read](../context/ingestion.md#raw-transactions-read-by-their-account).
-- A cash or depot transaction's amount has exactly two decimals, so a bank's sub-cent amount fails its sync instead of being rounded.
-- A security is named by a bank the system knows.
-- A currency is three capital letters, and an ISIN is two letters, nine letters or digits, and one digit.
-- A brand's name and domain are each unique, its domain is a lowercase bare hostname such as `rossmann.de`, and its pattern is a valid regular expression that does not match the empty string, so no brand matches every counterparty.
-- A logo has exactly one of a domain, in a brand's format, and the ISIN of a known security, each unique, and its image and `etag` are set together.
-- A price is of a known security on a weekday, above 0, and the only one of its security that day.
-- A text column never holds an empty string, so `NULL` is the only way to hold no value.
+Every column is required unless the diagram marks it optional.
+A dotted line has no foreign key: the backend matches the rows when it reads them.
+The [schema](../../apps/backend/src/schema.ts) holds the constraints, and the [migrations](../../apps/backend/drizzle/) the triggers.
