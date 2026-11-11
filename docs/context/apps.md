@@ -48,3 +48,19 @@ The frontend shows the user's money in normalized transactions and the figures t
 **Consequence:** a raw transaction that extraction turns into none, such as finvesto's notice of a charge, shows up in no interface.
 
 **Consequence:** a wrong extraction surfaces only as a wrong figure or transaction in the frontend, so its cause is found in the database.
+
+## Charts drawn with Recharts
+
+**Id:** faad392b-071e-4510-9b99-37d8531f6e8e
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer decision in a design review, 2026-11-11
+
+The frontend draws its charts with Recharts, coloured by the colour tokens in its stylesheet.
+
+**Reason:** an established React chart library turns a chart into a few dozen lines of JSX, and its strokes and fills take CSS variables, so light and dark need no code of their own.
+
+**Rejected alternative:** hand-written SVG charts, about 150 lines of scales, ticks and hover handling per chart with tests of their own, custom infrastructure for a solved problem.
+
+**Consequence:** Recharts stacks its layers by type rather than by element order, lines above areas, so a line meant to lie under an area takes an explicit z-index.

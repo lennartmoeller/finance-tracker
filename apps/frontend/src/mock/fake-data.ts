@@ -111,6 +111,26 @@ export function fakeData(): Data {
   const days = (from: number, to = 1) =>
     Array.from({ length: from - to + 1 }, (_, index) => daysAgo(from - index));
 
+  const start = 850;
+  const closesOf = new Map(
+    Object.values(securities).map(({ isin, price }) => {
+      const closes = new Map<string, number>();
+      let close = price;
+      for (const date of days(start + 7).toReversed()) {
+        if (date.getDay() % 6 === 0) continue;
+        closes.set(iso(date), Math.round(close * 100) / 100);
+        close /= 1 + (random() - 0.48) * 0.03;
+      }
+      return [isin, closes];
+    }),
+  );
+  const priceOn = ({ isin }: Security, date: Date) => {
+    for (let day = date; ; day = new Date(day.getTime() - 86_400_000)) {
+      const close = closesOf.get(isin)?.get(iso(day));
+      if (close) return close;
+    }
+  };
+
   const account = (
     id: number,
     bank: Account["bank"],
@@ -190,7 +210,7 @@ export function fakeData(): Data {
     amount: number,
     description: string,
   ) => {
-    const quantity = amount / (bought.price * (0.8 + random() * 0.2));
+    const quantity = amount / priceOn(bought, date);
     depot(accountId, date, bought, "trade", quantity, amount, description);
     return quantity;
   };
@@ -354,12 +374,23 @@ export function fakeData(): Data {
       null,
       `Savings plan execution ${bought.isin} ${bought.name}, quantity: ${quantity.toFixed(4)}`,
     );
+    return quantity;
+  };
+  const sell = (
+    accountId: number,
+    date: Date,
+    sold: Security,
+    quantity: number,
+    description: string,
+  ) => {
+    const amount = quantity * priceOn(sold, date) - 1;
+    depot(accountId, date, sold, "trade", -quantity, -amount, description);
+    return amount;
   };
   const dividend = (date: Date, paying: Security, amount: number) => {
     depot(5, date, paying, "distribution", null, amount, null);
     cash(3, date, amount, null, `Cash Dividend for ISIN ${paying.isin}`);
   };
-  const start = 850;
   cash(
     3,
     daysAgo(start),
@@ -390,33 +421,39 @@ export function fakeData(): Data {
         brands.rossmann,
       );
   }
-  depot(
+  let amundiShares = 0;
+  for (const date of days(start - 4, 661))
+    if (date.getDate() === 2)
+      amundiShares += Number(
+        savingsPlan(date, securities.amundi, 50).toFixed(4),
+      );
+  const amundiSale = sell(
     5,
-    daysAgo(790),
-    securities.allianz,
-    "trade",
-    3.8462,
-    1000,
-    "Buy trade",
-  );
-  cash(3, daysAgo(790), -1000, null, "Buy trade DE0008404005 Allianz SE");
-  depot(5, daysAgo(610), securities.apple, "trade", 2.3148, 500, "Buy trade");
-  depot(
-    5,
-    daysAgo(270),
-    securities.apple,
-    "trade",
-    -2.3148,
-    -620,
+    daysAgo(655),
+    securities.amundi,
+    amundiShares,
     "Sell trade",
   );
+  cash(3, daysAgo(655), amundiSale, null, "Sell trade LU2089238203 Amundi");
+  buy(5, daysAgo(790), securities.allianz, 1000, "Buy trade");
+  cash(3, daysAgo(790), -1000, null, "Buy trade DE0008404005 Allianz SE");
+  const appleShares = buy(5, daysAgo(610), securities.apple, 500, "Buy trade");
+  sell(5, daysAgo(270), securities.apple, appleShares, "Sell trade");
 
   cash(4, daysAgo(183), 1000, "Alex Example", "Umbuchung");
   cash(4, daysAgo(181), -49.9, "Deutsche Bank AG", "Kontoführungsentgelt");
   cash(4, daysAgo(176), -4.9, "VISA CAFE MILCHBAR", "KARTENZAHLUNG");
   cash(4, daysAgo(170), -250, "Alex Example", "Umbuchung");
-  depot(6, daysAgo(412), securities.deutscheBank, "trade", 30, 480, "RECEIPT");
-  depot(6, daysAgo(231), securities.deutscheBank, "trade", 30, 510, "RECEIPT");
+  for (const receivedDaysAgo of [412, 231])
+    depot(
+      6,
+      daysAgo(receivedDaysAgo),
+      securities.deutscheBank,
+      "trade",
+      30,
+      30 * priceOn(securities.deutscheBank, daysAgo(receivedDaysAgo)),
+      "RECEIPT",
+    );
   depot(
     6,
     daysAgo(183),
@@ -450,23 +487,35 @@ export function fakeData(): Data {
     null,
     "Verkauf wegen Vorabpauschale",
   );
+  const dwsDistribution = 28.51;
+  depot(
+    7,
+    daysAgo(270),
+    securities.dws,
+    "distribution",
+    null,
+    dwsDistribution,
+    "Ausschüttung",
+  );
   depot(
     7,
     daysAgo(265),
     securities.dws,
     "reinvestment",
-    0.2137,
+    dwsDistribution / priceOn(securities.dws, daysAgo(265)),
     null,
     "Wiederanlage Ausschüttung",
   );
 
   const dateOf = ({ cash, depot }: Transaction) =>
     cash?.date ?? depot?.date ?? "";
-  const prices: Price[] = Object.values(securities).map(({ isin, price }) => ({
-    isin,
-    date: iso(daysAgo(1)),
-    price: price.toFixed(2),
-  }));
+  const prices: Price[] = [...closesOf].flatMap(([isin, closes]) =>
+    [...closes].map(([date, close]) => ({
+      isin,
+      date,
+      price: close.toFixed(2),
+    })),
+  );
   return {
     accounts,
     transactions: transactions.sort(

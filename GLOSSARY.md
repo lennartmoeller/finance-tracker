@@ -47,7 +47,7 @@ The balance the user enters once for an account, which its transactions carry fo
 _Avoid_: initial balance, starting balance
 
 **Invested money**:
-The money the user has put into a depot and not taken out: what its purchases cost, fees included, less what its sales paid out.
+The money the user has put into a depot or a security and not taken out: what its purchases cost, fees included, less what its sales paid out.
 _Avoid_: cost basis, net deposits, depot value
 
 **Session**:
@@ -124,11 +124,11 @@ A stretch of days at whose end the user's depots together hold shares of a secur
 _Avoid_: holding period, position
 
 **Market value**:
-What a depot's shares are worth: each held security's shares times its latest price.
+What the shares of a depot, a security or all depots are worth: each held security's shares times its latest price.
 _Avoid_: depot value, current value, worth
 
 **Gain**:
-What a depot's market value exceeds its invested money by, negative where it falls short.
+What market value exceeds invested money by, negative where it falls short, shown with its percent of what the purchases cost.
 _Avoid_: profit, return, performance
 
 **Total**:
@@ -172,7 +172,7 @@ The app that ingests syncs, stores all of the system's data in PostgreSQL, and s
 _Avoid_: bank data service, server
 
 **Frontend**:
-The web app in which the user views and manages the system's data, so far an overview of the total and each account's balance or, for a depot, its invested money, market value and gain, and every normalized transaction.
+The web app in which the user views and manages the system's data, so far an overview of the total and each account's balance or, for a depot, its invested money, market value and gain; the securities held and sold with their figures and value over time; and every normalized transaction.
 _Avoid_: transaction viewer, consumer, web UI
 
 **Browser extension**:

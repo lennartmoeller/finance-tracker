@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowRightLeft, LayoutDashboard } from "lucide-react";
+import { ArrowRightLeft, ChartLine, LayoutDashboard } from "lucide-react";
 import { bank } from "@finance-tracker/shared/bank";
 import { errorMessage } from "@finance-tracker/shared/client";
 import type {
@@ -8,6 +8,7 @@ import type {
   Transaction,
 } from "@finance-tracker/shared/contract";
 import { Overview } from "./Overview.tsx";
+import { Securities } from "./Securities.tsx";
 import { Transactions, type Scope } from "./Transactions.tsx";
 
 export type Data = {
@@ -18,6 +19,7 @@ export type Data = {
 
 const views = [
   { id: "overview", name: "Overview", Icon: LayoutDashboard },
+  { id: "securities", name: "Securities", Icon: ChartLine },
   { id: "transactions", name: "Transactions", Icon: ArrowRightLeft },
 ] as const;
 
@@ -81,6 +83,8 @@ export function App({ load }: { load: () => Promise<Data> }) {
               setView("transactions");
             }}
           />
+        ) : view === "securities" ? (
+          <Securities data={data} error={error} />
         ) : (
           <Transactions
             key={`${scope.type}-${String(scope.accountId)}`}
