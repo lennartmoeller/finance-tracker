@@ -4,7 +4,11 @@ import type {
   CashTransaction,
   DepotTransaction,
 } from "@finance-tracker/bank-data-api/contract";
-import { decimalSum } from "@finance-tracker/bank-data-api/decimal";
+import {
+  cents,
+  centsQuotient,
+  decimalSum,
+} from "@finance-tracker/bank-data-api/decimal";
 import {
   deutscheBankDepotRawTransactionV1,
   type DeutscheBankDepotRawTransactionV1,
@@ -118,7 +122,7 @@ function ofType(
   return {
     type,
     quantity: type === "distribution" ? null : shares,
-    amount: paid?.amount ?? null,
+    amount: paid ? cents(paid.amount) : null,
     currency: paid?.currency ?? null,
   };
 }
@@ -133,7 +137,7 @@ function fromGermanBooking(booking: {
   return {
     cash: {
       date: germanDate(booking.date),
-      amount: germanDecimal(booking.amount),
+      amount: cents(germanDecimal(booking.amount)),
       currency: booking.currency,
       counterparty: booking.counterparty || null,
       description: booking.description || null,
@@ -176,12 +180,17 @@ function fromTradeRepublic(
   type: Account["type"],
 ): Extracted {
   const amount = decimalSum([data.amount, data.fee, data.tax]);
+  // Trade Republic's date column holds the UTC date, a day early for a transaction just after midnight in Berlin.
+  const date = Temporal.Instant.from(data.datetime)
+    .toZonedDateTimeISO("Europe/Berlin")
+    .toPlainDate()
+    .toString();
   const description = data.description || null;
   if (type === "cash")
     return {
       cash: {
-        date: data.date,
-        amount,
+        date,
+        amount: cents(amount),
         currency: data.currency,
         counterparty: data.counterparty_name || null,
         description,
@@ -190,7 +199,7 @@ function fromTradeRepublic(
   const trade = data.type === "BUY" || data.type === "SELL";
   return {
     depot: {
-      date: data.date,
+      date,
       isin: data.symbol,
       securityName: data.name,
       ...ofType(trade ? "trade" : "distribution", data.shares, {
@@ -218,18 +227,28 @@ const finvestoTypes: Record<
 };
 
 function fromFinvesto(row: FinvestoRawTransactionV1): Extracted {
-  const [kind, part] = [row[4], row[5]];
+  const [kind, part, payment, currency] = [
+    row[4],
+    row[5],
+    germanDecimal(row[8]),
+    row[9],
+  ];
   const type = finvestoTypes[kind];
+  // finvesto pays a distribution in its fund's currency and quotes column 30 as that currency per euro.
+  const paidInEuro =
+    currency === "EUR"
+      ? { amount: payment, currency }
+      : {
+          amount: centsQuotient(payment, germanDecimal(row[30])),
+          currency: "EUR",
+        };
   return type
     ? {
         depot: {
           date: `20${germanDate(row[3])}`,
           isin: row[7],
           securityName: row[6],
-          ...ofType(type, germanDecimal(row[10]), {
-            amount: germanDecimal(row[8]),
-            currency: row[9],
-          }),
+          ...ofType(type, germanDecimal(row[10]), paidInEuro),
           description: part ? `${kind} · ${part}` : kind,
         },
       }

@@ -27,6 +27,7 @@ erDiagram
   securities {
     text isin PK
     text name
+    text named_by "the bank whose name it holds"
   }
   cash_transactions {
     integer transaction_id PK, FK
@@ -49,13 +50,14 @@ erDiagram
 ```
 
 Every column is required unless the diagram marks it optional, and an optional column without a value is `NULL`.
-A security keeps the name first delivered for its ISIN, whichever bank names it differently later.
+A security holds the fullest name a bank delivered for its ISIN: finvesto's before Deutsche Bank's before Trade Republic's.
 
 ## Normalized transactions
 
 - A normalized transaction belongs to the account of its transaction, so a trade's cash side is a cash transaction of the account that paid, wherever [its bank delivers one](./architecture.md#raw-data-and-shape-versions).
 - A raw transaction is extracted to at most one normalized transaction, and one that moves neither money nor shares, such as finvesto's notice of a charge, to none.
-- A cash transaction's amount is the change of the balance, fees and taxes included.
+- A cash transaction's amount is the change of the balance, fees and taxes included, and its date the day the balance changed, such as a card purchase's booking date rather than its purchase date.
+- A normalized transaction's counterparty and description hold its bank's text as delivered, such as ING's `VISA ` prefix or the line breaks in its remittance text, so tidying them is a consumer's job.
 
 ## Depot transaction types
 
@@ -78,5 +80,7 @@ The database enforces each of these, so no writer can store a row that breaks on
 - A trigger lets a cash transaction reference only a cash account's transaction and a depot transaction only a depot's, so no transaction has both.
 - A trigger keeps a row of `transactions` unchanged, so a raw transaction stays as its bank delivered it.
 - An account's type is cash or depot and its bank one the service knows, and a trigger keeps both unchanged, because [they decide how its raw transactions are read](./adr/0011-raw-transactions-read-by-their-account.md).
+- A cash or depot transaction's amount has exactly two decimals, so a bank's sub-cent amount fails its sync instead of being rounded.
+- A security is named by a bank the service knows.
 - A currency is three capital letters, and an ISIN is two letters, nine letters or digits, and one digit.
 - A text column never holds an empty string, so `NULL` is the only way to hold no value.

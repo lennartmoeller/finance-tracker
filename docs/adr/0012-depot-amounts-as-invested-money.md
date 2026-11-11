@@ -16,3 +16,4 @@ A charge paid by selling shares, such as finvesto's fees and Vorabpauschale, get
 
 - Adding up an account's amounts gives its balance, or for a depot its invested money, wherever the bank data service holds the account's whole history.
 - A trade appears in the depot and the account that paid with opposite amounts, so it cancels when adding up across accounts, and a purchase paid with income, such as the one following a stock perk, counts like any other.
+- A purchase paid through the user's salary, such as finvesto's or Deutsche Bank's `RECEIPT`, has no cash transaction to cancel it and counts at the market value its bank delivers where the bank delivers no price paid, because a discount on it is pay the user invests.

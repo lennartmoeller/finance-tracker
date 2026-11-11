@@ -1,7 +1,10 @@
 import { implement, ORPCError } from "@orpc/server";
-import { desc, eq, sql } from "drizzle-orm";
+import { desc, eq, sql, type SQLWrapper } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { contract } from "@finance-tracker/bank-data-api/contract";
+import {
+  contract,
+  type Account,
+} from "@finance-tracker/bank-data-api/contract";
 import { extractTransactions } from "./extraction.ts";
 import {
   accounts,
@@ -10,6 +13,19 @@ import {
   transactions,
   securities,
 } from "./schema.ts";
+
+// finvesto names a fund in full, Deutsche Bank a security in exchange capitals and Trade Republic by a short display name, so the fuller name wins.
+const securityNamers: Account["bank"][] = [
+  "finvesto",
+  "Deutsche Bank",
+  "Trade Republic",
+];
+
+const namerRank = (bank: SQLWrapper) =>
+  sql`array_position(array[${sql.join(
+    securityNamers.map((namer) => sql`${namer}`),
+    sql`, `,
+  )}]::text[], ${bank})`;
 
 const accountNotFound = () =>
   new ORPCError("NOT_FOUND", { message: "The account does not exist." });
@@ -108,13 +124,22 @@ export function createRouter(db: NodePgDatabase, apiToken: string) {
         if (depot.length) {
           await tx
             .insert(securities)
-            .values(
-              depot.map(({ isin, securityName }) => ({
-                isin,
-                name: securityName,
-              })),
-            )
-            .onConflictDoNothing();
+            .values([
+              ...new Map(
+                depot.map(({ isin, securityName }) => [
+                  isin,
+                  { isin, name: securityName, namedBy: account.bank },
+                ]),
+              ).values(),
+            ])
+            .onConflictDoUpdate({
+              target: securities.isin,
+              set: {
+                name: sql`excluded.name`,
+                namedBy: sql`excluded.named_by`,
+              },
+              setWhere: sql`${namerRank(sql`excluded.named_by`)} < ${namerRank(securities.namedBy)}`,
+            });
           await tx.insert(depotTransactions).values(depot);
         }
         return {

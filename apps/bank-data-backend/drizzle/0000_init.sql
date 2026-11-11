@@ -20,6 +20,7 @@ CREATE TABLE "cash_transactions" (
 	"currency" text NOT NULL,
 	"counterparty" text,
 	"description" text,
+	CONSTRAINT "cash_transactions_amount_in_cents" CHECK (scale("cash_transactions"."amount") = 2),
 	CONSTRAINT "cash_transactions_currency_format" CHECK ("cash_transactions"."currency" ~ '^[A-Z]{3}$'),
 	CONSTRAINT "cash_transactions_counterparty_filled" CHECK ("cash_transactions"."counterparty" <> ''),
 	CONSTRAINT "cash_transactions_description_filled" CHECK ("cash_transactions"."description" <> '')
@@ -35,6 +36,7 @@ CREATE TABLE "depot_transactions" (
 	"currency" text,
 	"description" text,
 	CONSTRAINT "depot_transactions_fields_of_type" CHECK ((("depot_transactions"."type" = 'trade' and "depot_transactions"."quantity" <> 0 and sign("depot_transactions"."amount") = sign("depot_transactions"."quantity")) or ("depot_transactions"."type" = 'reinvestment' and "depot_transactions"."quantity" > 0 and "depot_transactions"."amount" is null) or ("depot_transactions"."type" = 'fee' and "depot_transactions"."quantity" < 0 and "depot_transactions"."amount" is null) or ("depot_transactions"."type" = 'tax' and "depot_transactions"."quantity" < 0 and "depot_transactions"."amount" is null) or ("depot_transactions"."type" = 'distribution' and "depot_transactions"."quantity" is null and "depot_transactions"."amount" > 0)) is true),
+	CONSTRAINT "depot_transactions_amount_in_cents" CHECK (scale("depot_transactions"."amount") = 2),
 	CONSTRAINT "depot_transactions_currency_with_amount" CHECK (("depot_transactions"."amount" is null) = ("depot_transactions"."currency" is null)),
 	CONSTRAINT "depot_transactions_currency_format" CHECK ("depot_transactions"."currency" ~ '^[A-Z]{3}$'),
 	CONSTRAINT "depot_transactions_description_filled" CHECK ("depot_transactions"."description" <> '')
@@ -43,8 +45,10 @@ CREATE TABLE "depot_transactions" (
 CREATE TABLE "securities" (
 	"isin" text PRIMARY KEY NOT NULL,
 	"name" text NOT NULL,
+	"named_by" text NOT NULL,
 	CONSTRAINT "securities_isin_format" CHECK ("securities"."isin" ~ '^[A-Z]{2}[A-Z0-9]{9}[0-9]$'),
-	CONSTRAINT "securities_name_filled" CHECK ("securities"."name" <> '')
+	CONSTRAINT "securities_name_filled" CHECK ("securities"."name" <> ''),
+	CONSTRAINT "securities_named_by_known" CHECK ("securities"."named_by" in ('Deutsche Bank', 'finvesto', 'ING', 'Trade Republic'))
 );
 --> statement-breakpoint
 CREATE TABLE "transactions" (

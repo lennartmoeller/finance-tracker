@@ -28,6 +28,8 @@ const matches = (column: AnyPgColumn, pattern: string) =>
 const oneOf = (column: AnyPgColumn, values: readonly string[]) =>
   sql`${column} in (${sql.raw(values.map((value) => `'${value}'`).join(", "))})`;
 
+const inCents = (column: AnyPgColumn) => sql`scale(${column}) = 2`;
+
 export const accounts = pgTable(
   "accounts",
   {
@@ -70,6 +72,7 @@ export const securities = pgTable(
   {
     isin: text().primaryKey(),
     name: text().notNull(),
+    namedBy: text().$type<Account["bank"]>().notNull(),
   },
   (table) => [
     check(
@@ -77,6 +80,7 @@ export const securities = pgTable(
       matches(table.isin, "^[A-Z]{2}[A-Z0-9]{9}[0-9]$"),
     ),
     check("securities_name_filled", filled(table.name)),
+    check("securities_named_by_known", oneOf(table.namedBy, bank.options)),
   ],
 );
 
@@ -96,6 +100,7 @@ export const cashTransactions = pgTable(
     description: text(),
   },
   (table) => [
+    check("cash_transactions_amount_in_cents", inCents(table.amount)),
     check(
       "cash_transactions_currency_format",
       matches(table.currency, currencyPattern.source),
@@ -140,6 +145,7 @@ export const depotTransactions = pgTable(
           sql` or `,
         )}) is true`,
       ),
+      check("depot_transactions_amount_in_cents", inCents(table.amount)),
       check(
         "depot_transactions_currency_with_amount",
         sql`(${table.amount} is null) = (${table.currency} is null)`,

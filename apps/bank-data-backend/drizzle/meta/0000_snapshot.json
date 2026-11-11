@@ -149,6 +149,10 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
+        "cash_transactions_amount_in_cents": {
+          "name": "cash_transactions_amount_in_cents",
+          "value": "scale(\"cash_transactions\".\"amount\") = 2"
+        },
         "cash_transactions_currency_format": {
           "name": "cash_transactions_currency_format",
           "value": "\"cash_transactions\".\"currency\" ~ '^[A-Z]{3}$'"
@@ -246,6 +250,10 @@
           "name": "depot_transactions_fields_of_type",
           "value": "((\"depot_transactions\".\"type\" = 'trade' and \"depot_transactions\".\"quantity\" <> 0 and sign(\"depot_transactions\".\"amount\") = sign(\"depot_transactions\".\"quantity\")) or (\"depot_transactions\".\"type\" = 'reinvestment' and \"depot_transactions\".\"quantity\" > 0 and \"depot_transactions\".\"amount\" is null) or (\"depot_transactions\".\"type\" = 'fee' and \"depot_transactions\".\"quantity\" < 0 and \"depot_transactions\".\"amount\" is null) or (\"depot_transactions\".\"type\" = 'tax' and \"depot_transactions\".\"quantity\" < 0 and \"depot_transactions\".\"amount\" is null) or (\"depot_transactions\".\"type\" = 'distribution' and \"depot_transactions\".\"quantity\" is null and \"depot_transactions\".\"amount\" > 0)) is true"
         },
+        "depot_transactions_amount_in_cents": {
+          "name": "depot_transactions_amount_in_cents",
+          "value": "scale(\"depot_transactions\".\"amount\") = 2"
+        },
         "depot_transactions_currency_with_amount": {
           "name": "depot_transactions_currency_with_amount",
           "value": "(\"depot_transactions\".\"amount\" is null) = (\"depot_transactions\".\"currency\" is null)"
@@ -276,6 +284,12 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "named_by": {
+          "name": "named_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
         }
       },
       "indexes": {},
@@ -291,6 +305,10 @@
         "securities_name_filled": {
           "name": "securities_name_filled",
           "value": "\"securities\".\"name\" <> ''"
+        },
+        "securities_named_by_known": {
+          "name": "securities_named_by_known",
+          "value": "\"securities\".\"named_by\" in ('Deutsche Bank', 'finvesto', 'ING', 'Trade Republic')"
         }
       },
       "isRLSEnabled": false

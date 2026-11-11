@@ -46,7 +46,7 @@ const deutscheBankCashBooking = Object.assign(
   },
 );
 
-test("a Deutsche Bank booking pads its date and keeps an amount without trailing zeros", () => {
+test("a Deutsche Bank booking pads its date and its amount's cents", () => {
   expect(
     extractTransactions({ bank: "Deutsche Bank", type: "cash" }, [
       deutscheBankCashBooking,
@@ -55,7 +55,7 @@ test("a Deutsche Bank booking pads its date and keeps an amount without trailing
     {
       cash: {
         date: "2026-05-03",
-        amount: "-100.8",
+        amount: "-100.80",
         counterparty: "Max Mustermann",
         description: "Umbuchung",
       },
@@ -116,7 +116,7 @@ test("a Deutsche Bank depot receipt is a trade with its cost and shares, and a d
   ]);
 });
 
-test("Trade Republic cash amounts include fees and taxes, and the depot takes a trade's opposite amount with its signed shares and a dividend as a distribution", () => {
+test("Trade Republic cash amounts include fees and taxes and fall on their Berlin day, and the depot takes a trade's opposite amount with its signed shares and a dividend as a distribution", () => {
   const row = (
     type: string,
     shares: string,
@@ -156,13 +156,17 @@ test("Trade Republic cash amounts include fees and taxes, and the depot takes a 
   expect(
     extractTransactions({ bank: "Trade Republic", type: "cash" }, [
       ...securityRows,
-      row("TRANSFER_INBOUND", "", "500.000000"),
+      {
+        ...row("CUSTOMER_INPAYMENT", "", "500.000000"),
+        datetime: "2026-04-01T22:51:44.341400Z",
+        date: "2026-04-01",
+      },
     ]),
   ).toMatchObject([
     { cash: { amount: "-401.00", currency: "EUR" } },
     { cash: { amount: "1005.10" } },
     { cash: { amount: "3.45" } },
-    { cash: { amount: "500.000000" } },
+    { cash: { date: "2026-04-02", amount: "500.00" } },
   ]);
   expect(
     extractTransactions(
@@ -184,7 +188,7 @@ test("Trade Republic cash amounts include fees and taxes, and the depot takes a 
   ]);
 });
 
-test("a finvesto purchase is a trade, a distribution carries what it paid, a sale for a tax only its shares, and a notice yields no normalized transaction", () => {
+test("a finvesto purchase is a trade, a distribution carries what it paid in euros, a sale for a tax only its shares, and a notice yields no normalized transaction", () => {
   const row = (
     kind: FinvestoRawTransactionV1[4],
     payment: string,
@@ -204,7 +208,10 @@ test("a finvesto purchase is a trade, a distribution carries what it paid, a sal
   };
   const extracted = extractTransactions({ bank: "finvesto", type: "depot" }, [
     row("Kauf", "40", "0,334823"),
-    row("Fondsertrag (Ausschüttung)", "3,6", "0"),
+    Object.assign(row("Fondsertrag (Ausschüttung)", "3,6", "0"), {
+      9: "USD",
+      30: "1,167463",
+    }),
     row("Verkauf wegen Vorabpauschale", "1,2", "-0,098047"),
     row("Vorabpauschale", "0", "0"),
   ]);
@@ -215,11 +222,18 @@ test("a finvesto purchase is a trade, a distribution carries what it paid, a sal
         securityName: "Global Fund",
         type: "trade",
         quantity: "0.334823",
-        amount: "40",
+        amount: "40.00",
         currency: "EUR",
       },
     },
-    { depot: { type: "distribution", quantity: null, amount: "3.6" } },
+    {
+      depot: {
+        type: "distribution",
+        quantity: null,
+        amount: "3.08",
+        currency: "EUR",
+      },
+    },
     {
       depot: {
         type: "tax",
