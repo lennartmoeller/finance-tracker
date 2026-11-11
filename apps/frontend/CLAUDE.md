@@ -5,4 +5,4 @@
 - Design for desktop windows from 1,100 pixels wide, because a phone gets an app of its own if one comes, as [the context](../../docs/context/apps.md#one-backend-one-frontend-and-a-browser-extension) records.
 - Keep the frontend monochrome, giving colour only to bank and brand logos, to status (freshness, errors and destructive actions), to gains and losses, and to chart series, whose colours pass the `dataviz` skill's palette validator in light and dark.
 - Give every colour a token on `:root` in `style.css`, written as one `light-dark()` value.
-- Format money, numbers and dates in German through `format.ts`, and word labels in English with the glossary's terms.
+- Format money, numbers and dates in German through `format.ts`, and word labels in English with the code's terms.

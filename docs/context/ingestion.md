@@ -12,7 +12,7 @@ The browser extension reads every account from its bank's website, and no data s
 
 **Reason:** the user wants all the data a bank offers, and the bank's website offers more than its PSD2 interface for every account but one.
 Through Enable Banking, the ING cash account ING offers for linking adds the transaction ID, the transaction date and the counterparty IBAN on 5% of debits, while its website adds the running balance; the Deutsche Bank cash account adds the transaction ID and ISO 20022 transaction codes, while its website adds BIC, mandate reference, creditor ID, foreign fees and the ultimate party.
-More fields count for more than the bank's transaction ID, because [identity](../contract/architecture.md#raw-data-and-shape-versions) falls back to a hash of stable fields where a source has no ID.
+More fields count for more than the bank's transaction ID, because [identity](../contract/ingestion.md#adapters) falls back to a hash of stable fields where a source has no ID.
 That ING cash account alone is richer through Enable Banking, but ING offers its other cash account for no linking, so the extension needs an ING adapter anyway, and that adapter reads both in the same session.
 PSD2 covers payment accounts only, so the depots and the Trade Republic and finvesto accounts take the extension in any case.
 
@@ -49,7 +49,7 @@ The PayPal account stays out of the system.
 **Reason:** PayPal's website offers its transactions only as activity reports it generates asynchronously, and the user rates the account as not worth what reading them costs.
 A report carries every field the extension would want, but covers at most 12 months within the last seven years, takes about four minutes to generate, and makes PayPal email the user; the report list holds 12 reports, and older reports lose their files while still listed.
 
-**Rejected alternative:** reports since the last sync, one per sync reaching back before the account's last sync, which waits minutes for an email each time and breaks the rule that a [sync](../contract/architecture.md#browser-extension-sync) reads the full history the bank offers.
+**Rejected alternative:** reports since the last sync, one per sync reaching back before the account's last sync, which waits minutes for an email each time and breaks the rule that a [sync](../contract/ingestion.md) reads the full history the bank offers.
 
 **Rejected alternative:** the full history on every sync, which costs seven or eight reports, emails and minutes of waiting per sync and pushes the user's own reports out of the list.
 
@@ -147,7 +147,7 @@ Shape versions count per bank and account type: a format change within an export
 
 **Rejected alternative:** a source stored with every raw transaction, which repeats what the account says and lets one account type's sync be stored on another account of the same bank.
 
-**Rejected alternative:** bank and account type in the sync input, which would let the contract validate the raw transactions and the compiler pair each adapter with it, but repeats what the account says, so the backend validates after loading the account instead.
+**Rejected alternative:** bank and account type in the sync input, which would let the API contract validate the raw transactions and the compiler pair each adapter with it, but repeats what the account says, so the backend validates after loading the account instead.
 
 **Consequence:** account types sharing an export, such as Trade Republic's cash account and depot, each count its shape versions, so a change to it adds a version to each, and a type that joins it later starts at its own version 1.
 
