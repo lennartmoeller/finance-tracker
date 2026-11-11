@@ -1,9 +1,6 @@
 import { Fragment, useState } from "react";
 import { ChevronRight } from "lucide-react";
-import type {
-  Account,
-  Transaction,
-} from "@finance-tracker/bank-data-api/contract";
+import type { Account, Transaction } from "@finance-tracker/shared/contract";
 import { RawTransaction } from "./RawTransaction.tsx";
 
 const dateFormat = new Intl.DateTimeFormat("en-GB", {

@@ -1,5 +1,5 @@
 {
-  "name": "@finance-tracker/bank-data-extension",
+  "name": "@finance-tracker/browser-extension",
   "private": true,
   "version": "0.2.0",
   "type": "module",
@@ -10,7 +10,7 @@
     "postinstall": "wxt prepare"
   },
   "dependencies": {
-    "@finance-tracker/bank-data-api": "workspace:*",
+    "@finance-tracker/shared": "workspace:*",
     "lucide-react": "1.70.0",
     "react": "19.3.1",
     "react-dom": "19.3.1",

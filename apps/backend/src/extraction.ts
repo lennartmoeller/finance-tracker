@@ -3,26 +3,26 @@ import type {
   Account,
   CashTransaction,
   DepotTransaction,
-} from "@finance-tracker/bank-data-api/contract";
+} from "@finance-tracker/shared/contract";
 import {
   cents,
   centsQuotient,
   decimalSum,
-} from "@finance-tracker/bank-data-api/decimal";
+} from "@finance-tracker/shared/decimal";
 import {
   deutscheBankDepotRawTransactionV1,
   type DeutscheBankDepotRawTransactionV1,
-} from "@finance-tracker/bank-data-api/deutsche-bank-depot";
-import { deutscheBankCashRawTransactionV1 } from "@finance-tracker/bank-data-api/deutsche-bank-cash";
+} from "@finance-tracker/shared/deutsche-bank-depot";
+import { deutscheBankCashRawTransactionV1 } from "@finance-tracker/shared/deutsche-bank-cash";
 import {
   finvestoRawTransactionV1,
   type FinvestoRawTransactionV1,
-} from "@finance-tracker/bank-data-api/finvesto";
-import { ingRawTransactionV1 } from "@finance-tracker/bank-data-api/ing";
+} from "@finance-tracker/shared/finvesto";
+import { ingRawTransactionV1 } from "@finance-tracker/shared/ing";
 import {
   tradeRepublicRawTransactionV1,
   type TradeRepublicRawTransactionV1,
-} from "@finance-tracker/bank-data-api/trade-republic";
+} from "@finance-tracker/shared/trade-republic";
 import {
   deutscheBankIdentities,
   finvestoIdentities,

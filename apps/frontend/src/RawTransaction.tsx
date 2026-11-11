@@ -1,11 +1,8 @@
 import { useState } from "react";
-import type {
-  Account,
-  Transaction,
-} from "@finance-tracker/bank-data-api/contract";
-import { deutscheBankCashHeaderV1 } from "@finance-tracker/bank-data-api/deutsche-bank-cash";
-import { finvestoHeaderV1 } from "@finance-tracker/bank-data-api/finvesto";
-import { ingHeaderV1 } from "@finance-tracker/bank-data-api/ing";
+import type { Account, Transaction } from "@finance-tracker/shared/contract";
+import { deutscheBankCashHeaderV1 } from "@finance-tracker/shared/deutsche-bank-cash";
+import { finvestoHeaderV1 } from "@finance-tracker/shared/finvesto";
+import { ingHeaderV1 } from "@finance-tracker/shared/ing";
 
 type Json = Transaction["data"];
 

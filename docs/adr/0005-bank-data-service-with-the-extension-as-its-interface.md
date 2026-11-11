@@ -1,5 +1,5 @@
 ---
-status: amended by ADR-0010
+status: superseded by ADR-0014
 ---
 
 # Bank data service with the extension as its interface

@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
-import type { FinvestoRawTransactionV1 } from "@finance-tracker/bank-data-api/finvesto";
-import type { IngRawTransactionV1 } from "@finance-tracker/bank-data-api/ing";
-import type { TradeRepublicRawTransactionV1 } from "@finance-tracker/bank-data-api/trade-republic";
+import type { FinvestoRawTransactionV1 } from "@finance-tracker/shared/finvesto";
+import type { IngRawTransactionV1 } from "@finance-tracker/shared/ing";
+import type { TradeRepublicRawTransactionV1 } from "@finance-tracker/shared/trade-republic";
 
 export const tradeRepublicIdentities = (
   rawTransactions: TradeRepublicRawTransactionV1[],

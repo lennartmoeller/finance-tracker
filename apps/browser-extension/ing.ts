@@ -1,10 +1,10 @@
 import { z } from "zod";
-import type { Account } from "@finance-tracker/bank-data-api/contract";
+import type { Account } from "@finance-tracker/shared/contract";
 import {
   ingHeaderV1,
   ingRawTransactionV1,
   type IngRawTransactionV1,
-} from "@finance-tracker/bank-data-api/ing";
+} from "@finance-tracker/shared/ing";
 import type { IngAccountRow } from "./entrypoints/ing-accounts.content.ts";
 import { shapeMismatch } from "./shape-mismatch.ts";
 import { inject, navigate, notLoggedIn, withSyncTab } from "./sync-tab.ts";

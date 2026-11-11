@@ -1,11 +1,8 @@
 import { useState } from "react";
 import { Check, CircleExclamationPoint, Pencil, RefreshCw } from "lucide-react";
-import { bank } from "@finance-tracker/bank-data-api/bank";
-import type { Account } from "@finance-tracker/bank-data-api/contract";
-import {
-  freshness,
-  lastSyncText,
-} from "@finance-tracker/bank-data-api/last-sync";
+import { bank } from "@finance-tracker/shared/bank";
+import type { Account } from "@finance-tracker/shared/contract";
+import { freshness, lastSyncText } from "@finance-tracker/shared/last-sync";
 import type { SyncRequest, SyncState } from "../background.ts";
 import { BankLogo } from "./BankLogo.tsx";
 import { EditAccount } from "./EditAccount.tsx";

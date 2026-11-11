@@ -3,23 +3,14 @@ import { CircleExclamationPoint, Inbox, Wallet } from "lucide-react";
 import {
   accountNumberFormats,
   groupAccountNumber,
-} from "@finance-tracker/bank-data-api/account-number";
-import { accountTypeNames } from "@finance-tracker/bank-data-api/account-type-names";
-import { bank as banks } from "@finance-tracker/bank-data-api/bank";
-import { bankLogos } from "@finance-tracker/bank-data-api/bank-logos";
-import {
-  createApiClient,
-  errorMessage,
-} from "@finance-tracker/bank-data-api/client";
-import type {
-  Account,
-  Transaction,
-} from "@finance-tracker/bank-data-api/contract";
-import { decimalSum } from "@finance-tracker/bank-data-api/decimal";
-import {
-  freshness,
-  lastSyncText,
-} from "@finance-tracker/bank-data-api/last-sync";
+} from "@finance-tracker/shared/account-number";
+import { accountTypeNames } from "@finance-tracker/shared/account-type-names";
+import { bank as banks } from "@finance-tracker/shared/bank";
+import { bankLogos } from "@finance-tracker/shared/bank-logos";
+import { createApiClient, errorMessage } from "@finance-tracker/shared/client";
+import type { Account, Transaction } from "@finance-tracker/shared/contract";
+import { decimalSum } from "@finance-tracker/shared/decimal";
+import { freshness, lastSyncText } from "@finance-tracker/shared/last-sync";
 import { formatDate, TransactionTable } from "./TransactionTable.tsx";
 
 const api = createApiClient(`${location.origin}/rpc`);
@@ -62,8 +53,7 @@ export function App() {
     <div className="app">
       <aside className="sidebar">
         <div className="brand">
-          <h1>Transaction viewer</h1>
-          <p>Normalized and raw transactions of the bank data service</p>
+          <h1>Finance Tracker</h1>
         </div>
         <nav className="account-groups">
           {!accounts && !error

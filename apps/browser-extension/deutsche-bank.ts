@@ -1,14 +1,14 @@
 import { z } from "zod";
-import type { Account } from "@finance-tracker/bank-data-api/contract";
+import type { Account } from "@finance-tracker/shared/contract";
 import {
   deutscheBankCashHeaderV1,
   deutscheBankCashRawTransactionV1,
   type DeutscheBankCashRawTransactionV1,
-} from "@finance-tracker/bank-data-api/deutsche-bank-cash";
+} from "@finance-tracker/shared/deutsche-bank-cash";
 import {
   deutscheBankDepotRawTransactionV1,
   type DeutscheBankDepotRawTransactionV1,
-} from "@finance-tracker/bank-data-api/deutsche-bank-depot";
+} from "@finance-tracker/shared/deutsche-bank-depot";
 import { shapeMismatch } from "./shape-mismatch.ts";
 import { inject, navigate, notLoggedIn, withSyncTab } from "./sync-tab.ts";
 

@@ -11,14 +11,14 @@ import {
   unique,
   type AnyPgColumn,
 } from "drizzle-orm/pg-core";
-import { bank } from "@finance-tracker/bank-data-api/bank";
+import { bank } from "@finance-tracker/shared/bank";
 import {
   accountType,
   type Account,
   type DepotTransaction,
   type Transaction,
-} from "@finance-tracker/bank-data-api/contract";
-import { currencyPattern } from "@finance-tracker/bank-data-api/currency";
+} from "@finance-tracker/shared/contract";
+import { currencyPattern } from "@finance-tracker/shared/currency";
 
 const filled = (column: AnyPgColumn) => sql`${column} <> ''`;
 

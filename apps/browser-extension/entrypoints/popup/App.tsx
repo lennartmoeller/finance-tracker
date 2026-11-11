@@ -1,10 +1,7 @@
 import { useEffect, useState, type SubmitEvent } from "react";
 import { CircleExclamationPoint, KeyRound, Landmark, Plus } from "lucide-react";
-import {
-  errorMessage,
-  isUnauthorized,
-} from "@finance-tracker/bank-data-api/client";
-import type { Account } from "@finance-tracker/bank-data-api/contract";
+import { errorMessage, isUnauthorized } from "@finance-tracker/shared/client";
+import type { Account } from "@finance-tracker/shared/contract";
 import { apiClient, saveApiToken } from "../../api.ts";
 import type { SyncState } from "../background.ts";
 import { AccountList } from "./AccountList.tsx";

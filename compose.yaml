@@ -12,9 +12,9 @@ services:
       interval: 2s
     restart: unless-stopped
 
-  bank-data-backend:
+  backend:
     build:
-      target: bank-data-backend
+      target: backend
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres
       API_TOKEN: ${API_TOKEN:?Set API_TOKEN in .env}
@@ -26,5 +26,4 @@ services:
     restart: unless-stopped
 
 volumes:
-  # Renaming this volume starts an empty database beside the old one, so it keeps its name without the service prefix.
   postgres:

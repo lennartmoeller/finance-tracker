@@ -12,7 +12,7 @@ The exploration on 2026-11-10 found:
 
 ## Considered options
 
-- Reports since the last sync: the first sync requests seven yearly reports and every later sync one report reaching back before the account's last sync, each waiting about four minutes for one email, but breaking the [architecture](../architecture.md#extension-sync)'s rule that a sync reads the full history the bank offers.
+- Reports since the last sync: the first sync requests seven yearly reports and every later sync one report reaching back before the account's last sync, each waiting about four minutes for one email, but breaking the [architecture](../architecture.md#browser-extension-sync)'s rule that a sync reads the full history the bank offers.
 - Full history on every sync: seven or eight reports, emails and minutes of waiting per sync, pushing the user's own reports out of the list.
 - A two-step sync that requests the reports and imports them on the next sync, at two clicks per sync.
 - Scraping the activity page, which lacks the running balance, the balance impact and the related transaction codes.

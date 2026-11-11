@@ -1,5 +1,5 @@
 {
-  "name": "@finance-tracker/bank-data-api",
+  "name": "@finance-tracker/shared",
   "private": true,
   "type": "module",
   "exports": {

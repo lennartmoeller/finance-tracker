@@ -4,11 +4,11 @@ import {
   accountNumberFormats,
   accountNumberIssue,
   groupAccountNumber,
-} from "@finance-tracker/bank-data-api/account-number";
-import { accountTypeNames } from "@finance-tracker/bank-data-api/account-type-names";
-import { bank as banks } from "@finance-tracker/bank-data-api/bank";
-import { errorMessage } from "@finance-tracker/bank-data-api/client";
-import type { Account } from "@finance-tracker/bank-data-api/contract";
+} from "@finance-tracker/shared/account-number";
+import { accountTypeNames } from "@finance-tracker/shared/account-type-names";
+import { bank as banks } from "@finance-tracker/shared/bank";
+import { errorMessage } from "@finance-tracker/shared/client";
+import type { Account } from "@finance-tracker/shared/contract";
 import { apiClient } from "../../api.ts";
 import { accountNameTaken } from "./account-name.ts";
 import { BankLogo } from "./BankLogo.tsx";

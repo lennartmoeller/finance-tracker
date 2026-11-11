@@ -1,10 +1,10 @@
 import { z } from "zod";
-import type { Account } from "@finance-tracker/bank-data-api/contract";
+import type { Account } from "@finance-tracker/shared/contract";
 import {
   finvestoHeaderV1,
   finvestoRawTransactionV1,
   type FinvestoRawTransactionV1,
-} from "@finance-tracker/bank-data-api/finvesto";
+} from "@finance-tracker/shared/finvesto";
 import { shapeMismatch } from "./shape-mismatch.ts";
 import { inject, navigate, notLoggedIn, withSyncTab } from "./sync-tab.ts";
 

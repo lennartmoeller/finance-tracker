@@ -1,12 +1,12 @@
 {
-  "name": "@finance-tracker/transaction-viewer-frontend",
+  "name": "@finance-tracker/frontend",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite"
   },
   "dependencies": {
-    "@finance-tracker/bank-data-api": "workspace:*",
+    "@finance-tracker/shared": "workspace:*",
     "lucide-react": "1.70.0",
     "react": "19.3.1",
     "react-dom": "19.3.1"

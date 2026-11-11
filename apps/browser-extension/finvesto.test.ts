@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { finvestoHeaderV1 } from "@finance-tracker/bank-data-api/finvesto";
+import { finvestoHeaderV1 } from "@finance-tracker/shared/finvesto";
 import { parseFinvestoCsv } from "./finvesto.ts";
 
 const depot = "12345678901";

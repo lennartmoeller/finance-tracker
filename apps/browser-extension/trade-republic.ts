@@ -1,9 +1,9 @@
 import { z } from "zod";
-import type { Account } from "@finance-tracker/bank-data-api/contract";
+import type { Account } from "@finance-tracker/shared/contract";
 import {
   tradeRepublicRawTransactionV1,
   type TradeRepublicRawTransactionV1,
-} from "@finance-tracker/bank-data-api/trade-republic";
+} from "@finance-tracker/shared/trade-republic";
 import { shapeMismatch } from "./shape-mismatch.ts";
 import { inject, navigate, notLoggedIn, withSyncTab } from "./sync-tab.ts";
 

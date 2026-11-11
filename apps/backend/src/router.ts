@@ -1,10 +1,7 @@
 import { implement, ORPCError } from "@orpc/server";
 import { desc, eq, sql, type SQLWrapper } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import {
-  contract,
-  type Account,
-} from "@finance-tracker/bank-data-api/contract";
+import { contract, type Account } from "@finance-tracker/shared/contract";
 import { extractTransactions } from "./extraction.ts";
 import {
   accounts,

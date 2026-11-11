@@ -1,4 +1,4 @@
-import type { Account } from "@finance-tracker/bank-data-api/contract";
+import type { Account } from "@finance-tracker/shared/contract";
 
 export function accountNameTaken(
   accounts: readonly Account[],

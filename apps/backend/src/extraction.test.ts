@@ -1,8 +1,8 @@
 import { expect, test } from "vitest";
-import type { DeutscheBankCashRawTransactionV1 } from "@finance-tracker/bank-data-api/deutsche-bank-cash";
-import type { DeutscheBankDepotRawTransactionV1 } from "@finance-tracker/bank-data-api/deutsche-bank-depot";
-import type { FinvestoRawTransactionV1 } from "@finance-tracker/bank-data-api/finvesto";
-import type { TradeRepublicRawTransactionV1 } from "@finance-tracker/bank-data-api/trade-republic";
+import type { DeutscheBankCashRawTransactionV1 } from "@finance-tracker/shared/deutsche-bank-cash";
+import type { DeutscheBankDepotRawTransactionV1 } from "@finance-tracker/shared/deutsche-bank-depot";
+import type { FinvestoRawTransactionV1 } from "@finance-tracker/shared/finvesto";
+import type { TradeRepublicRawTransactionV1 } from "@finance-tracker/shared/trade-republic";
 import { extractTransactions } from "./extraction.ts";
 
 test("an ING booking keeps its German amount as a decimal and an empty counterparty as none", () => {

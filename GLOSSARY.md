@@ -1,6 +1,6 @@
 # Finance tracker
 
-A self-hosted system that collects the transactions of one user's accounts at several banks, stores them, and serves them to consumers.
+A self-hosted system that collects the transactions of one user's accounts at several banks, stores them, and lets the user view and manage them.
 
 ## Language
 
@@ -102,7 +102,7 @@ _Avoid_: dedup key, fingerprint
 ### Ingestion
 
 **Adapter**:
-The part of the extension that reads one bank's transactions from the user's session.
+The part of the browser extension that reads one bank's transactions from the user's session.
 _Avoid_: scraper, connector, plugin
 
 **Shape version**:
@@ -129,16 +129,16 @@ _Avoid_: import (for the step)
 Turning a raw transaction into a normalized transaction.
 _Avoid_: parsing, mapping, normalization
 
-### Services
+### Apps
 
-**Bank data service**:
-The service that collects the transactions of the user's accounts from their banks' websites, stores them, and serves them to consumers as normalized transactions together with their raw transactions.
-_Avoid_: ingestion service, bank sync, importer
+**Backend**:
+The app that ingests syncs, stores all of the system's data in PostgreSQL, and serves it to the frontend and the browser extension.
+_Avoid_: bank data service, server
 
-**Consumer**:
-A service that reads transactions through the bank data service's API, such as the transaction viewer or a future finance logic backend.
-_Avoid_: client, downstream service
+**Frontend**:
+The web app in which the user views and manages the system's data, so far each account's normalized transactions beside their raw transactions, with the account's balance or, for a depot, its invested money.
+_Avoid_: transaction viewer, consumer, web UI
 
-**Transaction viewer**:
-The consumer that lists each account's normalized transactions beside their raw transactions, with the account's balance or, for a depot, its invested money, so the user can check the bank data service's data.
-_Avoid_: data quality frontend, inspector
+**Browser extension**:
+The Firefox extension whose adapters read transactions from the bank websites in the user's sessions, and whose popup creates, renames, removes and syncs accounts.
+_Avoid_: extension, add-on, plugin

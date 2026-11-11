@@ -1,5 +1,5 @@
-import { bankLogos } from "@finance-tracker/bank-data-api/bank-logos";
-import type { Account } from "@finance-tracker/bank-data-api/contract";
+import { bankLogos } from "@finance-tracker/shared/bank-logos";
+import type { Account } from "@finance-tracker/shared/contract";
 
 export function BankLogo({
   bank,

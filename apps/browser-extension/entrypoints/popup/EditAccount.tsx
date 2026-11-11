@@ -1,10 +1,10 @@
 import { useState, type SubmitEvent } from "react";
 import { Trash } from "lucide-react";
-import { errorMessage } from "@finance-tracker/bank-data-api/client";
-import type { Account } from "@finance-tracker/bank-data-api/contract";
+import { errorMessage } from "@finance-tracker/shared/client";
+import type { Account } from "@finance-tracker/shared/contract";
 import { apiClient } from "../../api.ts";
 import { accountNameTaken } from "./account-name.ts";
-import { accountTypeNames } from "@finance-tracker/bank-data-api/account-type-names";
+import { accountTypeNames } from "@finance-tracker/shared/account-type-names";
 import { BankLogo } from "./BankLogo.tsx";
 
 type Api = Awaited<ReturnType<typeof apiClient>>;

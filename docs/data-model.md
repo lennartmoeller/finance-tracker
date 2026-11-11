@@ -1,6 +1,6 @@
 # Data model
 
-The bank data service stores each transaction once with its raw transaction, gives cash accounts and depots a table each for the normalized transactions extracted from it, and lets the database itself reject data that makes no sense; why is recorded in [ADR 0013](./adr/0013-normalized-transactions-per-account-type-checked-by-the-database.md).
+The backend stores each transaction once with its raw transaction, gives cash accounts and depots a table each for the normalized transactions extracted from it, and lets the database itself reject data that makes no sense; why is recorded in [ADR 0013](./adr/0013-normalized-transactions-per-account-type-checked-by-the-database.md).
 
 ```mermaid
 erDiagram
@@ -57,7 +57,7 @@ A security holds the fullest name a bank delivered for its ISIN: finvesto's befo
 - A normalized transaction belongs to the account of its transaction, so a trade's cash side is a cash transaction of the account that paid, wherever [its bank delivers one](./architecture.md#raw-data-and-shape-versions).
 - A raw transaction is extracted to at most one normalized transaction, and one that moves neither money nor shares, such as finvesto's notice of a charge, to none.
 - A cash transaction's amount is the change of the balance, fees and taxes included, and its date the day the balance changed, such as a card purchase's booking date rather than its purchase date.
-- A normalized transaction's counterparty and description hold its bank's text as delivered, such as ING's `VISA ` prefix or the line breaks in its remittance text, so tidying them is a consumer's job.
+- A normalized transaction's counterparty and description hold its bank's text as delivered, such as ING's `VISA ` prefix or the line breaks in its remittance text, so tidying them is not extraction's job.
 
 ## Depot transaction types
 
@@ -74,13 +74,13 @@ A security holds the fullest name a bank delivered for its ISIN: finvesto's befo
 
 ## Database rules
 
-The database enforces each of these, so no writer can store a row that breaks one; the [schema](../apps/bank-data-backend/src/schema.ts) holds the constraints and the [migration](../apps/bank-data-backend/drizzle/0000_init.sql) the triggers.
+The database enforces each of these, so no writer can store a row that breaks one; the [schema](../apps/backend/src/schema.ts) holds the constraints and the [migration](../apps/backend/drizzle/0000_init.sql) the triggers.
 
 - A depot transaction has one of the five types, its quantity and amount follow that type as the [types table](#depot-transaction-types) states, and it has a currency exactly when it has an amount.
 - A trigger lets a cash transaction reference only a cash account's transaction and a depot transaction only a depot's, so no transaction has both.
 - A trigger keeps a row of `transactions` unchanged, so a raw transaction stays as its bank delivered it.
-- An account's type is cash or depot and its bank one the service knows, and a trigger keeps both unchanged, because [they decide how its raw transactions are read](./adr/0011-raw-transactions-read-by-their-account.md).
+- An account's type is cash or depot and its bank one the system knows, and a trigger keeps both unchanged, because [they decide how its raw transactions are read](./adr/0011-raw-transactions-read-by-their-account.md).
 - A cash or depot transaction's amount has exactly two decimals, so a bank's sub-cent amount fails its sync instead of being rounded.
-- A security is named by a bank the service knows.
+- A security is named by a bank the system knows.
 - A currency is three capital letters, and an ISIN is two letters, nine letters or digits, and one digit.
 - A text column never holds an empty string, so `NULL` is the only way to hold no value.
