@@ -8,7 +8,7 @@ if [[ -z $task ]]; then
   exit 2
 fi
 
-planning="$(git rev-parse --show-toplevel)/docs/planning"
+planning="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")/docs/planning"
 
 last=0
 for existing in "$planning"/[0-9][0-9][0-9][0-9]-*/; do
