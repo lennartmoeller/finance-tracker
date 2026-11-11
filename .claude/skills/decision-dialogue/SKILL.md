@@ -30,13 +30,14 @@ description: Do a Q&A with a user to refine an idea into an actionable plan. Use
 ## Hand over the plan
 
 1. Present the final goal, decisions and plan, and ask with the interactive question tool how to proceed, offering these options:
-   - **Confirm and implement**: implement the plan in this session.
-   - **Confirm and write an implementation prompt**: hand the plan to a new session.
+   - **Confirm and implement here**: implement the plan in this session.
+   - **Confirm and implement in a new session**: hand the plan over to `/implement-plan` in a fresh session.
    - **Request changes**: change the plan before confirming it.
 2. On a change request, apply it through the question loop, then ask again.
 3. On either confirmation, set the plan's status to approved with today's date.
-4. For an implementation prompt, first make the planning directory self-contained: move everything only this session knows into it, such as research results, probe output, the user's statements and scratchpad files, until a new session that reads only the directory and the repository lacks nothing.
-   Then write `IMPLEMENTATION_PROMPT.md` into the directory from this skill's `templates/IMPLEMENTATION_PROMPT.md`, and give the user its path.
+4. To implement here, invoke the `implement-plan` skill with the planning directory.
+5. To hand over, first make the planning directory self-contained: move everything only this session knows into it, such as research results, probe output, the user's statements and scratchpad files, until a new session that reads only the directory and the repository lacks nothing.
+   Then tell the user to run `/implement-plan <NNNN>` with the directory's number in a new session.
 
 ## Working rules
 
