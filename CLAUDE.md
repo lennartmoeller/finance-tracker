@@ -92,7 +92,6 @@ Before writing, name the principle the change is most likely to break, state it 
 ## Repository knowledge files
 
 - Keep each file current, concise and focused on its reader's task.
-- Use the `markdown-authoring` skill when editing repository knowledge files.
 - Give each fact or rule one canonical home and link to it instead of maintaining duplicate explanations.
 - Keep implemented contracts in code, schemas, workflows and tests; generate references from those sources where needed.
 
@@ -111,3 +110,9 @@ Before writing, name the principle the change is most likely to break, state it 
 
 - Give humans a selective overview of the repository's purpose, high-level architecture and boundaries, how to start, and where authoritative guidance for each reader task lives.
 - Link to contributor and task-specific guides for detailed procedures, keeping the overview focused rather than turning it into a complete repository manual.
+
+## Skills to use
+
+- Use the `contract-authoring` skill after implementing a change, to keep `docs/contract/` true to the code.
+- Use the `markdown-authoring` skill whenever writing or editing a Markdown file.
+- Use the `workflow-authoring` skill whenever writing or editing a GitHub Actions workflow or action.
