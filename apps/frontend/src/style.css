@@ -14,6 +14,14 @@
   --fresh: light-dark(#16a34a, #22c55e);
   --aging: light-dark(#e08a00, #f5a524);
   --stale: light-dark(#dc2626, #f05252);
+  --category-1: light-dark(#2a78d6, #3987e5);
+  --category-2: light-dark(#eb6834, #d95926);
+  --category-3: light-dark(#1baf7a, #199e70);
+  --category-4: light-dark(#eda100, #c98500);
+  --category-5: light-dark(#e87ba4, #d55181);
+  --category-6: light-dark(#008300, #008300);
+  --gain: light-dark(#15803d, #22c55e);
+  --loss: light-dark(#dc2626, #f05252);
   --danger-soft: light-dark(#fdf3f3, rgba(229, 72, 77, 0.1));
   --danger-line: light-dark(#f6d4d4, rgba(229, 72, 77, 0.26));
   --danger-text: light-dark(#b42318, #ff9592);
@@ -281,7 +289,7 @@ button {
   background: var(--stale);
 }
 
-.table-wrap {
+.scroll {
   flex: 1;
   overflow: auto;
 }
@@ -358,7 +366,8 @@ tbody tr:not(.month) {
   cursor: pointer;
 }
 
-tbody tr:not(.month):hover td {
+tbody tr:not(.month):hover td,
+tbody tr.hovered td {
   background: var(--hover);
 }
 
@@ -471,17 +480,17 @@ tbody tr.selected:hover td {
   color: var(--muted);
 }
 
-.overview {
+.page {
   flex: 1;
   overflow: auto;
   padding: 20px 20px 32px;
 }
 
-.overview > * {
+.page > * {
   max-width: 1040px;
 }
 
-.overview h2 {
+.page h2 {
   margin: 28px 0 10px;
   font-size: 13px;
   font-weight: 600;
@@ -543,7 +552,7 @@ button.card:hover {
   font-variant-numeric: tabular-nums;
 }
 
-.card-note {
+.note {
   color: var(--muted);
   font-size: 12px;
 }
@@ -552,7 +561,15 @@ button.card:hover {
   padding: 18px 20px;
 }
 
-.hero .card-note {
+.figures {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 18px 20px 36px;
+}
+
+.hero .note,
+.figures .note {
   margin-top: 8px;
 }
 
@@ -566,6 +583,26 @@ button.card:hover {
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
+}
+
+.hero-value {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.hero-gain {
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.gain {
+  color: var(--gain);
+}
+
+.loss {
+  color: var(--loss);
 }
 
 .hero-parts {
@@ -582,6 +619,134 @@ button.card:hover {
 
 .hero-parts strong {
   font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.hero-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px;
+}
+
+.hero-row .hero-parts {
+  margin-top: 0;
+  text-align: right;
+}
+
+.hero-row .hero-parts > div {
+  width: 112px;
+}
+
+.crumbs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 20px;
+  margin-bottom: 10px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.crumbs button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.crumbs button:hover,
+.crumbs [aria-current="page"] {
+  color: var(--text);
+}
+
+.crumbs svg {
+  width: 14px;
+  height: 14px;
+}
+
+.chart {
+  margin: 36px 0 0;
+}
+
+.key {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.key::before {
+  width: 12px;
+  height: 2px;
+  border-radius: 1px;
+  content: "";
+}
+
+.key.market-value::before {
+  background: var(--category-1);
+}
+
+.key.invested-money::before {
+  background: var(--faint);
+}
+
+.readout {
+  min-width: 200px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--raised);
+  box-shadow: var(--shadow);
+  font-size: 12px;
+}
+
+.readout-title {
+  margin-bottom: 4px;
+  color: var(--muted);
+}
+
+.readout-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  line-height: 20px;
+}
+
+.readout-row .key {
+  color: var(--muted);
+}
+
+.holdings {
+  display: flex;
+  gap: 44px;
+}
+
+.donut {
+  flex: none;
+  width: 260px;
+  padding: 0 0 20px 20px;
+}
+
+.donut .skeleton {
+  height: auto;
+  aspect-ratio: 1;
+  border-radius: 50%;
+}
+
+.holdings > table,
+.skeleton-rows {
+  flex: 1;
+  align-self: flex-start;
+  min-width: 0;
+}
+
+.donut .recharts-pie-sector {
+  cursor: pointer;
+}
+
+.readout-row strong {
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
@@ -667,14 +832,22 @@ button.card:hover {
   border-bottom: 1px solid var(--border);
 }
 
-.card .skeleton {
+.card .skeleton,
+.figures .skeleton {
   width: 40%;
 }
 
-.card .skeleton.big {
+.card .skeleton.big,
+.figures .skeleton.big {
   width: 60%;
   height: 18px;
   margin-top: 8px;
+}
+
+.figures .skeleton.chart-skeleton {
+  width: 100%;
+  height: 260px;
+  margin-top: 18px;
 }
 
 @keyframes pulse {

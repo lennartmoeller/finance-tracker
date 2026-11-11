@@ -308,7 +308,7 @@ function TransactionList<Row extends Transaction>({
           ))}
       </div>
       {rows.length ? (
-        <div className="table-wrap">
+        <div className="scroll">
           <table>
             <colgroup>
               {columns.map(({ name, width }) => (

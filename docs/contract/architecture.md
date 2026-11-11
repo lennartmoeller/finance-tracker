@@ -33,7 +33,7 @@ flowchart LR
 | Component | Owns | Leaves to others |
 | --- | --- | --- |
 | Backend | the API contract's implementation; validation, deduplication, raw storage and extraction; every piece of data the system stores, logos downloaded from Logo.dev and prices from onvista included | reading bank websites |
-| Frontend | the interface in which the user views and manages everything, so far an overview of each account's balance, or for a depot its invested money, market value and gain, and every normalized transaction | reading bank websites |
+| Frontend | the interface in which the user views and manages everything, so far an overview of each account's balance, or for a depot its invested money, market value and gain, an analysis of every security held or sold, and every normalized transaction; the figures it shows | reading bank websites |
 | Browser extension | one adapter per bank website; shape validation; the popup that creates, renames and removes accounts, lists them by bank with their last sync, and syncs each one | storing bank credentials |
 | PostgreSQL | the tables of the [data model](./data-model.md) and the rules that keep their data sound | |
 
@@ -62,6 +62,16 @@ Why every account takes the browser extension is recorded in [the context](../co
 - Its date is the booking date where the raw transaction has one, otherwise the transaction date.
 - Its counterparty and description are filled wherever the raw transaction has one.
 - A normalized transaction carries no balance, because an account's balance and a depot's invested money and holdings add up from its transactions.
+
+## Figures
+
+The frontend adds up every figure it shows from the normalized transactions and prices that `transaction.list` and `price.list` deliver, so the API serves no figures, as [the context](../context/figures.md#securities-figures-add-up-in-the-frontend) records.
+
+- A security's figures add up over every depot that holds or held it, and the figures for all securities leave out a held security without a price and name it.
+- A gain carries its percent of what the purchases cost, as the [glossary](../../GLOSSARY.md#prices) defines it.
+- A scope's distributions show as reinvested, each reinvestment's shares times its security's price on its day, and paid out, the rest floored at 0, as [the context](../context/figures.md#distributions-split-into-paid-out-and-reinvested) records.
+- The Securities view charts each calendar day's market value and invested money from the scope's first depot transaction through the latest price, or through the last day held once nothing is held any more; a day takes each held security's latest price on or before it.
+- The Securities view's donut colours the six largest held securities and folds any further ones into one "Other" slice, because the categorical palette stays distinguishable as a closed ring of up to six colours.
 
 ## Ingestion
 
@@ -121,7 +131,7 @@ flowchart TD
   subgraph apps["apps/"]
     extension["browser-extension<br/>bank website adapters, popup"]
     backend["backend<br/>API contract implementation, ingest, extraction and identity, price fill, schema"]
-    frontend["frontend<br/>overview and normalized transactions, mock mode"]
+    frontend["frontend<br/>overview, securities analysis and normalized transactions, figures, mock mode"]
   end
   subgraph packages["packages/"]
     shared["shared<br/>API contract: procedures with input and output schemas; typed client; versioned raw shapes per bank and account type; bank logos and account wording for interfaces"]

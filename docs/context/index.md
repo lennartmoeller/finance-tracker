@@ -24,7 +24,7 @@ Why the finance tracker is built the way it is, in the [Keep the Why](https://ke
 
 ## A
 
-- [apps.md](apps.md) — why the system is one backend, one frontend and a browser extension, and what the frontend shows
+- [apps.md](apps.md) — why the system is one backend, one frontend and a browser extension, what the frontend shows, and how it draws charts
 
 ## B
 
@@ -35,6 +35,8 @@ Why the finance tracker is built the way it is, in the [Keep the Why](https://ke
 ## E
 
 ## F
+
+- [figures.md](figures.md) — how the frontend's gains and distributions count, and why the frontend computes them
 
 ## G
 
