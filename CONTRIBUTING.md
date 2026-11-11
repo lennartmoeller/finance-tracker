@@ -6,7 +6,7 @@
 2. Install pnpm with `npm install --global pnpm`; any pnpm version switches itself to the one pinned in the `packageManager` field of [`package.json`](./package.json).
 3. Run `pnpm install`.
 4. Install a Docker-compatible container runtime with Compose, such as Docker Desktop, or Colima with the standalone `docker-compose`, which spells this guide's `docker compose` with a hyphen.
-5. Create a `.env` in the repository root with `API_TOKEN=<a random secret>` and `DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres`; Compose and the frontend's dev server read the token from it, and the backend's dev server both values.
+5. Create a `.env` in the repository root with `API_TOKEN=<a random secret>`, `DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres` and `LOGO_DEV_SECRET_KEY=<the secret key from your Logo.dev dashboard>`; Compose reads the token and the key from it, the frontend's dev server the token, and the backend's dev server all three.
 6. Install each Claude Code plugin enabled in [`.claude/settings.json`](./.claude/settings.json) with `claude plugin install <plugin>@<marketplace> --scope project`, because Claude Code enables these plugins for every clone but does not download them.
 
 ## Run the system
@@ -38,7 +38,7 @@ Write a trigger by hand into the generated migration, because Drizzle's schema h
 ## Check a change
 
 Run `pnpm check`, the quality gate; the [`CI` workflow](./.github/workflows/ci.yml) runs the same command and a CodeQL analysis.
-Tests run without a database, so `pnpm check` and CI need no PostgreSQL; what rests on the database is checked by hand: skipping known raw transactions by the unique constraint on account and identity, and rejecting rows by the [database rules](./docs/data-model.md#database-rules).
+Tests run without a database or Logo.dev, so `pnpm check` and CI need neither PostgreSQL nor a Logo.dev key; what rests on them is checked by hand: skipping known raw transactions by the unique constraint on account and identity, rejecting rows by the [database rules](./docs/data-model.md#database-rules), and downloading, storing and serving logos.
 
 - Fix formatting with `pnpm exec prettier --write .` and autofixable lint findings with `pnpm exec eslint --fix .`.
 - Delete what knip reports as unused instead of ignoring it.

@@ -341,6 +341,98 @@
       },
       "isRLSEnabled": false
     },
+    "public.logos": {
+      "name": "logos",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "logos_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "domain": {
+          "name": "domain",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "isin": {
+          "name": "isin",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "image": {
+          "name": "image",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "etag": {
+          "name": "etag",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "logos_isin_securities_isin_fk": {
+          "name": "logos_isin_securities_isin_fk",
+          "tableFrom": "logos",
+          "tableTo": "securities",
+          "columnsFrom": ["isin"],
+          "columnsTo": ["isin"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "logos_domain_unique": {
+          "name": "logos_domain_unique",
+          "nullsNotDistinct": false,
+          "columns": ["domain"]
+        },
+        "logos_isin_unique": {
+          "name": "logos_isin_unique",
+          "nullsNotDistinct": false,
+          "columns": ["isin"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "logos_one_identifier": {
+          "name": "logos_one_identifier",
+          "value": "(\"logos\".\"domain\" is null) <> (\"logos\".\"isin\" is null)"
+        },
+        "logos_domain_format": {
+          "name": "logos_domain_format",
+          "value": "\"logos\".\"domain\" ~ '^([a-z0-9]([a-z0-9-]*[a-z0-9])?\\.)+[a-z]{2,}$'"
+        },
+        "logos_etag_with_image": {
+          "name": "logos_etag_with_image",
+          "value": "(\"logos\".\"image\" is null) = (\"logos\".\"etag\" is null)"
+        },
+        "logos_etag_filled": {
+          "name": "logos_etag_filled",
+          "value": "\"logos\".\"etag\" <> ''"
+        }
+      },
+      "isRLSEnabled": false
+    },
     "public.securities": {
       "name": "securities",
       "schema": "",

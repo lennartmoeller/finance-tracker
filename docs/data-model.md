@@ -9,6 +9,8 @@ erDiagram
   transactions ||--o| depot_transactions : "extracts to"
   securities ||--o{ depot_transactions : "appears in"
   brands |o..o{ cash_transactions : "names by pattern"
+  brands |o..o| logos : "pictured by domain"
+  securities |o--o| logos : "pictured by ISIN"
 
   accounts {
     integer id PK
@@ -43,6 +45,13 @@ erDiagram
     text name "unique"
     text pattern
     text domain "unique"
+  }
+  logos {
+    integer id PK
+    text domain "unique, or an isin"
+    text isin FK "unique, or a domain"
+    bytea image "optional: a 256-pixel PNG"
+    text etag "optional, with image"
   }
   depot_transactions {
     integer transaction_id PK, FK
@@ -84,6 +93,12 @@ A security holds the fullest name a bank delivered for its ISIN: finvesto's befo
 - The user inserts brands into `brands` by hand, each with its name, its website's domain and a pattern in PostgreSQL's regular expression dialect.
 - A cash transaction's brand is the earliest-created brand whose pattern matches its counterparty regardless of letter case, found anew on every read, so a brand covers the whole history from the moment it is stored.
 
+## Logos
+
+- A logo belongs to what Logo.dev was asked for, a brand's domain or a security's ISIN, so a brand finds its logo by its domain and a security by its ISIN.
+- Every read of the transactions first downloads the logo of each domain and ISIN without a `logos` row; a row without image records that Logo.dev knows no logo, and a failed download stores nothing, so the next read retries.
+- A brand whose domain changes finds no logo until the next read downloads the new domain's, and the old domain's row stays unused.
+
 ## Database rules
 
 The database enforces each of these, so no writer can store a row that breaks one; the [schema](../apps/backend/src/schema.ts) holds the constraints and the [migration](../apps/backend/drizzle/0000_init.sql) the triggers.
@@ -96,4 +111,5 @@ The database enforces each of these, so no writer can store a row that breaks on
 - A security is named by a bank the system knows.
 - A currency is three capital letters, and an ISIN is two letters, nine letters or digits, and one digit.
 - A brand's name and domain are each unique, its domain is a lowercase bare hostname such as `rossmann.de`, and its pattern is a valid regular expression that does not match the empty string, so no brand matches every counterparty.
+- A logo has exactly one of a domain, in a brand's format, and the ISIN of a known security, each unique, and its image and `etag` are set together.
 - A text column never holds an empty string, so `NULL` is the only way to hold no value.

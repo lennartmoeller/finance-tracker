@@ -23,6 +23,30 @@ export const formatDate = (date: string) =>
 
 const none = <span className="empty-field">—</span>;
 
+function Named({
+  name,
+  logo,
+  children,
+}: {
+  name: string;
+  logo: string | null;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="named">
+      {logo ? (
+        <img className="logo small" src={logo} alt="" />
+      ) : (
+        <span className="logo small letter">{name[0]}</span>
+      )}
+      <div>
+        {name}
+        {children}
+      </div>
+    </div>
+  );
+}
+
 export function TransactionTable({
   account,
   transactions,
@@ -73,13 +97,23 @@ export function TransactionTable({
                   <td className="date">
                     {normalized ? formatDate(normalized.date) : none}
                   </td>
-                  {!ofDepot && <td>{transaction.brand?.name ?? none}</td>}
+                  {!ofDepot && (
+                    <td>
+                      {transaction.brand ? (
+                        <Named {...transaction.brand} />
+                      ) : (
+                        none
+                      )}
+                    </td>
+                  )}
                   <td>
                     {depot ? (
-                      <>
-                        {depot.securityName}
+                      <Named
+                        name={depot.securityName}
+                        logo={depot.securityLogo}
+                      >
                         <span className="isin">{depot.isin}</span>
-                      </>
+                      </Named>
                     ) : (
                       (cash?.counterparty ?? none)
                     )}

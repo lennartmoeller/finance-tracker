@@ -51,6 +51,7 @@ const depotTransaction = z.object({
   date: z.iso.date(),
   isin: z.string(),
   securityName: z.string(),
+  securityLogo: z.string().nullable(),
   type: z.enum(["trade", "reinvestment", "fee", "tax", "distribution"]),
   quantity: decimal.nullable(),
   amount: decimal.nullable(),
@@ -67,7 +68,7 @@ const transaction = z.object({
   data: z.json(),
   cash: cashTransaction.nullable(),
   depot: depotTransaction.nullable(),
-  brand: z.object({ name: z.string() }).nullable(),
+  brand: z.object({ name: z.string(), logo: z.string().nullable() }).nullable(),
 });
 
 export type Transaction = z.infer<typeof transaction>;
