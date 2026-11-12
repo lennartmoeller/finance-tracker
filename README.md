@@ -36,9 +36,11 @@ Finance Tracker consists of three apps:
 
 One user owns all data, so the system manages no users or permissions, and it holds no bank credentials, because the browser extension reads only sessions the user opened.
 The frontend and the browser extension reach the data only through the backend's [API](./docs/contract/api.md).
+Every supported bank is one folder in [`banks/`](./banks/) with all that the three apps need of it, as [Banks](./docs/contract/banks.md) shows, and [`shared/`](./shared/) holds the API contract and the code every app and bank uses.
 
 ## Further reading
 
+- [Banks](./docs/contract/banks.md): what a bank's folder holds and how each app finds it.
 - [Ingestion](./docs/contract/ingestion.md): how a sync brings an account's transactions into the backend, and how each adapter reads its bank.
 - [Data model](./docs/contract/data-model.md): the tables, their columns and their relations.
 - [API](./docs/contract/api.md): the backend's procedures and who calls them.
@@ -47,7 +49,7 @@ The frontend and the browser extension reach the data only through the backend's
 - [Logos](./docs/contract/logos.md): how transactions get their brands, and brands and securities their logos from Logo.dev.
 - [Hosting](./docs/contract/hosting.md): where the apps run and how requests are authenticated.
 - [Context](./docs/context/index.md): why the system is built as it is.
-- [Contributing](./CONTRIBUTING.md): local setup, running the system, the quality gate, releases and dependency updates.
+- [Contributing](./CONTRIBUTING.md): local setup, running the system, schema changes, adding a bank, the quality gate, releases and dependency updates.
 
 ## License
 

@@ -65,10 +65,9 @@ erDiagram
     text domain "optional, unique, instead of an isin"
     text isin FK "optional, unique, instead of a domain"
     bytea image "optional: a 256-pixel PNG"
-    text etag "optional, with image"
   }
 ```
 
 Every column is required unless the diagram marks it optional.
 A dotted line has no foreign key: the backend matches the rows when it reads them.
-The [schema](../../apps/backend/src/schema.ts) holds the constraints, and the [migrations](../../apps/backend/drizzle/) the triggers.
+The [schema](../../apps/backend/schema.sql) holds the constraints and triggers.
