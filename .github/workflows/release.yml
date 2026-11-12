@@ -16,7 +16,6 @@ jobs:
     uses: ./.github/workflows/ci.yml
     permissions:
       contents: read
-      security-events: write
 
   version:
     needs: check
