@@ -1,7 +1,7 @@
 import type { BankAdapter } from "@finance-tracker/shared/bank";
 
 export const banks = Object.values(
-  import.meta.glob<BankAdapter>("../banks/*/adapter.ts", {
+  import.meta.glob<BankAdapter>("../shared/banks/*/adapter.ts", {
     eager: true,
     import: "default",
   }),

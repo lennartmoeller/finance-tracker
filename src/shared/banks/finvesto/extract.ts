@@ -1,9 +1,9 @@
-import type { BankExtraction, Extracted } from "@finance-tracker/shared/bank";
-import type { DepotTransaction } from "@finance-tracker/shared/contract";
-import { centsQuotient } from "@finance-tracker/shared/decimal";
-import { depotFields } from "@finance-tracker/shared/depot";
-import { germanDate, germanDecimal } from "@finance-tracker/shared/german";
-import { extraction } from "@finance-tracker/shared/raw-transactions";
+import type { BankExtraction, Extracted } from "../../bank.ts";
+import type { DepotTransaction } from "../../contract.ts";
+import { centsQuotient } from "../../decimal.ts";
+import { depotFields } from "../../depot.ts";
+import { germanDate, germanDecimal } from "../../german.ts";
+import { extraction } from "../../raw-transactions.ts";
 import bank from "./bank.ts";
 import { depotV1, type DepotV1 } from "./shapes.ts";
 

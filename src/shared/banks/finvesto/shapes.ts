@@ -1,4 +1,4 @@
-import { currency } from "@finance-tracker/shared/contract";
+import { currency } from "../../contract.ts";
 import { z } from "zod";
 
 const date = z.string().regex(/^\d{2}\.\d{2}\.\d{2}$/);

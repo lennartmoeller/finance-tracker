@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { currency } from "@finance-tracker/shared/contract";
-import { decimal } from "@finance-tracker/shared/decimal";
+import { currency } from "../../contract.ts";
+import { decimal } from "../../decimal.ts";
 
 export const cashHeaderV1 =
   "Buchungstag;Wert;Umsatzart;Begünstigter / Auftraggeber;Verwendungszweck;IBAN / Kontonummer;BIC;Kundenreferenz;Mandatsreferenz;Gläubiger ID;Fremde Gebühren;Betrag;Abweichender Empfänger;Anzahl der Aufträge;Anzahl der Schecks;Soll;Haben;Währung";

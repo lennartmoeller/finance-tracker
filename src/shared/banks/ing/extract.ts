@@ -1,6 +1,6 @@
-import type { BankExtraction } from "@finance-tracker/shared/bank";
-import { germanBooking } from "@finance-tracker/shared/german";
-import { extraction } from "@finance-tracker/shared/raw-transactions";
+import type { BankExtraction } from "../../bank.ts";
+import { germanBooking } from "../../german.ts";
+import { extraction } from "../../raw-transactions.ts";
 import bank from "./bank.ts";
 import { cashV1 } from "./shapes.ts";
 

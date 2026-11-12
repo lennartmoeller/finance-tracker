@@ -1,8 +1,8 @@
-import type { BankExtraction } from "@finance-tracker/shared/bank";
-import { negated } from "@finance-tracker/shared/decimal";
-import { depotFields } from "@finance-tracker/shared/depot";
-import { germanBooking } from "@finance-tracker/shared/german";
-import { extraction } from "@finance-tracker/shared/raw-transactions";
+import type { BankExtraction } from "../../bank.ts";
+import { negated } from "../../decimal.ts";
+import { depotFields } from "../../depot.ts";
+import { germanBooking } from "../../german.ts";
+import { extraction } from "../../raw-transactions.ts";
 import bank from "./bank.ts";
 import { cashV1, depotV1 } from "./shapes.ts";
 

@@ -1,7 +1,7 @@
-import type { BankExtraction } from "@finance-tracker/shared/bank";
-import { cents, decimalSum, negated } from "@finance-tracker/shared/decimal";
-import { depotFields } from "@finance-tracker/shared/depot";
-import { extraction } from "@finance-tracker/shared/raw-transactions";
+import type { BankExtraction } from "../../bank.ts";
+import { cents, decimalSum, negated } from "../../decimal.ts";
+import { depotFields } from "../../depot.ts";
+import { extraction } from "../../raw-transactions.ts";
 import bank from "./bank.ts";
 import { rawTransactionV1, type RawTransactionV1 } from "./shapes.ts";
 

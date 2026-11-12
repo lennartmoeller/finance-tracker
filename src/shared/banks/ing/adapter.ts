@@ -1,14 +1,6 @@
-import type { BankAdapter } from "@finance-tracker/shared/bank";
-import {
-  parseRawTransactions,
-  shapeMismatch,
-} from "@finance-tracker/shared/raw-transactions";
-import {
-  inject,
-  navigate,
-  notLoggedIn,
-  withSyncTab,
-} from "@finance-tracker/shared/sync-tab";
+import type { BankAdapter } from "../../bank.ts";
+import { parseRawTransactions, shapeMismatch } from "../../raw-transactions.ts";
+import { inject, navigate, notLoggedIn, withSyncTab } from "../../sync-tab.ts";
 import bank from "./bank.ts";
 import { cashV1, headerV1 } from "./shapes.ts";
 

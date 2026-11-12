@@ -54,7 +54,7 @@ Until the first release, a schema change edits that file in place, and the first
 
 ## Add a bank
 
-1. Create a folder in [`src/banks/`](./src/banks/) with its `bank.ts`, `adapter.ts`, `extract.ts`, raw transaction shapes, `logo.png` and tests, following [`src/banks/CLAUDE.md`](./src/banks/CLAUDE.md) and the interfaces in [`src/shared/bank.ts`](./src/shared/bank.ts).
+1. Create a folder in [`src/shared/banks/`](./src/shared/banks/) with its `bank.ts`, `adapter.ts`, `extract.ts`, raw transaction shapes, `logo.png` and tests, following [`src/shared/banks/CLAUDE.md`](./src/shared/banks/CLAUDE.md) and the interfaces in [`src/shared/bank.ts`](./src/shared/bank.ts).
 2. Add the bank to the checks `accounts_bank_known` and `securities_named_by_known` [in the schema](#change-the-database-schema).
 3. Add the bank to the supported accounts in [`README.md`](./README.md) and its adapter to [Ingestion](./docs/contract/ingestion.md#adapters).
 

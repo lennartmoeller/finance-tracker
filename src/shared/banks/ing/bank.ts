@@ -1,5 +1,5 @@
-import { iban } from "@finance-tracker/shared/account-number";
-import type { Bank } from "@finance-tracker/shared/bank";
+import { iban } from "../../account-number.ts";
+import type { Bank } from "../../bank.ts";
 
 export default {
   name: "ING",

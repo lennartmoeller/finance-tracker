@@ -2,7 +2,7 @@
 
 ```mermaid
 flowchart LR
-  subgraph unit["src/banks/&lt;bank&gt;/"]
+  subgraph unit["src/shared/banks/&lt;bank&gt;/"]
     bank["bank.ts<br/>name, logo,<br/>account types with number formats"]
     adapter["adapter.ts<br/>hosts, permissions, read"]
     extract["extract.ts<br/>security name rank,<br/>an extraction per account type and shape version"]

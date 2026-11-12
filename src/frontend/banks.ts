@@ -2,7 +2,7 @@ import type { Bank } from "@finance-tracker/shared/bank";
 
 const logos = new Map(
   Object.values(
-    import.meta.glob<Bank>("../banks/*/bank.ts", {
+    import.meta.glob<Bank>("../shared/banks/*/bank.ts", {
       eager: true,
       import: "default",
     }),

@@ -1,5 +1,5 @@
-import { currency } from "@finance-tracker/shared/contract";
-import { decimal } from "@finance-tracker/shared/decimal";
+import { currency } from "../../contract.ts";
+import { decimal } from "../../decimal.ts";
 import { z } from "zod";
 
 export const rawTransactionV1 = z

@@ -1,5 +1,5 @@
-import { depotNumber } from "@finance-tracker/shared/account-number";
-import type { Bank } from "@finance-tracker/shared/bank";
+import { depotNumber } from "../../account-number.ts";
+import type { Bank } from "../../bank.ts";
 
 export default {
   name: "finvesto",

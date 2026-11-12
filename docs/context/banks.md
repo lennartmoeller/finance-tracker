@@ -9,7 +9,7 @@
 **Source:** the empty-house rewrite of 2026-11-11, designed by the coding agent after the target structure of `.claude/skills/empty-house-refactoring/SKILL.md`; not yet confirmed by the maintainer
 **See:** ingestion.md#raw-transactions-read-by-their-account — aef5e287-882f-486e-9b4e-37a23394ddea — as of 2026-11-11
 
-Everything bank-specific lives in the bank's folder under `src/banks/`: its name, logo and account number formats, its raw transaction shapes, the adapter the extension runs and the extraction the backend runs.
+Everything bank-specific lives in the bank's folder under `src/shared/banks/`: its name, logo and account number formats, its raw transaction shapes, the adapter the extension runs and the extraction the backend runs.
 The apps find the folders by file name, the frontend and the extension through Vite's `import.meta.glob`, the backend and the extension's manifest through `src/shared/discover.ts` in Node, so no app names a bank.
 
 **Reason:** adding, changing or removing a bank is the change the repository sees most, and it touches one folder instead of a shape file in the shared package, an adapter and its entrypoints in the extension, a case in the backend's extraction, an identity function, a logo map, a ranking list and the manifest's permissions.

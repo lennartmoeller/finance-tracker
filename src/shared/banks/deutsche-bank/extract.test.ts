@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { identify } from "@finance-tracker/shared/identity";
+import { identify } from "../../identity.ts";
 import deutscheBank from "./extract.ts";
 
 const { cash, depot } = deutscheBank.extractions;
