@@ -15,6 +15,24 @@ Docker Compose stays the local way to run and test the system.
 
 **Rejected alternative:** unknown.
 
+## The cluster's data is production data, the local data is test data
+
+**Id:** 52452f47-4a09-4e37-9397-b1052196ebe2
+**Type:** constraint
+**Status:** active
+**Evidence:** confirmed
+**Source:** conversation with the maintainer, 2026-11-12
+**Revisit when:** the home network backs up the cluster's database and has restored it once
+**See:** hosting.md#a-helm-chart-on-k3s-is-the-only-production-deployment — 4fade0dd-8483-47e6-9e4d-862672214e6a — as of 2026-11-12
+**See:** hosting.md#the-cluster-starts-with-an-empty-database — 5b7412c9-d0d0-4e06-8be8-8287ff03c2f7 — as of 2026-11-12
+
+The cluster's PostgreSQL holds the data the maintainer works with, so a change to it by hand starts from a dump and waits for the maintainer's go, and every merge to `main` reaches it by itself.
+The Compose database on the maintainer's machine is test data, which a check may reset or destroy.
+
+**Reason:** nothing backs up the cluster's database until the home network adds backup and recovery, so a mistake there cannot be undone, while the local data serves only trying things out.
+
+**Consequence:** resetting the Compose database loses the history that only it holds, from before the cluster started empty.
+
 ## The chart has fixed names, one value and one Secret
 
 **Id:** b502b030-c0d4-4e30-a029-2373ba15ae07
@@ -227,7 +245,26 @@ The release workflow calls the CI workflow on the pushed commit before it comput
 
 **Rejected alternative:** publishing in parallel with CI.
 
-**Consequence:** a release waits for CI, CodeQL included.
+**Consequence:** a release waits for CI.
+
+## CodeQL runs in its own workflow
+
+**Id:** 251325d9-379c-4773-9558-86a1839ed5dc
+**Type:** decision
+**Type:** workaround
+**Status:** active
+**Evidence:** confirmed
+**Source:** the coding agent's proposal after code scanning's pull request check found no matching analysis on `main`, confirmed by the maintainer on 2026-11-12
+**Revisit when:** CodeQL names an analysis in a called workflow after the called file
+**See:** hosting.md#the-release-runs-ci-first — 177c7b22-84f6-468c-ba73-92b877b89581 — as of 2026-11-12
+
+CodeQL scans in `codeql.yml` on pull requests and pushes to `main`, outside the CI workflow that the release calls.
+
+**Reason:** CodeQL names an analysis after the workflow file that started the run, so inside the called CI workflow `main`'s analyses were filed under `release.yml` and the pull requests' under `ci.yml`; code scanning compares a pull request only with the same configuration on `main`, and reported "1 configuration not found" instead of the alerts the pull request introduces.
+
+**Rejected alternative:** CodeQL in the CI workflow with the check's neutral result accepted, which leaves every pull request without its comparison of new alerts.
+
+**Consequence:** a release no longer waits for CodeQL, which never gated it, since alerts do not fail the analysis job.
 
 ## Pull requests build the images and lint the chart
 
