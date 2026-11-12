@@ -6,7 +6,7 @@ flowchart LR
   transactions["transaction.list"]
   prices["price.list"]
   subgraph frontend["Frontend"]
-    overview["Overview<br/>the total, each cash account's balance,<br/>each depot's invested money, market value and gain"]
+    overview["Overview<br/>the total, each cash account's balance<br/>from its start balance and amounts,<br/>each depot's invested money, market value and gain"]
     securities["Securities<br/>each security held or sold, and all together:<br/>invested money, market value, gain and distributions,<br/>and every day's market value and invested money"]
     list["Transactions<br/>the normalized transactions<br/>of one account or all of a type"]
   end

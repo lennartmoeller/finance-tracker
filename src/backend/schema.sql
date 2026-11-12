@@ -7,12 +7,15 @@ create table accounts (
   type text not null,
   number text not null,
   last_synced_at timestamptz,
+  start_balance numeric,
   constraint accounts_bank_number_key unique (bank, number),
   constraint accounts_bank_name_key unique (bank, name),
   constraint accounts_name_filled check (name <> ''),
-  constraint accounts_bank_known check (bank in ('Deutsche Bank', 'finvesto', 'ING', 'Trade Republic')),
+  constraint accounts_bank_known check (bank in ('Deutsche Bank', 'finvesto', 'ING', 'Sparkasse', 'Trade Republic')),
   constraint accounts_type_known check (type in ('cash', 'depot')),
-  constraint accounts_number_filled check (number <> '')
+  constraint accounts_number_filled check (number <> ''),
+  constraint accounts_start_balance_of_cash check (type = 'cash' or start_balance is null),
+  constraint accounts_start_balance_in_cents check (scale(start_balance) = 2)
 );
 
 create table transactions (

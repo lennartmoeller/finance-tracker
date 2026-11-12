@@ -17,6 +17,7 @@ const account = z.object({
   type: accountType,
   number: z.string(),
   lastSyncedAt: z.date().nullable(),
+  startBalance: decimal.nullable(),
 });
 
 export type Account = z.infer<typeof account>;

@@ -58,3 +58,22 @@ The frontend computes each security's figures and the daily market value and inv
 **Rejected alternative:** a backend procedure serving figures or series per security, which adds API surface for figures the browser already has the inputs for.
 
 **Consequence:** the series recomputes a position only on days with a transaction, and the chart redraws after the rest of the view, because Recharts needs about 150 ms in the dev server for some 850 daily points.
+
+## A cash balance starts from an optional start balance
+
+**Id:** a53f4fef-6c7a-463b-bf4d-189f9d8b24ff
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer request and decision in a planning dialogue, 2026-11-12
+
+`accounts.start_balance` holds a cash account's balance before its first stored transaction, empty unless the account's stored history begins after it was opened, and always empty on a depot.
+A cash account's balance in the frontend is its start balance, where set, plus the sum of its amounts.
+
+**Reason:** the Sparkasse history begins long after that account was opened, while the other cash accounts' histories reach back to their opening, ING's through the legacy data and Trade Republic's and Deutsche Bank's through their exports; empty is how the schema marks a value that doesn't apply, and the migrate step adds such a column without a hand step.
+
+**Rejected alternative:** a start balance required on every cash account, 0 as the usual one, which needs a hand update of the existing cash accounts in every instance before its check validates.
+
+**Rejected alternative:** `not null default 0` on every account, which gives depots a 0 that means "does not apply".
+
+**Consequence:** no interface sets it, so it is inserted by hand together with the account it belongs to.

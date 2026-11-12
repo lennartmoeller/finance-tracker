@@ -4,7 +4,7 @@ import { accountNumberIssue } from "@finance-tracker/shared/account-number";
 import type { Account } from "@finance-tracker/shared/contract";
 import { banks } from "./banks.ts";
 
-const columns = `id, name, bank, type, number, last_synced_at as "lastSyncedAt"`;
+const columns = `id, name, bank, type, number, last_synced_at as "lastSyncedAt", start_balance as "startBalance"`;
 
 export const accountNotFound = () =>
   new ORPCError("NOT_FOUND", { message: "The account does not exist." });
@@ -23,7 +23,12 @@ async function withoutConflict<T>(query: Promise<T>): Promise<T> {
 
 export async function createAccount(
   db: Pool,
-  { name, bank, type, number }: Omit<Account, "id" | "lastSyncedAt">,
+  {
+    name,
+    bank,
+    type,
+    number,
+  }: Pick<Account, "name" | "bank" | "type" | "number">,
 ): Promise<Account> {
   const format = banks.get(bank)?.accounts[type];
   const issue = format

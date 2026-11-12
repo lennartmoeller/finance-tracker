@@ -12,6 +12,14 @@ export type Bank = {
   accounts: Partial<Record<Account["type"], AccountNumberFormat>>;
 };
 
+export const syncedBy = (
+  banks: readonly Bank[],
+  { bank, type }: Pick<Account, "bank" | "type">,
+) =>
+  banks.some(
+    ({ name, accounts }) => name === bank && accounts[type] !== undefined,
+  );
+
 export type BankAdapter = Bank & {
   hosts: string[];
   permissions: string[];

@@ -20,3 +20,16 @@ export const cashV1 = z.tuple([
   amount,
   currency,
 ]);
+
+// ING's export before autumn 2026, without Referenz, which reached the system after version 1 through the legacy Finance application's data.
+export const cashV2 = z.tuple([
+  date,
+  date,
+  z.string(),
+  z.string(),
+  z.string(),
+  amount,
+  currency,
+  amount,
+  currency,
+]);

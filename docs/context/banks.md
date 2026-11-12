@@ -23,3 +23,23 @@ The apps find the folders by file name, the frontend and the extension through V
 **Consequence:** bank names are plain strings in the API contract, so the backend checks a new account's bank, type and number against the bank's declaration instead of the contract's schema.
 
 **Consequence:** the database schema still lists the banks in two checks, so a new bank needs a schema change as well.
+
+## A bank declares only the account types the extension syncs
+
+**Id:** bc02b8d8-1203-472c-970a-f5651ec803a7
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer decision in a planning dialogue, 2026-11-12
+**See:** banks.md#every-bank-is-one-folder-that-the-apps-discover — d2f8114b-dd33-47e2-bbf3-8f54bf4bff7e — as of 2026-11-12
+
+A bank's `bank.ts` declares only the account types the browser extension syncs, so a bank the extension doesn't sync, such as Sparkasse, declares none and has no `adapter.ts`.
+That one rule decides three places: `account.create` accepts only a declared type, the popup lists only accounts of a declared type, and the frontend marks only those with a sync's freshness.
+
+**Reason:** a declared type already meant one the extension syncs, as `account.create`'s answer to any other says, so no new field was needed, and an account the extension can't sync shows neither a sync button that fails nor a freshness mark that stays stale.
+
+**Rejected alternative:** Sparkasse declaring a cash account with the IBAN format, plus a new field in `bank.ts` marking banks filled by hand, which lets `account.create` check the IBAN but adds a field for the same effect.
+
+**Rejected alternative:** hiding such an account in the popup only, which leaves the frontend's freshness mark stale for good.
+
+**Consequence:** an account of an undeclared type is inserted into the database by hand, so no app checks its number.

@@ -7,9 +7,11 @@ import {
   type DepotTransaction,
   type Transaction,
 } from "@finance-tracker/shared/contract";
+import { syncedBy } from "@finance-tracker/shared/bank";
 import { freshness, lastSyncText } from "@finance-tracker/shared/last-sync";
 import { AccountName } from "../AccountName.tsx";
 import type { Data, Loading, Scope } from "../App.tsx";
+import { banks } from "../banks.ts";
 import {
   formatAmount,
   formatDate,
@@ -260,10 +262,12 @@ function TransactionList<P extends Part>({
             account.id,
             <>
               <AccountName account={account} />
-              <span
-                className={`dot ${freshness(account.lastSyncedAt)}`}
-                title={lastSyncText(account.lastSyncedAt)}
-              />
+              {syncedBy(banks, account) && (
+                <span
+                  className={`dot ${freshness(account.lastSyncedAt)}`}
+                  title={lastSyncText(account.lastSyncedAt)}
+                />
+              )}
             </>,
           ),
         )}
