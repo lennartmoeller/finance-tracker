@@ -11,7 +11,7 @@
 
 The backend stores the price of each security for every LS Exchange trading day of its holding spans, read by ISIN from onvista's undocumented API without a key, so that a depot can be valued on any day it held the security.
 A price is the security's close on LS Exchange in EUR.
-The `price.fill` procedure fills the finished days each holding span lacks and never rewrites a stored price; the user calls it by hand until a Kubernetes CronJob calls it once a day.
+The `price.fill` procedure fills the finished days each holding span lacks and never rewrites a stored price; a CronJob calls it once a day in the cluster, and the user calls it by hand with Compose.
 
 **Reason:** LS Exchange covers every trading day of every security the user held, closes latest, at 23:00, and is where Trade Republic, which held most of them, trades.
 Never rewriting a stored price lets the stored history outlive a change to onvista's API.
@@ -35,3 +35,20 @@ Never rewriting a stored price lets the stored history outlive a change to onvis
 **Consequence:** prices are as fresh as the last fill, so a depot's market value shows the date of the oldest price it uses.
 
 **Consequence:** a stock split within a holding span stays unhandled until a depot transaction type models one.
+
+## A CronJob fills the prices at 01:00 Berlin time
+
+**Id:** 61ba5112-9c1e-48b4-9e12-3e91c6041496
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** the coding agent's proposal, confirmed by the maintainer with the plan on 2026-11-12
+**See:** prices.md#security-prices-from-onvista — 35b1e0be-7456-4bbb-8dfd-f1cf70621ac5 — as of 2026-11-12
+
+The chart's CronJob `price-fill` calls `price.fill` daily at 01:00 Europe/Berlin, never twice at once, from the backend's image, whose BusyBox `wget` posts the call with the API token to the backend inside the cluster.
+
+**Reason:** LS Exchange closes at 23:00 and the fill stores finished days up to yesterday, so 01:00 fills the day that just ended.
+
+**Reason:** the backend's image already carries an HTTP client, so no further image is pinned.
+
+**Rejected alternative:** an image of its own with an HTTP client such as curl, one more image to pin and bump.

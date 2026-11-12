@@ -31,7 +31,9 @@ const os = implement(contract)
   .$context<{ authorization: string | undefined }>()
   .use(({ context, next }) => {
     if (context.authorization !== authorization)
-      throw new ORPCError("UNAUTHORIZED");
+      throw new ORPCError("UNAUTHORIZED", {
+        message: "The backend rejected the API token.",
+      });
     return next();
   });
 

@@ -1,0 +1,34 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: price-fill
+spec:
+  # LS Exchange closes at 23:00, and the fill stores finished days up to yesterday.
+  schedule: "0 1 * * *"
+  timeZone: Europe/Berlin
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: price-fill
+              image: ghcr.io/lennartmoeller/finance-tracker-backend:{{ .Chart.AppVersion }}
+              command:
+                - wget
+                - -q
+                - -O-
+                - --header
+                - "Authorization: Bearer $(API_TOKEN)"
+                - --header
+                - "Content-Type: application/json"
+                - --post-data
+                - "{}"
+                - http://backend:3000/rpc/price/fill
+              env:
+                - name: API_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: finance-tracker
+                      key: API_TOKEN

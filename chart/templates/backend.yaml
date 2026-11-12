@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+spec:
+  # Recreate stops the old pod before the new pod's migrate step starts, because two migrate steps must never overlap.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      initContainers:
+        - name: migrate
+          image: &image ghcr.io/lennartmoeller/finance-tracker-backend:{{ .Chart.AppVersion }}
+          command: [node, src/backend/migrate.ts]
+          env: &env
+            - name: API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: finance-tracker
+                  key: API_TOKEN
+            - name: LOGO_DEV_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: finance-tracker
+                  key: LOGO_DEV_SECRET_KEY
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: finance-tracker
+                  key: POSTGRES_PASSWORD
+            - name: DATABASE_URL
+              value: postgres://postgres:$(POSTGRES_PASSWORD)@postgres:5432/postgres
+      containers:
+        - name: backend
+          image: *image
+          env: *env
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+spec:
+  selector:
+    app: backend
+  ports:
+    - port: 3000

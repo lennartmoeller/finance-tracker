@@ -2,11 +2,11 @@
 
 ```mermaid
 sequenceDiagram
-  actor User
+  participant Caller as CronJob or user
   participant BE as Backend
   participant OV as onvista
   participant FE as Frontend
-  User->>BE: price.fill
+  Caller->>BE: price.fill
   BE->>BE: Find the holding spans, the days the depots held each security, in the depot transactions
   loop each held security
     BE->>OV: Search the security by its ISIN
@@ -15,7 +15,7 @@ sequenceDiagram
     OV-->>BE: JSON with one close per trading day
     BE->>BE: Store them
   end
-  BE-->>User: How many prices were stored
+  BE-->>Caller: How many prices were stored
   FE->>BE: price.list
   BE-->>FE: Every stored price
 ```

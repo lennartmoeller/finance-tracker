@@ -48,6 +48,8 @@ Why the finance tracker is built the way it is, in the [Keep the Why](https://ke
 
 ## H
 
+- [hosting.md](hosting.md) — why the finance tracker ships as a Helm chart with its own PostgreSQL, how nginx, the migrate step and the network policy guard it, how every merge releases, and how the extension finds and updates itself
+
 ## I
 
 - [ingestion.md](ingestion.md) — why every account is read by the browser extension, which export each adapter reads, and how raw transactions are read
@@ -58,7 +60,7 @@ Why the finance tracker is built the way it is, in the [Keep the Why](https://ke
 
 ## L
 
-- [layout.md](layout.md) — why all implementation lives in `src/`, one folder per package, and all shared code in `src/shared/`
+- [layout.md](layout.md) — why all implementation lives in `src/`, one folder per package, all shared code in `src/shared/`, and the chart at the root
 
 ## M
 
@@ -68,7 +70,7 @@ Why the finance tracker is built the way it is, in the [Keep the Why](https://ke
 
 ## P
 
-- [prices.md](prices.md) — where security prices come from and how they are filled
+- [prices.md](prices.md) — where security prices come from, and how and when they are filled
 
 ## Q
 

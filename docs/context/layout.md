@@ -39,3 +39,20 @@ Code that two or more packages or banks use lives in `src/shared/`: the bank fol
 **Consequence:** the type check of `src/shared/` carries Node's and the extension's types, so a module there that runs in one app only is caught by the type check of the app that imports it.
 
 **Consequence:** knip does not follow the extension's `import.meta.glob`, so its configuration exempts the adapters' exports.
+
+## The chart sits at the root, the nginx template beside the frontend
+
+**Id:** c79b7cd5-5638-4e5c-a76e-71d22d1be470
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** conversation with the maintainer, 2026-11-12
+**See:** layout.md#all-implementation-lives-in-src-one-folder-per-package — 8841fb4c-d06f-4177-9783-d323cfe6fbe0 — as of 2026-11-12
+
+The Helm chart lives in `chart/` at the repository root, beside `Dockerfile` and `compose.yaml`, as deployment configuration, and the nginx template lives in `src/frontend/` beside `vite.config.ts`, as the production counterpart of the dev server's proxy.
+
+**Reason:** the root holds configuration and `src/` one folder per workspace package, and the nginx template belongs to the frontend it serves.
+
+**Rejected alternative:** the nginx template at the root too, which separates it from the frontend.
+
+**Rejected alternative:** a `deploy/` folder for the chart and the nginx template, which still leaves `Dockerfile` and `compose.yaml` outside it.

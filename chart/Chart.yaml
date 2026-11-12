@@ -1,0 +1,6 @@
+apiVersion: v2
+name: finance-tracker
+description: A single-user, self-hosted personal finance tracker.
+# The release workflow sets both versions from the release's tag.
+version: 0.0.0
+appVersion: 0.0.0
