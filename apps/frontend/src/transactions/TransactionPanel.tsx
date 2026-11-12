@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from "react";
 import { X } from "lucide-react";
-import { accountTypeNames } from "@finance-tracker/shared/account-types";
+import { accountTypeNames } from "@finance-tracker/shared/account-type-names";
 import type { Account } from "@finance-tracker/shared/contract";
 import { AccountName } from "../AccountName.tsx";
 import { formatDate } from "../format.ts";
@@ -52,7 +52,7 @@ export function TransactionPanel({
   return (
     <aside className="panel" aria-label="Transaction">
       <div className="panel-head">
-        <Logo src={logo} name={title} large />
+        <Logo src={logo} name={title} />
         <div className="panel-title">
           <div className="panel-name">{title ?? none}</div>
           <div className="panel-amount">{amount ?? none}</div>

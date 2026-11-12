@@ -179,13 +179,6 @@ button {
   font-weight: 600;
 }
 
-.logo.large {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  font-size: 18px;
-}
-
 .bank {
   flex: none;
   width: 16px;

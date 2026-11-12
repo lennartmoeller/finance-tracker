@@ -1,6 +1,5 @@
 {
   "name": "@finance-tracker/backend",
-  "private": true,
   "type": "module",
   "scripts": {
     "dev": "node --env-file=../../.env --watch src/main.ts"

@@ -5,7 +5,7 @@ import {
   groupAccountNumber,
   type AccountNumberFormat,
 } from "@finance-tracker/shared/account-number";
-import { accountTypeNames } from "@finance-tracker/shared/account-types";
+import { accountTypeNames } from "@finance-tracker/shared/account-type-names";
 import type { Bank } from "@finance-tracker/shared/bank";
 import { errorMessage } from "@finance-tracker/shared/error-message";
 import type { Account } from "@finance-tracker/shared/contract";

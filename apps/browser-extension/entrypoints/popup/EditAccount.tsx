@@ -1,6 +1,6 @@
 import { useState, type SubmitEvent } from "react";
 import { Trash } from "lucide-react";
-import { accountTypeNames } from "@finance-tracker/shared/account-types";
+import { accountTypeNames } from "@finance-tracker/shared/account-type-names";
 import { errorMessage } from "@finance-tracker/shared/error-message";
 import type { Account } from "@finance-tracker/shared/contract";
 import { apiClient } from "../../api.ts";

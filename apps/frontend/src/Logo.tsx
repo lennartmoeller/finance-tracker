@@ -1,19 +1,15 @@
-const letterOf = (name: string | null) =>
-  name?.match(/[\p{L}\p{N}]/u)?.[0]?.toUpperCase() ?? "";
-
 export function Logo({
   src,
   name,
-  large = false,
 }: {
   src: string | null;
   name: string | null;
-  large?: boolean;
 }) {
-  const className = large ? "logo large" : "logo";
   return src ? (
-    <img className={className} src={src} alt="" />
+    <img className="logo" src={src} alt="" />
   ) : (
-    <span className={`${className} letter`}>{letterOf(name)}</span>
+    <span className="logo letter">
+      {name?.match(/[\p{L}\p{N}]/u)?.[0]?.toUpperCase()}
+    </span>
   );
 }

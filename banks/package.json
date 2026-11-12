@@ -1,6 +1,5 @@
 {
   "name": "@finance-tracker/banks",
-  "private": true,
   "type": "module",
   "exports": {
     "./discover": "./discover.ts",

@@ -124,6 +124,13 @@ tr.month th {
   border-bottom: 1px solid var(--border);
 }
 
+.panel-head .logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  font-size: 18px;
+}
+
 .panel-title {
   flex: 1;
   min-width: 0;

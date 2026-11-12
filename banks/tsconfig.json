@@ -1,8 +1,7 @@
 {
   "extends": "../tsconfig.base.json",
   "compilerOptions": {
-    "module": "nodenext",
-    "lib": ["es2024", "dom", "dom.iterable", "esnext.temporal"],
+    "lib": ["es2025", "dom", "esnext.temporal"],
     "types": ["firefox-webext-browser", "node"]
   },
   "include": ["**/*.ts"]

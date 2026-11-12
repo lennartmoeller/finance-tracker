@@ -2,10 +2,8 @@ import { z } from "zod";
 import type { Price } from "@finance-tracker/shared/contract";
 
 const instruments = "https://api.onvista.de/api/v1/instruments";
-const lsExchange = "_LSX";
-const timeout = 5000;
 
-const search = z.object({
+const searchResult = z.object({
   list: z.array(
     z.object({
       isin: z.string(),
@@ -26,7 +24,7 @@ const snapshot = z.object({
   }),
 });
 
-const history = z
+export const eodHistory = z
   .object({
     isoCurrency: z.literal("EUR"),
     datetimeLast: z.array(z.int()),
@@ -35,43 +33,38 @@ const history = z
   .refine(
     ({ datetimeLast, last }) => datetimeLast.length === last.length,
     "onvista sent a different number of days and prices.",
+  )
+  .transform(({ datetimeLast, last }): Omit<Price, "isin">[] =>
+    // onvista stamps each trading day at 12:00 UTC.
+    datetimeLast.map((seconds, day) => ({
+      date: new Date(seconds * 1000).toISOString().slice(0, 10),
+      price: String(last[day]),
+    })),
   );
 
-async function get(path: string): Promise<unknown> {
+async function get<T>(path: string, schema: z.ZodType<T>) {
   const response = await fetch(`${instruments}/${path}`, {
-    signal: AbortSignal.timeout(timeout),
+    signal: AbortSignal.timeout(5_000),
   });
   if (!response.ok)
     throw new Error(`onvista answered ${response.status.toString()}.`);
-  return response.json();
-}
-
-export function parsePrices(body: unknown): Omit<Price, "isin">[] {
-  const { datetimeLast, last } = history.parse(body);
-  // onvista stamps each trading day at 12:00 UTC.
-  return datetimeLast.map((seconds, index) => ({
-    date: new Date(seconds * 1000).toISOString().slice(0, 10),
-    price: String(last[index]),
-  }));
+  return schema.parse(await response.json());
 }
 
 export async function fetchPrices(isin: string, from: string) {
-  const instrument = search
-    .parse(await get(`query?searchValue=${isin}`))
-    .list.find((hit) => hit.isin === isin);
+  const { list } = await get(`query?searchValue=${isin}`, searchResult);
+  const instrument = list.find((hit) => hit.isin === isin);
   if (!instrument) throw new Error("onvista finds no security by this ISIN.");
   const path = `${instrument.entityType}/${instrument.entityValue}`;
-  const quote = snapshot
-    .parse(await get(`${path}/snapshot`))
-    .quoteList.list.find(
-      ({ market, isoCurrency }) =>
-        market.codeMarket === lsExchange && isoCurrency === "EUR",
-    );
+  const { quoteList } = await get(`${path}/snapshot`, snapshot);
+  const quote = quoteList.list.find(
+    ({ market, isoCurrency }) =>
+      market.codeMarket === "_LSX" && isoCurrency === "EUR",
+  );
   if (!quote) throw new Error("onvista lists no EUR quote on LS Exchange.");
   // range=MAX reaches from startDate to the last finished trading day.
-  return parsePrices(
-    await get(
-      `${path}/eod_history?idNotation=${quote.market.idNotation.toString()}&range=MAX&startDate=${from}`,
-    ),
+  return get(
+    `${path}/eod_history?idNotation=${quote.market.idNotation.toString()}&range=MAX&startDate=${from}`,
+    eodHistory,
   );
 }

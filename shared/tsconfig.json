@@ -1,9 +1,4 @@
 {
   "extends": "../tsconfig.base.json",
-  "compilerOptions": {
-    "module": "nodenext",
-    "lib": ["es2024", "dom"],
-    "types": []
-  },
   "include": ["*.ts"]
 }
