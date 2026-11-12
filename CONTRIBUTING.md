@@ -43,7 +43,7 @@ pnpm --filter @finance-tracker/frontend mock
 ## Change the database schema
 
 [`src/backend/schema.sql`](./src/backend/schema.sql) is the whole schema, triggers included, and the state every start brings the database to.
-Before the backend starts, the `migrate` service plans the difference with pgschema and applies it, unless the plan drops a table, column, sequence, trigger or function, or changes a column's type.
+Before the backend starts, the `migrate` service plans the difference with pgschema and applies it, unless the plan drops a table, column, sequence, function, procedure or trigger, or changes a column's type.
 
 1. Edit `schema.sql`.
 2. Run `docker compose up -d --build`, or `docker compose up -d --build migrate` while [developing](#for-development), which applies every change that loses nothing before the backend starts.
