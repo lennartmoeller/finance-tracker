@@ -15,7 +15,9 @@ services:
     restart: unless-stopped
 
   migrate:
-    build: .
+    build: &backend-build
+      context: .
+      target: backend
     command: [node, src/backend/migrate.ts]
     environment:
       DATABASE_URL: &database-url postgres://postgres:postgres@postgres:5432/postgres
@@ -24,16 +26,31 @@ services:
         condition: service_healthy
 
   backend:
-    build: .
+    build: *backend-build
     environment:
       DATABASE_URL: *database-url
-      API_TOKEN: ${API_TOKEN:?Set API_TOKEN in .env}
+      API_TOKEN: &api-token ${API_TOKEN:?Set API_TOKEN in .env}
       LOGO_DEV_SECRET_KEY: ${LOGO_DEV_SECRET_KEY:?Set LOGO_DEV_SECRET_KEY in .env}
     ports:
       - 127.0.0.1:3000:3000
     depends_on:
       migrate:
         condition: service_completed_successfully
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      target: frontend
+    environment:
+      API_TOKEN: *api-token
+    ports:
+      - 127.0.0.1:8080:80
+    depends_on:
+      backend:
+        condition: service_started
+        # nginx resolves the backend's address once at start, and a recreated backend gets a new one.
+        restart: true
     restart: unless-stopped
 
 volumes:

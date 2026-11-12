@@ -1,19 +1,19 @@
-import { useEffect, useState, type SubmitEvent } from "react";
-import { CircleExclamationPoint, KeyRound, Landmark, Plus } from "lucide-react";
-import { isUnauthorized } from "@finance-tracker/shared/client";
+import { useEffect, useState } from "react";
+import { CircleExclamationPoint, Landmark, Plus, Settings } from "lucide-react";
+import { isUnauthorized, isUnreachable } from "@finance-tracker/shared/client";
 import { errorMessage } from "@finance-tracker/shared/error-message";
 import type { Account } from "@finance-tracker/shared/contract";
-import { apiClient, saveApiToken } from "../../api.ts";
+import { apiClient } from "../../api.ts";
 import type { SyncState } from "../background.ts";
 import { AccountList } from "./AccountList.tsx";
 import { AddAccount } from "./AddAccount.tsx";
+import { Connect, type ConnectErrors } from "./Connect.tsx";
 
 export function App() {
   const [accounts, setAccounts] = useState<Account[]>();
   const [syncs, setSyncs] = useState<Record<string, SyncState>>({});
   const [loadError, setLoadError] = useState("");
-  const [needsToken, setNeedsToken] = useState(false);
-  const [token, setToken] = useState("");
+  const [connectErrors, setConnectErrors] = useState<ConnectErrors>();
   const [adding, setAdding] = useState(false);
   const [addedId, setAddedId] = useState<number>();
   const toggleLabel = adding ? "Close" : "Add account";
@@ -23,7 +23,10 @@ export function App() {
       setAccounts(await (await apiClient()).account.list());
       setLoadError("");
     } catch (error) {
-      if (isUnauthorized(error)) setNeedsToken(true);
+      if (isUnauthorized(error))
+        setConnectErrors({ apiToken: errorMessage(error) });
+      else if (isUnreachable(error))
+        setConnectErrors({ address: errorMessage(error) });
       else setLoadError(errorMessage(error));
     }
   }
@@ -63,13 +66,6 @@ export function App() {
     };
   }, []);
 
-  async function saveToken(event: SubmitEvent<HTMLFormElement>) {
-    event.preventDefault();
-    await saveApiToken(token.trim());
-    setNeedsToken(false);
-    await load();
-  }
-
   return (
     <>
       <header className="header">
@@ -79,50 +75,45 @@ export function App() {
             {adding ? "Add account" : "Bank account sync"}
           </p>
         </div>
-        {!needsToken && (
-          <button
-            className={
-              adding ? "icon-button toggle open" : "icon-button toggle"
-            }
-            disabled={!accounts}
-            title={toggleLabel}
-            onClick={() => {
-              setAdding(!adding);
-              setAddedId(undefined);
-            }}
-          >
-            <Plus />
-          </button>
+        {!connectErrors && (
+          <div className="header-actions">
+            <button
+              className="icon-button header-button"
+              title="Connection"
+              onClick={() => {
+                setConnectErrors({});
+                setAdding(false);
+              }}
+            >
+              <Settings />
+            </button>
+            <button
+              className={
+                adding
+                  ? "icon-button header-button open"
+                  : "icon-button header-button"
+              }
+              disabled={!accounts}
+              title={toggleLabel}
+              onClick={() => {
+                setAdding(!adding);
+                setAddedId(undefined);
+              }}
+            >
+              <Plus />
+            </button>
+          </div>
         )}
       </header>
       <main className="body">
-        {needsToken ? (
-          <form className="form" onSubmit={(event) => void saveToken(event)}>
-            <div className="intro">
-              <div className="intro-icon">
-                <KeyRound />
-              </div>
-              <p className="intro-title">Connect to the backend</p>
-            </div>
-            <div className="field">
-              <label className="label" htmlFor="token">
-                API token
-              </label>
-              <input
-                className="input"
-                id="token"
-                type="password"
-                autoFocus
-                value={token}
-                onChange={(event) => {
-                  setToken(event.target.value);
-                }}
-              />
-            </div>
-            <button className="button primary block" disabled={!token.trim()}>
-              Save
-            </button>
-          </form>
+        {connectErrors ? (
+          <Connect
+            errors={connectErrors}
+            onConnected={() => {
+              setConnectErrors(undefined);
+              void load();
+            }}
+          />
         ) : adding && accounts ? (
           <AddAccount
             accounts={accounts}

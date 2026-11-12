@@ -1,11 +1,11 @@
 {
   "name": "@finance-tracker/browser-extension",
-  "version": "0.2.0",
+  "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "wxt --browser firefox",
     "build": "wxt build --browser firefox",
-    "sign": "pnpm build && web-ext sign --channel unlisted --source-dir .output/firefox-mv3 --artifacts-dir .output/signed",
+    "sign": "wxt zip -b firefox && web-ext sign --channel unlisted --source-dir .output/firefox-mv3 --upload-source-code .output/*-sources.zip --artifacts-dir .output/signed",
     "postinstall": "wxt prepare"
   },
   "dependencies": {
