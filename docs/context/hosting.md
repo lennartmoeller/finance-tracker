@@ -261,7 +261,7 @@ The release pushes the chart to `oci://ghcr.io/lennartmoeller/charts`, next to t
 
 **Rejected alternative:** a Helm repository on GitHub Pages through chart-releaser, which adds a `gh-pages` branch, an action and an index that grows with every release.
 
-**Consequence:** ghcr.io publishes the backend image, the frontend image and the chart as private packages, which are switched to public once, by hand, after the first release, as [`CONTRIBUTING.md`](../../CONTRIBUTING.md#release) says.
+**Consequence:** the packages that the release pushes from this public repository come out public, so the cluster pulls them without credentials; GitHub's documentation contradicts itself on whether a pushed package inherits the repository's visibility, and the first release on 2026-11-12 showed that it does.
 
 ## The user enters the backend's address in the popup
 
