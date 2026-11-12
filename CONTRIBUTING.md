@@ -24,15 +24,13 @@ pnpm --filter @finance-tracker/frontend dev
 curl -X POST http://localhost:3000/rpc/price/fill -H "Authorization: Bearer $API_TOKEN" -H 'Content-Type: application/json' -d '{}'
 ```
 
-Install the browser extension from a [release](#release-the-browser-extension).
-
 ### For development
 
 Development keeps the frontend's dev server and swaps the backend container and the released extension for dev servers that reload on every change.
 
 ```sh
-# Run PostgreSQL alone and the backend's dev server
-docker compose up -d postgres
+# Run PostgreSQL with its schema, and the backend's dev server
+docker compose up -d migrate
 pnpm --filter @finance-tracker/backend dev
 
 # Open a Firefox with the browser extension loaded until that Firefox closes
@@ -44,17 +42,21 @@ pnpm --filter @finance-tracker/frontend mock
 
 ## Change the database schema
 
-A change to the API contract's banks, account types or currency pattern changes the schema too, because [`schema.ts`](./apps/backend/src/schema.ts) builds its constraints from them.
-Drizzle's schema holds no triggers, so the migrations carry them as hand-written SQL.
+[`src/backend/schema.sql`](./src/backend/schema.sql) is the whole schema, triggers included, and the state every start brings the database to.
+Before the backend starts, the `migrate` service plans the difference with pgschema and applies it, unless the plan drops a table, column, sequence, function, procedure or trigger, or changes a column's type.
 
-Until the first release, [`0000_init.sql`](./apps/backend/drizzle/0000_init.sql) stays the only migration, and a schema change replaces it:
-
-1. Delete `apps/backend/drizzle` and run `pnpm --filter @finance-tracker/backend exec drizzle-kit generate --name init`.
-2. Append the triggers of the previous `0000_init.sql` and restore the previous `when` in `meta/_journal.json`, because the backend applies a migration only when its `when` is newer than that of the last migration it applied.
-3. Back up the local database with `pg_dump` and bring it to the new schema in one hand-written SQL transaction, which keeps its data without re-syncing every account.
-4. Check that `pg_dump --schema-only` of the local database equals that of a fresh database built from the new migration.
-
-After the first release, add a migration per change with `pnpm --filter @finance-tracker/backend exec drizzle-kit generate --name <change>` instead.
+1. Edit `schema.sql`.
+2. Run `docker compose up -d --build`, or `docker compose up -d --build migrate` while [developing](#for-development), which applies every change that loses nothing before the backend starts.
+3. If `migrate` refuses the plan, `docker compose logs migrate` shows the refused lines, and the backend container stays stopped:
+   1. Back up the database with `docker compose exec -T postgres pg_dump --username postgres postgres > backup.sql`.
+   2. Write the change by hand in `change.sql` and run it with `docker compose exec -T postgres psql --username postgres --single-transaction --set ON_ERROR_STOP=1 postgres < change.sql`:
+      - A renamed column: `alter table … rename column`, and `alter table … rename constraint` for every constraint named after the column, its `<table>_<column>_not_null` included.
+      - A renamed function: `alter function … rename to`.
+      - A changed signature of a function that triggers or checks use: drop and create the function together with them.
+      - An intended drop or type change: that `drop` or `alter … type` itself.
+   3. Repeat step 2, whose plan no longer holds the change.
+4. If `migrate` fails on `VALIDATE CONSTRAINT`, existing rows violate the new check, which stays `NOT VALID` until the next start after the rows or `schema.sql` are fixed.
+5. After a change by hand, check that `pg_dump --schema-only` of the database equals that of a scratch database built with `psql -f schema.sql`, the only check that sees NOT NULL constraint names, timestamp modifiers and commas in trigger arguments.
 
 ## Check a change
 

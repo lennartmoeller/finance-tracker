@@ -1,6 +1,6 @@
 .DS_Store
-node_modules/
-dist/
+.env
 .output/
 .wxt/
-.env
+docs/planning/
+node_modules/

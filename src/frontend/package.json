@@ -1,0 +1,22 @@
+{
+  "name": "@finance-tracker/frontend",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "mock": "vite --mode mock"
+  },
+  "dependencies": {
+    "@finance-tracker/shared": "workspace:*",
+    "lucide-react": "1.70.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "react-is": "19.3.1",
+    "recharts": "3.10.1"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.2.1",
+    "vite": "8.3.6"
+  }
+}

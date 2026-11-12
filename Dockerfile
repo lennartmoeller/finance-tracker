@@ -1,8 +1,11 @@
-FROM node:26.13.0-alpine AS workspace
+FROM pgplex/pgschema:1.14.1 AS pgschema
+
+FROM node:26.13.0-alpine
+COPY --from=pgschema /usr/local/bin/pgschema /usr/local/bin/pgschema
 WORKDIR /app
 RUN npm install --global pnpm
-COPY . .
-RUN pnpm install --frozen-lockfile --filter @finance-tracker/backend...
-
-FROM workspace AS backend
-CMD ["node", "apps/backend/src/main.ts"]
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY src/backend src/backend
+COPY src/shared src/shared
+RUN pnpm install --frozen-lockfile --prod --filter @finance-tracker/backend...
+CMD ["node", "src/backend/main.ts"]

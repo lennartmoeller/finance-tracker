@@ -1,0 +1,10 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "includeEntryExports": true,
+  // The Dockerfile copies pgschema into the backend's image from pgschema's own image.
+  "ignoreBinaries": ["pgschema"],
+  "ignoreIssues": {
+    // The extension imports each adapter's default export through import.meta.glob, which knip does not follow.
+    "src/shared/banks/*/adapter.ts": ["exports"],
+  },
+}

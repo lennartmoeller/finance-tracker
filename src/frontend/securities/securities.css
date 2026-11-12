@@ -1,0 +1,167 @@
+.figures {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 18px 20px 36px;
+}
+
+.figures .note {
+  margin-top: 8px;
+}
+
+.crumbs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 20px;
+  margin-bottom: 10px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.crumbs button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.crumbs button:hover,
+.crumbs [aria-current="page"] {
+  color: var(--text);
+}
+
+.crumbs svg {
+  width: 14px;
+  height: 14px;
+}
+
+.hero-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px;
+}
+
+.hero-value {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.hero-gain {
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.hero-row .hero-parts {
+  margin-top: 0;
+  text-align: right;
+}
+
+.hero-row .hero-parts > div {
+  width: 112px;
+}
+
+.chart {
+  height: 260px;
+  margin-top: 36px;
+}
+
+.readout {
+  min-width: 200px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--raised);
+  box-shadow: var(--shadow);
+  font-size: 12px;
+}
+
+.readout-title {
+  margin-bottom: 4px;
+  color: var(--muted);
+}
+
+.readout-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  line-height: 20px;
+}
+
+.readout-row strong {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.key {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+}
+
+.key > span {
+  width: 12px;
+  height: 2px;
+  border-radius: 1px;
+}
+
+.holdings {
+  display: flex;
+  align-items: flex-start;
+  gap: 44px;
+}
+
+.holdings > table,
+.skeleton-rows {
+  flex: 1;
+  min-width: 0;
+}
+
+.holdings th:last-child {
+  width: 180px;
+}
+
+tbody tr.hovered td {
+  background: var(--hover);
+}
+
+.donut {
+  flex: none;
+  width: 260px;
+  padding: 0 0 20px 20px;
+}
+
+.donut .recharts-wrapper,
+.donut .skeleton {
+  aspect-ratio: 1;
+}
+
+.donut .recharts-pie-sector {
+  cursor: pointer;
+}
+
+.donut .skeleton {
+  height: auto;
+  border-radius: 50%;
+}
+
+.figures .skeleton {
+  width: 40%;
+}
+
+.figures .skeleton.big {
+  width: 60%;
+  height: 18px;
+  margin-top: 8px;
+}
+
+.figures .skeleton.chart-skeleton {
+  width: 100%;
+  height: 260px;
+  margin-top: 18px;
+}
