@@ -119,20 +119,25 @@ button {
   height: 16px;
 }
 
-.toggle {
+.header-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.header-button {
   width: 32px;
   height: 32px;
   border: 1px solid var(--border);
   color: var(--text);
 }
 
-.toggle svg {
+.header-button svg {
   width: 18px;
   height: 18px;
   transition: transform 0.22s cubic-bezier(0.3, 0.7, 0.4, 1);
 }
 
-.toggle.open svg {
+.header-button.open svg {
   transform: rotate(45deg);
 }
 

@@ -1,0 +1,16 @@
+name: Install
+description: Set up Node.js and pnpm, and install the workspace's dependencies.
+
+runs:
+  using: composite
+  steps:
+    - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+      with:
+        cache: true
+    - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version-file: .nvmrc
+    - shell: bash
+      run: |
+        set -euo pipefail
+        pnpm install

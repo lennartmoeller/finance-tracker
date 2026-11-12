@@ -1,0 +1,13 @@
+server {
+    listen 80;
+    root /usr/share/nginx/html;
+
+    # A sync carries an account's whole history, and transaction.list waits for every missing logo.
+    client_max_body_size 0;
+    proxy_read_timeout 10m;
+
+    location ~ ^/(rpc|logos)/ {
+        proxy_pass http://backend:3000;
+        proxy_set_header Authorization "Bearer ${API_TOKEN}";
+    }
+}

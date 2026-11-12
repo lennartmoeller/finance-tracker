@@ -1,13 +1,23 @@
 import { createApiClient } from "@finance-tracker/shared/client";
 
-export async function apiClient() {
-  const { apiToken } = await browser.storage.local.get("apiToken");
-  return createApiClient(
-    "http://localhost:3000/rpc",
-    typeof apiToken === "string" ? apiToken : "",
-  );
+export type Connection = { address: string; apiToken: string };
+
+export async function storedConnection(): Promise<Connection> {
+  const { address, apiToken } = await browser.storage.local.get([
+    "address",
+    "apiToken",
+  ]);
+  return {
+    address: typeof address === "string" ? address : "http://localhost:3000",
+    apiToken: typeof apiToken === "string" ? apiToken : "",
+  };
 }
 
-export async function saveApiToken(apiToken: string) {
-  await browser.storage.local.set({ apiToken });
+export async function apiClient() {
+  const { address, apiToken } = await storedConnection();
+  return createApiClient(`${address}/rpc`, apiToken);
+}
+
+export async function saveConnection(connection: Connection) {
+  await browser.storage.local.set(connection);
 }
