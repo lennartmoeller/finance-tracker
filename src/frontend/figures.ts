@@ -157,7 +157,7 @@ export function dailyValues(
   );
   const end = holdings(transactions).length
     ? latestPrice
-    : nextDay(lastSale(transactions), -1);
+    : nextDay(lastSale(transactions) || first, -1);
   const priceOn = latestPrices(prices);
   const values: DayValues[] = [];
   let position = positionOf([]);

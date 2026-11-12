@@ -106,3 +106,12 @@ test("the daily values carry Friday's price over the weekend, step invested mone
     { date: "2026-11-09", marketValue: 210, invested: 205, gain: 5 },
   ]);
 });
+
+test("a security neither held nor sold, such as one that only paid a distribution, has no daily values", () => {
+  expect(
+    dailyValues(
+      [depot("2026-03-02", fund, "distribution", null, "4.10")],
+      prices,
+    ),
+  ).toEqual([]);
+});
