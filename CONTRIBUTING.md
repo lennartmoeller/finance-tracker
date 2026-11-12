@@ -24,8 +24,6 @@ pnpm --filter @finance-tracker/frontend dev
 curl -X POST http://localhost:3000/rpc/price/fill -H "Authorization: Bearer $API_TOKEN" -H 'Content-Type: application/json' -d '{}'
 ```
 
-Install the browser extension from a [release](#release-the-browser-extension).
-
 ### For development
 
 Development keeps the frontend's dev server and swaps the backend container and the released extension for dev servers that reload on every change.
@@ -60,14 +58,6 @@ Before the backend starts, the `migrate` service plans the difference with pgsch
 4. If `migrate` fails on `VALIDATE CONSTRAINT`, existing rows violate the new check, which stays `NOT VALID` until the next start after the rows or `schema.sql` are fixed.
 5. After a change by hand, check that `pg_dump --schema-only` of the database equals that of a scratch database built with `psql -f schema.sql`, the only check that sees NOT NULL constraint names, timestamp modifiers and commas in trigger arguments.
 
-## Add a bank
-
-1. Create a folder in [`src/shared/banks/`](./src/shared/banks/) with its `bank.ts`, `adapter.ts`, `extract.ts`, raw transaction shapes, `logo.png` and tests, following [`src/shared/banks/CLAUDE.md`](./src/shared/banks/CLAUDE.md) and the interfaces in [`src/shared/bank.ts`](./src/shared/bank.ts).
-2. Add the bank to the checks `accounts_bank_known` and `securities_named_by_known` [in the schema](#change-the-database-schema).
-3. Add the bank to the supported accounts in [`README.md`](./README.md) and its adapter to [Ingestion](./docs/contract/ingestion.md#adapters).
-
-Removing a bank deletes its folder, and its entries in those checks once its accounts are deleted and the securities it named are named by another bank.
-
 ## Check a change
 
 ```sh
@@ -78,14 +68,3 @@ pnpm check
 pnpm exec prettier --write .
 pnpm exec eslint --fix .
 ```
-
-## Release the browser extension
-
-1. Raise `version` in [`src/browser-extension/package.json`](./src/browser-extension/package.json).
-2. Run `pnpm --filter @finance-tracker/browser-extension sign` with the addons.mozilla.org API credentials in `WEB_EXT_API_KEY` and `WEB_EXT_API_SECRET`, which signs the build for the unlisted channel.
-3. Install the signed file from `src/browser-extension/.output/signed` in Firefox.
-
-## Update dependencies
-
-Dependabot opens weekly pull requests for npm packages, GitHub Actions, the Dockerfile's Node.js image and the Compose images, as [`.github/dependabot.yml`](./.github/dependabot.yml) configures.
-Raise [`.nvmrc`](./.nvmrc) together with the Dockerfile's Node.js image, and pnpm in the `packageManager` field of [`package.json`](./package.json) by hand, because Dependabot tracks neither.

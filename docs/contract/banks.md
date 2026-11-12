@@ -2,22 +2,13 @@
 
 ```mermaid
 flowchart LR
-  subgraph unit["src/shared/banks/&lt;bank&gt;/"]
-    bank["bank.ts<br/>name, logo,<br/>account types with number formats"]
-    adapter["adapter.ts<br/>hosts, permissions, read"]
-    extract["extract.ts<br/>security name rank,<br/>an extraction per account type and shape version"]
-  end
-  interfaces["src/shared/bank.ts<br/>Bank, BankAdapter, BankExtraction"]
+  bank["A bank,<br/>one folder in src/shared/banks/"]
   frontend["Frontend"]
-  popup["Extension popup and background"]
-  manifest["Extension manifest,<br/>built by wxt.config.ts"]
+  extension["Browser extension"]
   backend["Backend"]
-  interfaces -. "typed by" .- unit
-  bank -- "import.meta.glob: bank logos" --> frontend
-  adapter -- "import.meta.glob: banks to add accounts at, sync" --> popup
-  adapter -- "src/shared/discover.ts: hosts and permissions" --> manifest
-  extract -- "src/shared/discover.ts: new account checks,<br/>extraction, security naming" --> backend
+  bank -- "name and logo" --> frontend
+  bank -- "name, logo and account types with their number formats,<br/>access to the bank's websites,<br/>reading an account's raw transactions" --> extension
+  bank -- "account types with their number formats,<br/>each raw transaction's identity and normalized transaction,<br/>its rank for naming securities" --> backend
 ```
 
-Every app finds the bank folders by these file names, so a folder added or removed changes what the apps offer without a change to the apps.
-A bank's identity rule comes from its extraction, and [`src/shared/identity.ts`](../../src/shared/identity.ts) turns it into the identity the backend stores, as [Ingestion](./ingestion.md#adapters) shows.
+Every app takes each bank folder there is, so adding or removing a bank's folder changes no app, only the checks in the [schema](../../src/backend/schema.sql) that list the known banks.

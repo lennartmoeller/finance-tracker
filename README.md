@@ -40,7 +40,7 @@ The frontend and the browser extension reach the data only through the backend's
 
 ## Further reading
 
-- [Banks](./docs/contract/banks.md): what a bank's folder holds and how each app finds it.
+- [Banks](./docs/contract/banks.md): what each app gets from a bank.
 - [Ingestion](./docs/contract/ingestion.md): how a sync brings an account's transactions into the backend, and how each adapter reads its bank.
 - [Data model](./docs/contract/data-model.md): the tables, their columns and their relations.
 - [API](./docs/contract/api.md): the backend's procedures and who calls them.
@@ -49,7 +49,7 @@ The frontend and the browser extension reach the data only through the backend's
 - [Logos](./docs/contract/logos.md): how transactions get their brands, and brands and securities their logos from Logo.dev.
 - [Hosting](./docs/contract/hosting.md): where the apps run, how the schema reaches the database, and how requests are authenticated.
 - [Context](./docs/context/index.md): why the system is built as it is.
-- [Contributing](./CONTRIBUTING.md): local setup, running the system, schema changes, adding a bank, the quality gate, releases and dependency updates.
+- [Contributing](./CONTRIBUTING.md): local setup, running the system, schema changes and the quality gate.
 
 ## License
 
