@@ -49,4 +49,4 @@ The database itself rejects a row that breaks a rule, by constraints and, where 
 
 **Consequence:** a raw transaction that moves neither money nor shares, such as finvesto's notice of a charge, has no normalized transaction.
 
-**Consequence:** a new bank, account type or depot transaction type changes a constraint and so [needs a migration](../../CONTRIBUTING.md#change-the-database-schema).
+**Consequence:** a new bank, account type or depot transaction type changes a constraint and so [the schema](../../CONTRIBUTING.md#change-the-database-schema).

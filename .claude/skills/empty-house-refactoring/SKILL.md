@@ -54,6 +54,7 @@ Follow this order:
 
 Read the original for facts: what it does, the external contract, and the knowledge its code holds that nothing else records, such as a provider quirk or an edge case found in production.
 Take no form from it: its architecture, levels, folder structure, internal names and code shape are outcomes of the history, not of the idea.
+Every file is part of the rewrite, down to an ignore list or a tool config, so write each one anew under the rules.
 A form that a rule or a preference of the maintainer asks for belongs to the idea, so it stays.
 A design that ends up resembling the original is fine when it got there from the idea.
 

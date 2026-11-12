@@ -1,0 +1,37 @@
+.mock-bar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  height: 38px;
+  padding: 0 14px;
+  border-bottom: 1px dashed var(--border-strong);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.mock-bar strong {
+  color: var(--text);
+}
+
+.mock-choice {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 7px;
+  background: var(--selected);
+}
+
+.mock-choice button {
+  padding: 3px 9px;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+  cursor: pointer;
+}
+
+.mock-choice button[aria-pressed="true"] {
+  background: var(--bg);
+  box-shadow: var(--card-shadow);
+  color: var(--text);
+}

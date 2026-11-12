@@ -28,11 +28,15 @@ Why the finance tracker is built the way it is, in the [Keep the Why](https://ke
 
 ## B
 
+- [banks.md](banks.md) — why every bank is one folder that the apps discover
+
 ## C
 
 - [contract.md](contract.md) — why `docs/contract/` is an overview whose rules live in the code, why it is split by topic, and why terms live in the code without a glossary
 
 ## D
+
+- [database.md](database.md) — why the schema is one SQL file without an ORM, and how pgschema brings the database to it
 
 ## E
 
@@ -53,6 +57,8 @@ Why the finance tracker is built the way it is, in the [Keep the Why](https://ke
 ## K
 
 ## L
+
+- [layout.md](layout.md) — why all implementation lives in `src/`, one folder per package, and all shared code in `src/shared/`
 
 ## M
 

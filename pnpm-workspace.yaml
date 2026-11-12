@@ -1,6 +1,5 @@
 packages:
-  - apps/*
-  - packages/*
+  - src/*
 saveExact: true
 allowBuilds:
   # Its install script only verifies the platform binary that its optional dependencies already install.

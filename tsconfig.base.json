@@ -3,6 +3,7 @@
     "allowImportingTsExtensions": true,
     "allowUnreachableCode": false,
     "erasableSyntaxOnly": true,
+    "module": "nodenext",
     "noEmit": true,
     "noUncheckedIndexedAccess": true,
     "skipLibCheck": true,
