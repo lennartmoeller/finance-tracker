@@ -2,4 +2,5 @@
 .env
 .output/
 .wxt/
+docs/planning/
 node_modules/
