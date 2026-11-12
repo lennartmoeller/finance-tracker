@@ -79,4 +79,3 @@ helm lint --strict chart
 
 Every merge to `main` releases the backend and frontend images, the Helm chart and the signed browser extension under one version, which [`release.yml`](./.github/workflows/release.yml) derives from the last `v*` tag and the merged pull request's Conventional Commit title.
 The workflow signs the extension with an addons.mozilla.org API key, kept in the Actions secrets `WEB_EXT_API_KEY` and `WEB_EXT_API_SECRET`.
-ghcr.io publishes new packages as private, so after the first release switch `finance-tracker-backend`, `finance-tracker-frontend` and `charts/finance-tracker` to public in each package's settings, once.
