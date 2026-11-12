@@ -66,6 +66,18 @@
   padding-left: 6px;
 }
 
+.dot.fresh {
+  background: var(--fresh);
+}
+
+.dot.aging {
+  background: var(--aging);
+}
+
+.dot.stale {
+  background: var(--stale);
+}
+
 .chips .skeleton {
   width: 120px;
   height: 28px;
@@ -84,6 +96,11 @@ tr.month th {
   font-weight: 600;
   text-align: left;
   cursor: default;
+}
+
+td.muted {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
 }
 
 .type-badge {

@@ -205,18 +205,6 @@ button {
   border-radius: 50%;
 }
 
-.dot.fresh {
-  background: var(--fresh);
-}
-
-.dot.aging {
-  background: var(--aging);
-}
-
-.dot.stale {
-  background: var(--stale);
-}
-
 .gain {
   color: var(--gain);
 }
@@ -296,21 +284,15 @@ td.num {
   text-align: right;
 }
 
-td.num,
-td.muted {
+td.num {
   font-variant-numeric: tabular-nums;
-}
-
-td.muted {
-  color: var(--muted);
 }
 
 tbody tr {
   cursor: pointer;
 }
 
-tbody tr:hover td,
-tbody tr.hovered td {
+tbody tr:hover td {
   background: var(--hover);
 }
 

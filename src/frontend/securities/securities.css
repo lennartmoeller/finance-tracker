@@ -126,6 +126,10 @@
   width: 180px;
 }
 
+tbody tr.hovered td {
+  background: var(--hover);
+}
+
 .donut {
   flex: none;
   width: 260px;
