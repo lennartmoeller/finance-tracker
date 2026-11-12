@@ -4,7 +4,7 @@ The backend answers only requests that carry `API_TOKEN` as bearer token.
 The frontend's nginx adds it to every request it forwards to the backend, so whoever reaches the frontend's port reads and changes all data.
 The browser extension sends its requests to the address entered in its popup: the frontend's origin, whose nginx replaces the extension's token with its own, or the backend's port with the token entered there.
 
-## Docker Compose on the user's machine
+## Docker Compose on the user's machine, for tests
 
 ```mermaid
 flowchart LR
@@ -27,7 +27,7 @@ flowchart LR
 
 During development, the frontend's dev server takes nginx's place and adds the token the same way.
 
-## The K3s cluster of the home network
+## The K3s cluster of the home network, in production
 
 ```mermaid
 flowchart LR
