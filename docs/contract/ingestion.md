@@ -25,9 +25,28 @@ sequenceDiagram
 
 A sync leaves the overlap with earlier syncs to the identities already stored, so the browser extension keeps no state between syncs.
 
+## By hand
+
+```mermaid
+sequenceDiagram
+  actor User
+  participant DB as PostgreSQL
+  participant BE as Backend
+  User->>DB: Insert the account, with a start balance where its stored history begins after its opening
+  User->>BE: sync the raw transactions of a bank export with their shape version
+  BE->>BE: Store each raw transaction with a new identity, and the normalized transaction extracted from it
+  BE-->>User: Imported and skipped counts
+```
+
+The user inserts the account by hand, because `account.create` takes only the account types the browser extension syncs, and sends its raw transactions through the same `sync` as an adapter.
+Two shape versions reach the backend only this way:
+
+- Sparkasse 1: the CSV-CAMT V8 export, every cell quoted; identity: a hash of the row.
+- ING 2: ING's export without the `Referenz` column; identity: a hash of the row without its balance.
+
 ## Adapters
 
-Each bank is a folder in [`src/shared/banks/`](../../src/shared/banks/), as [Banks](./banks.md) shows, with its adapter, its extraction and its shape versions, one for each structure in which it has delivered an account type's raw transactions.
+Each bank is a folder in [`src/shared/banks/`](../../src/shared/banks/), as [Banks](./banks.md) shows, with its extraction, its shape versions, one for each structure in which it has delivered an account type's raw transactions, and its adapter if the browser extension syncs it.
 An adapter reads the account in an inactive tab within the user's session, and sends every row or object its bank delivers as one raw transaction.
 Where a diagram calls a bank's API, the adapter calls it from within the bank's page, so that the session authenticates the call.
 

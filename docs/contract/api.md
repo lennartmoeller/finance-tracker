@@ -5,7 +5,7 @@ The backend serves oRPC procedures under `/rpc`, which [`contract.ts`](../../src
 | Procedure | Caller | Does |
 | --- | --- | --- |
 | `account.create` | Browser extension | Creates an account from its name, bank, type and number |
-| `account.list` | Browser extension, frontend | Lists every account with its last sync |
+| `account.list` | Browser extension, frontend | Lists every account with its last sync and start balance |
 | `account.rename` | Browser extension | Renames an account |
 | `account.remove` | Browser extension | Removes an account with its transactions |
 | `sync` | Browser extension | Ingests an account's raw transactions, as [Ingestion](./ingestion.md) shows |

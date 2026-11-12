@@ -131,8 +131,14 @@ export const priced = (figures: DepotFigures | null) =>
 export const withoutPrices = (names: string[]) =>
   `Without ${names.join(", ")}, whose prices are missing.`;
 
-export function balance(transactions: Transaction[]): string | null {
-  const amounts = transactions.flatMap(({ cash }) => cash?.amount ?? []);
+export function balance(
+  startBalance: string | null,
+  transactions: Transaction[],
+): string | null {
+  const amounts = [
+    startBalance ?? [],
+    ...transactions.map(({ cash }) => cash?.amount ?? []),
+  ].flat();
   return amounts.length ? decimalSum(amounts) : null;
 }
 

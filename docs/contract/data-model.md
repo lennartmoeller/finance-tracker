@@ -18,6 +18,7 @@ erDiagram
     text type "cash or depot"
     text number "unique per bank"
     timestamptz last_synced_at "optional"
+    numeric start_balance "optional: a cash account's balance before its first stored transaction"
   }
   transactions {
     integer id PK

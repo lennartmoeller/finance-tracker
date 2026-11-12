@@ -38,7 +38,7 @@ function Figures({ data, onOpen }: { data: Data; onOpen: OnOpen }) {
     data.transactions.filter(({ accountId }) => accountId === id);
   const cash = accountsOf("cash").map((account) => ({
     account,
-    balance: balance(transactionsOf(account)),
+    balance: balance(account.startBalance, transactionsOf(account)),
   }));
   const depots = accountsOf("depot").map((account) => {
     const figures = depotFigures(

@@ -8,6 +8,7 @@ A single-user, self-hosted personal finance tracker that collects the transactio
 - Trade Republic (cash, depot)
 - Deutsche Bank (cash, depot)
 - finvesto (depot)
+- Sparkasse (cash)
 
 ## Architecture
 
@@ -40,15 +41,15 @@ The frontend and the browser extension reach the data only through the backend's
 ## Further reading
 
 - [Banks](./docs/contract/banks.md): what each app gets from a bank.
-- [Ingestion](./docs/contract/ingestion.md): how a sync brings an account's transactions into the backend, and how each adapter reads its bank.
+- [Ingestion](./docs/contract/ingestion.md): how a sync brings an account's transactions into the backend.
 - [Data model](./docs/contract/data-model.md): the tables, their columns and their relations.
 - [API](./docs/contract/api.md): the backend's procedures and who calls them.
 - [Prices](./docs/contract/prices.md): how security prices come from onvista.
 - [Figures](./docs/contract/figures.md): how the frontend adds up its views' figures from transactions and prices.
 - [Logos](./docs/contract/logos.md): how transactions get their brands, and brands and securities their logos from Logo.dev.
-- [Hosting](./docs/contract/hosting.md): where the apps run with Docker Compose and in the K3s cluster, how the schema reaches the database, how requests are authenticated, and how releases are published.
+- [Hosting](./docs/contract/hosting.md): where the apps run and how they are released.
 - [Context](./docs/context/index.md): why the system is built as it is.
-- [Contributing](./CONTRIBUTING.md): local setup, running the system, schema changes and the quality gate.
+- [Contributing](./CONTRIBUTING.md): how to set up, run and change the system.
 
 ## License
 

@@ -152,3 +152,72 @@ Shape versions count per bank and account type: a format change within an export
 **Consequence:** account types sharing an export, such as Trade Republic's cash account and depot, each count its shape versions, so a change to it adds a version to each, and a type that joins it later starts at its own version 1.
 
 **Consequence:** changing an account's bank or type would misread its raw transactions, so a database trigger keeps both unchanged.
+
+## Sparkasse entered by hand
+
+**Id:** 870bd184-e61b-4b73-99d9-7a19878e49b0
+**Type:** decision
+**Status:** active
+**Evidence:** unknown
+**Source:** maintainer request and decisions in a planning dialogue, 2026-11-12
+**Revisit when:** a Sparkasse account is to be kept current
+**See:** ingestion.md#ingestion-through-the-extension-only — eff3eade-324a-4347-b66f-2472c46fdd51 — as of 2026-11-12
+**See:** banks.md#a-bank-declares-only-the-account-types-the-extension-syncs — bc02b8d8-1203-472c-970a-f5651ec803a7 — as of 2026-11-12
+
+Sparkasse is a bank the system knows, so it stores Sparkasse accounts and their transactions, but the browser extension has no Sparkasse adapter, the one exception to ingestion through the extension only.
+Its account is inserted into the database by hand, and its raw transactions reach the backend through the same `sync` the extension calls, sent by a script that stays out of the repository, as the [contract](../contract/ingestion.md#by-hand) shows.
+
+**Reason:** the maintainer wants the history of a closed Sparkasse current account, which only the legacy Finance application held, and asked for no Sparkasse sync, now or later; that half is confirmed, while why a later Sparkasse account would not be synced either was not stated and is unknown.
+`sync` is the one path that hashes, extracts and inserts, with the database's checks behind it, so the hand path adds no second write path, and through the frontend's address it reaches production without the database password or a port-forward past the network policy.
+
+**Rejected alternative:** a Sparkasse adapter in the browser extension, ruled out by the maintainer.
+
+**Rejected alternative:** a script writing to the database directly in one transaction, which repeats `sync`'s inserts and needs a port-forward and the database password in production.
+
+**Rejected alternative:** the import script committed to the repository and deleted after its production run, which ships one-off code in a release.
+
+**Consequence:** `sync` sets the account's last sync time although no extension synced it, and a hand import is atomic per account, not as a whole.
+
+## ING's export without Referenz as shape version 2
+
+**Id:** 4be7a9a4-b2cb-4f70-8f2a-b2335b342339
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer decision in a planning dialogue, 2026-11-12, after comparing the legacy ING rows with the ING rows both instances stored
+**See:** ingestion.md#raw-transactions-read-by-their-account — aef5e287-882f-486e-9b4e-37a23394ddea — as of 2026-11-12
+
+ING's export as the legacy Finance application stored it lacks the `Referenz` column ING added in autumn 2026, so it is ING cash shape version 2, holding its nine cells as ING delivered them, with an identity that hashes them without the running balance, as version 1's does.
+The legacy history entered each instance only for the bookings dated before the earliest booking that instance had already stored from a sync, read from the instance at import time.
+
+**Reason:** from that day on, every legacy row matched a stored row field for field, and the stored rows carry the `Referenz` the legacy rows lack; before it, the legacy rows and the stored rows added up exactly to ING's newest running balance in both instances.
+ING's export reaches back 390 days from the day of a sync, so no later sync delivers a booking before that day.
+
+**Rejected alternative:** matching each legacy row against the stored rows by their fields, which gave the same result on that data but stores a booking twice wherever ING changed its text between the two exports.
+
+**Rejected alternative:** rebuilding the legacy rows into shape version 1 with an empty `Referenz`, which invents a cell ING never sent and still needs the cutoff.
+
+**Rejected alternative:** numbering the older format 0, since ING delivered it first; a shape version must be positive, and versions count in the order the system learns a format.
+
+**Consequence:** a booking's version 2 row and its version 1 row have different identities, so the two must never overlap: the import refused an ING account that had no synced rows yet, whose next sync would have stored the overlap again.
+
+## Two hand-created rows close the Sparkasse account
+
+**Id:** 9aaf944c-e2e6-440c-bdbc-f330a1f2adfc
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer decision in a planning dialogue, 2026-11-12; the legacy Finance application's bookkeeping and ING's incoming payout as evidence of the amounts and the date
+**See:** ingestion.md#sparkasse-entered-by-hand — 870bd184-e61b-4b73-99d9-7a19878e49b0 — as of 2026-11-12
+**See:** figures.md#a-cash-balance-starts-from-an-optional-start-balance — a53f4fef-6c7a-463b-bf4d-189f9d8b24ff — as of 2026-11-12
+
+The Sparkasse export ends two weeks before the account's closure, so two rows in the Sparkasse shape, created by hand and saying so in their description, record the fee charged on closing and the payout of the remaining balance to the ING current account.
+Each fills only the cells the evidence states, with the value date taken as the booking date, and every other cell empty.
+
+**Reason:** with them, every balance from the first exported booking on is right and the closed account ends at 0.00; the amounts and the date come from the legacy bookkeeping, which matches the export to the cent, and from ING's incoming payout the day after, marked as the balance of a closed account.
+
+**Rejected alternative:** the export alone, which leaves the closed account, and with it the total, too high by both amounts for good.
+
+**Rejected alternative:** a start balance lowered by both amounts, which ends at 0.00 but puts every earlier balance too low.
+
+**Consequence:** the account holds two raw transactions its bank never delivered in this form, the only ones in the system.

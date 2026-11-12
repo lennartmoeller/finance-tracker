@@ -42,10 +42,14 @@ const prices: Price[] = [
   { isin: talanx, date: "2026-11-06", price: "130.8" },
 ];
 
-test("a cash account's balance adds up its amounts, and an account without transactions has none", () => {
+test("a cash account's balance adds its amounts to its start balance, and an account with neither has none", () => {
   const cash = (amount: string) => ({ cash: { amount } }) as Transaction;
-  expect(balance([cash("100.00"), cash("-12.95"), cash("0.50")])).toBe("87.55");
-  expect(balance([])).toBeNull();
+  expect(balance(null, [cash("100.00"), cash("-12.95"), cash("0.50")])).toBe(
+    "87.55",
+  );
+  expect(balance("1250.00", [cash("-1230.55"), cash("-19.45")])).toBe("0.00");
+  expect(balance("12.00", [])).toBe("12.00");
+  expect(balance(null, [])).toBeNull();
 });
 
 test("a reinvested distribution is no paid-out one, even where the shares it bought are worth cents more", () => {

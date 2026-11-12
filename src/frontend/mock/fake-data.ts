@@ -86,7 +86,15 @@ const securities = {
   amundi: security("LU2089238203", "Amundi Prime Global UCITS ETF", null, 35.2),
 };
 
-const accounts: [Account["bank"], Account["type"], string, number][] = [
+const closedStartBalance = 1250;
+
+const accounts: [
+  Account["bank"],
+  Account["type"],
+  string,
+  number,
+  Account["startBalance"]?,
+][] = [
   ["ING", "cash", "Everyday", 0.1],
   ["ING", "cash", "Reserve", 3],
   ["Trade Republic", "cash", "Spending", 9],
@@ -94,10 +102,18 @@ const accounts: [Account["bank"], Account["type"], string, number][] = [
   ["Trade Republic", "depot", "ETFs", 9],
   ["Deutsche Bank", "depot", "Employee shares", 120],
   ["finvesto", "depot", "Fund plan", 14],
+  ["Sparkasse", "cash", "Closed", 480, closedStartBalance.toFixed(2)],
 ];
-const [everyday, reserve, spending, main, etfs, employeeShares, fundPlan] = [
-  1, 2, 3, 4, 5, 6, 7,
-];
+const [
+  everyday,
+  reserve,
+  spending,
+  main,
+  etfs,
+  employeeShares,
+  fundPlan,
+  closed,
+] = [1, 2, 3, 4, 5, 6, 7, 8];
 
 const purchases: [number, [number, number], string, Brand | null][] = [
   [0.15, [8, 85], "VISA KAUFLAND 2345", brands.kaufland],
@@ -387,6 +403,30 @@ export function fakeData(): Data {
   );
   sell(etfs, daysAgo(270), securities.apple, appleShares);
 
+  let closedBalance = closedStartBalance;
+  for (const date of days(840, 500)) {
+    if (date.getDate() !== 1) continue;
+    const fee = -4.47;
+    const power = -between([20, 60]);
+    closedBalance += fee + power;
+    cash(closed, date, fee, null, "Entgeltabrechnung");
+    cash(closed, date, power, "Stadtwerke Beispiel", "Abschlag Strom");
+  }
+  cash(
+    closed,
+    daysAgo(495),
+    -closedBalance,
+    null,
+    "Created by hand: balance paid out to the ING account on closing",
+  );
+  cash(
+    everyday,
+    daysAgo(494),
+    closedBalance,
+    "Alex Example",
+    "Ausgleich des Kontosaldos wegen Kontoauflösung",
+  );
+
   cash(main, daysAgo(183), 1000, "Alex Example", "Umbuchung");
   cash(main, daysAgo(181), -49.9, "Deutsche Bank AG", "Kontoführungsentgelt");
   cash(main, daysAgo(176), -4.9, "VISA CAFE MILCHBAR", "KARTENZAHLUNG");
@@ -457,14 +497,17 @@ export function fakeData(): Data {
   const dateOf = ({ cash, depot }: Transaction) =>
     cash?.date ?? depot?.date ?? "";
   return {
-    accounts: accounts.map(([bank, type, name, syncedDaysAgo], index) => ({
-      id: index + 1,
-      bank,
-      type,
-      name,
-      number: `FAKE${String(index + 1)}`,
-      lastSyncedAt: new Date(Date.now() - syncedDaysAgo * 86_400_000),
-    })),
+    accounts: accounts.map(
+      ([bank, type, name, syncedDaysAgo, startBalance = null], index) => ({
+        id: index + 1,
+        bank,
+        type,
+        name,
+        number: `FAKE${String(index + 1)}`,
+        lastSyncedAt: new Date(Date.now() - syncedDaysAgo * 86_400_000),
+        startBalance,
+      }),
+    ),
     transactions: transactions.sort(
       (a, b) => dateOf(b).localeCompare(dateOf(a)) || b.id - a.id,
     ),

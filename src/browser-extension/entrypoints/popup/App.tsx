@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { CircleExclamationPoint, Landmark, Plus, Settings } from "lucide-react";
+import { syncedBy } from "@finance-tracker/shared/bank";
 import { isUnauthorized, isUnreachable } from "@finance-tracker/shared/client";
 import { errorMessage } from "@finance-tracker/shared/error-message";
 import type { Account } from "@finance-tracker/shared/contract";
 import { apiClient } from "../../api.ts";
+import { banks } from "../../banks.ts";
 import type { SyncState } from "../background.ts";
 import { AccountList } from "./AccountList.tsx";
 import { AddAccount } from "./AddAccount.tsx";
@@ -20,7 +22,11 @@ export function App() {
 
   async function load() {
     try {
-      setAccounts(await (await apiClient()).account.list());
+      setAccounts(
+        (await (await apiClient()).account.list()).filter((account) =>
+          syncedBy(banks, account),
+        ),
+      );
       setLoadError("");
     } catch (error) {
       if (isUnauthorized(error))
