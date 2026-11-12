@@ -9,23 +9,31 @@ services:
       - 127.0.0.1:5432:5432
     volumes:
       - postgres:/var/lib/postgresql
-      - ./src/backend/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
     healthcheck:
       test: pg_isready --username postgres
       interval: 2s
     restart: unless-stopped
 
+  migrate:
+    build: .
+    command: [node, src/backend/migrate.ts]
+    environment:
+      DATABASE_URL: &database-url postgres://postgres:postgres@postgres:5432/postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   backend:
     build: .
     environment:
-      DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres
+      DATABASE_URL: *database-url
       API_TOKEN: ${API_TOKEN:?Set API_TOKEN in .env}
       LOGO_DEV_SECRET_KEY: ${LOGO_DEV_SECRET_KEY:?Set LOGO_DEV_SECRET_KEY in .env}
     ports:
       - 127.0.0.1:3000:3000
     depends_on:
-      postgres:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     restart: unless-stopped
 
 volumes:

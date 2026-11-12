@@ -1,4 +1,7 @@
+FROM pgplex/pgschema:1.14.1 AS pgschema
+
 FROM node:26.13.0-alpine
+COPY --from=pgschema /usr/local/bin/pgschema /usr/local/bin/pgschema
 WORKDIR /app
 RUN npm install --global pnpm
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./

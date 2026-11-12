@@ -36,7 +36,7 @@ Why the finance tracker is built the way it is, in the [Keep the Why](https://ke
 
 ## D
 
-- [database.md](database.md) — why the schema is one SQL file without an ORM
+- [database.md](database.md) — why the schema is one SQL file without an ORM, and how pgschema brings the database to it
 
 ## E
 

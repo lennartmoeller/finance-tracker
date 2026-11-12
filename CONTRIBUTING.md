@@ -31,8 +31,8 @@ Install the browser extension from a [release](#release-the-browser-extension).
 Development keeps the frontend's dev server and swaps the backend container and the released extension for dev servers that reload on every change.
 
 ```sh
-# Run PostgreSQL alone and the backend's dev server
-docker compose up -d postgres
+# Run PostgreSQL with its schema, and the backend's dev server
+docker compose up -d migrate
 pnpm --filter @finance-tracker/backend dev
 
 # Open a Firefox with the browser extension loaded until that Firefox closes
@@ -44,13 +44,21 @@ pnpm --filter @finance-tracker/frontend mock
 
 ## Change the database schema
 
-[`src/backend/schema.sql`](./src/backend/schema.sql) is the whole schema, triggers included, and PostgreSQL applies it when its container starts on an empty volume.
-Until the first release, a schema change edits that file in place, and the first release brings a migration per change instead.
+[`src/backend/schema.sql`](./src/backend/schema.sql) is the whole schema, triggers included, and the state every start brings the database to.
+Before the backend starts, the `migrate` service plans the difference with pgschema and applies it, unless the plan drops a table, column, sequence, trigger or function, or changes a column's type.
 
 1. Edit `schema.sql`.
-2. Back up the local database with `pg_dump`.
-3. Bring the local database to the new schema in one hand-written SQL transaction, which keeps its data without re-syncing every account; a renamed table or column also needs `ALTER TABLE … RENAME CONSTRAINT` for each constraint named after it.
-4. Check that `pg_dump --schema-only` of the local database equals that of a scratch database built with `psql -f schema.sql`.
+2. Run `docker compose up -d --build`, or `docker compose up -d --build migrate` while [developing](#for-development), which applies every change that loses nothing before the backend starts.
+3. If `migrate` refuses the plan, `docker compose logs migrate` shows the refused lines, and the backend container stays stopped:
+   1. Back up the database with `docker compose exec -T postgres pg_dump --username postgres postgres > backup.sql`.
+   2. Write the change by hand in `change.sql` and run it with `docker compose exec -T postgres psql --username postgres --single-transaction --set ON_ERROR_STOP=1 postgres < change.sql`:
+      - A renamed column: `alter table … rename column`, and `alter table … rename constraint` for every constraint named after the column, its `<table>_<column>_not_null` included.
+      - A renamed function: `alter function … rename to`.
+      - A changed signature of a function that triggers or checks use: drop and create the function together with them.
+      - An intended drop or type change: that `drop` or `alter … type` itself.
+   3. Repeat step 2, whose plan no longer holds the change.
+4. If `migrate` fails on `VALIDATE CONSTRAINT`, existing rows violate the new check, which stays `NOT VALID` until the next start after the rows or `schema.sql` are fixed.
+5. After a change by hand, check that `pg_dump --schema-only` of the database equals that of a scratch database built with `psql -f schema.sql`, the only check that sees NOT NULL constraint names, timestamp modifiers and commas in trigger arguments.
 
 ## Add a bank
 

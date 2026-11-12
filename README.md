@@ -47,7 +47,7 @@ The frontend and the browser extension reach the data only through the backend's
 - [Prices](./docs/contract/prices.md): how security prices come from onvista.
 - [Figures](./docs/contract/figures.md): how the frontend adds up its views' figures from transactions and prices.
 - [Logos](./docs/contract/logos.md): how transactions get their brands, and brands and securities their logos from Logo.dev.
-- [Hosting](./docs/contract/hosting.md): where the apps run and how requests are authenticated.
+- [Hosting](./docs/contract/hosting.md): where the apps run, how the schema reaches the database, and how requests are authenticated.
 - [Context](./docs/context/index.md): why the system is built as it is.
 - [Contributing](./CONTRIBUTING.md): local setup, running the system, schema changes, adding a bank, the quality gate, releases and dependency updates.
 

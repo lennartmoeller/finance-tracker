@@ -109,7 +109,8 @@ begin
     raise exception '% takes only the transactions of % accounts.', tg_table_name, tg_argv[0] using errcode = 'check_violation';
   end if;
   return new;
-end $$;
+end
+$$;
 
 create trigger cash_transactions_account_type before insert or update of transaction_id on cash_transactions
   for each row execute function require_account_type('cash');
@@ -120,7 +121,8 @@ create trigger depot_transactions_account_type before insert or update of transa
 create function reject_change() returns trigger language plpgsql as $$
 begin
   raise exception '%', tg_argv[0] using errcode = 'check_violation';
-end $$;
+end
+$$;
 
 create trigger transactions_unchanged before update on transactions
   for each row execute function reject_change('A raw transaction never changes.');
