@@ -70,4 +70,4 @@ erDiagram
 
 Every column is required unless the diagram marks it optional.
 A dotted line has no foreign key: the backend matches the rows when it reads them.
-The [schema](../../apps/backend/schema.sql) holds the constraints and triggers.
+The [schema](../../src/backend/schema.sql) holds the constraints and triggers.

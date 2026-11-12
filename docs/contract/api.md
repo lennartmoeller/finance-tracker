@@ -1,6 +1,6 @@
 # API
 
-The backend serves oRPC procedures under `/rpc`, which [`contract.ts`](../../shared/contract.ts) defines with their input and output schemas.
+The backend serves oRPC procedures under `/rpc`, which [`contract.ts`](../../src/shared/contract.ts) defines with their input and output schemas.
 
 | Procedure | Caller | Does |
 | --- | --- | --- |

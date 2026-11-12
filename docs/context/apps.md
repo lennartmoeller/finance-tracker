@@ -24,7 +24,7 @@ The frontend is where the user manages everything, accounts included, while the 
 
 **Rejected alternative:** a frontend that starts extension syncs, which needs a content-script relay because Firefox lacks `externally_connectable`, and gains nothing while the user must have the bank tab open anyway.
 
-**Consequence:** account management exists in both the frontend and the browser extension, so the logic both need lives in `shared/`.
+**Consequence:** account management exists in both the frontend and the browser extension, so the logic both need lives in `src/shared/`.
 
 **Consequence:** finance logic builds on normalized transactions alone, because a raw transaction's shape changes with every new shape version.
 

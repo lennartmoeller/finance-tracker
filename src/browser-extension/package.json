@@ -1,0 +1,25 @@
+{
+  "name": "@finance-tracker/browser-extension",
+  "version": "0.2.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wxt --browser firefox",
+    "build": "wxt build --browser firefox",
+    "sign": "pnpm build && web-ext sign --channel unlisted --source-dir .output/firefox-mv3 --artifacts-dir .output/signed",
+    "postinstall": "wxt prepare"
+  },
+  "dependencies": {
+    "@finance-tracker/shared": "workspace:*",
+    "lucide-react": "1.70.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@types/firefox-webext-browser": "143.0.1",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@wxt-dev/module-react": "1.2.2",
+    "web-ext": "10.8.0",
+    "wxt": "0.21.5"
+  }
+}

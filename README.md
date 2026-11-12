@@ -36,7 +36,7 @@ Finance Tracker consists of three apps:
 
 One user owns all data, so the system manages no users or permissions, and it holds no bank credentials, because the browser extension reads only sessions the user opened.
 The frontend and the browser extension reach the data only through the backend's [API](./docs/contract/api.md).
-Every supported bank is one folder in [`banks/`](./banks/) with all that the three apps need of it, as [Banks](./docs/contract/banks.md) shows, and [`shared/`](./shared/) holds the API contract and the code every app and bank uses.
+[`src/`](./src/) holds all implementation, one folder per app beside [`banks/`](./src/banks/), with one folder per supported bank holding all that the three apps need of it, as [Banks](./docs/contract/banks.md) shows, and [`shared/`](./src/shared/), with the API contract and all code that two or more apps or banks use.
 
 ## Further reading
 

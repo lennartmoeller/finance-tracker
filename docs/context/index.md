@@ -58,6 +58,8 @@ Why the finance tracker is built the way it is, in the [Keep the Why](https://ke
 
 ## L
 
+- [layout.md](layout.md) — why all implementation lives in `src/`, one folder per package, and all shared code in `src/shared/`
+
 ## M
 
 ## N

@@ -10,7 +10,7 @@
 **Revisit when:** the system has its first release, which needs a migration per schema change
 **See:** transactions.md#normalized-transactions-per-account-type-checked-by-the-database — 1c839c68-8767-49ee-ad4c-20216776c3a7 — as of 2026-11-11
 
-`apps/backend/schema.sql` holds the whole schema, its triggers included, the PostgreSQL container applies it to an empty volume, and the backend queries the database in plain SQL through `pg`.
+`src/backend/schema.sql` holds the whole schema, its triggers included, the PostgreSQL container applies it to an empty volume, and the backend queries the database in plain SQL through `pg`.
 
 **Reason:** the database enforces the data's rules by checks and triggers, which SQL states directly, while Drizzle's schema could hold no trigger, so its migrations carried hand-appended SQL beside a generated snapshot and journal, and every pre-release schema change regenerated them and restored a timestamp by hand.
 

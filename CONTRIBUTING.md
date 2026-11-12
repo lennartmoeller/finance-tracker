@@ -44,7 +44,7 @@ pnpm --filter @finance-tracker/frontend mock
 
 ## Change the database schema
 
-[`apps/backend/schema.sql`](./apps/backend/schema.sql) is the whole schema, triggers included, and PostgreSQL applies it when its container starts on an empty volume.
+[`src/backend/schema.sql`](./src/backend/schema.sql) is the whole schema, triggers included, and PostgreSQL applies it when its container starts on an empty volume.
 Until the first release, a schema change edits that file in place, and the first release brings a migration per change instead.
 
 1. Edit `schema.sql`.
@@ -54,7 +54,7 @@ Until the first release, a schema change edits that file in place, and the first
 
 ## Add a bank
 
-1. Create a folder in [`banks/`](./banks/) with its `bank.ts`, `adapter.ts`, `extract.ts`, raw transaction shapes, `logo.png` and tests, following [`banks/CLAUDE.md`](./banks/CLAUDE.md) and the interfaces in [`shared/bank.ts`](./shared/bank.ts).
+1. Create a folder in [`src/banks/`](./src/banks/) with its `bank.ts`, `adapter.ts`, `extract.ts`, raw transaction shapes, `logo.png` and tests, following [`src/banks/CLAUDE.md`](./src/banks/CLAUDE.md) and the interfaces in [`src/shared/bank.ts`](./src/shared/bank.ts).
 2. Add the bank to the checks `accounts_bank_known` and `securities_named_by_known` [in the schema](#change-the-database-schema).
 3. Add the bank to the supported accounts in [`README.md`](./README.md) and its adapter to [Ingestion](./docs/contract/ingestion.md#adapters).
 
@@ -73,9 +73,9 @@ pnpm exec eslint --fix .
 
 ## Release the browser extension
 
-1. Raise `version` in [`apps/browser-extension/package.json`](./apps/browser-extension/package.json).
+1. Raise `version` in [`src/browser-extension/package.json`](./src/browser-extension/package.json).
 2. Run `pnpm --filter @finance-tracker/browser-extension sign` with the addons.mozilla.org API credentials in `WEB_EXT_API_KEY` and `WEB_EXT_API_SECRET`, which signs the build for the unlisted channel.
-3. Install the signed file from `apps/browser-extension/.output/signed` in Firefox.
+3. Install the signed file from `src/browser-extension/.output/signed` in Firefox.
 
 ## Update dependencies
 
