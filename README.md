@@ -8,6 +8,7 @@ A single-user, self-hosted personal finance tracker that collects the transactio
 - Trade Republic (cash, depot)
 - Deutsche Bank (cash, depot)
 - finvesto (depot)
+- Sparkasse (cash, by hand, as [Ingestion](./docs/contract/ingestion.md#by-hand) shows)
 
 ## Architecture
 
@@ -40,7 +41,7 @@ The frontend and the browser extension reach the data only through the backend's
 ## Further reading
 
 - [Banks](./docs/contract/banks.md): what each app gets from a bank.
-- [Ingestion](./docs/contract/ingestion.md): how a sync brings an account's transactions into the backend, and how each adapter reads its bank.
+- [Ingestion](./docs/contract/ingestion.md): how a sync brings an account's transactions into the backend, from an adapter or by hand, and how each adapter reads its bank.
 - [Data model](./docs/contract/data-model.md): the tables, their columns and their relations.
 - [API](./docs/contract/api.md): the backend's procedures and who calls them.
 - [Prices](./docs/contract/prices.md): how security prices come from onvista.

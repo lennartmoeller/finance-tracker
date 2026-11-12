@@ -28,7 +28,7 @@ Why the finance tracker is built the way it is, in the [Keep the Why](https://ke
 
 ## B
 
-- [banks.md](banks.md) — why every bank is one folder that the apps discover
+- [banks.md](banks.md) — why every bank is one folder that the apps discover, and why it declares only the account types the extension syncs
 
 ## C
 
@@ -42,7 +42,7 @@ Why the finance tracker is built the way it is, in the [Keep the Why](https://ke
 
 ## F
 
-- [figures.md](figures.md) — how the frontend's gains and distributions count, and why the frontend computes them
+- [figures.md](figures.md) — how the frontend's balances, gains and distributions count, and why the frontend computes them
 
 ## G
 
@@ -52,7 +52,7 @@ Why the finance tracker is built the way it is, in the [Keep the Why](https://ke
 
 ## I
 
-- [ingestion.md](ingestion.md) — why every account is read by the browser extension, which export each adapter reads, and how raw transactions are read
+- [ingestion.md](ingestion.md) — why every account but Sparkasse is read by the browser extension, which export each adapter reads, how raw transactions are read, and how the legacy Sparkasse and ING history entered
 
 ## J
 
