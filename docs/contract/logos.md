@@ -5,14 +5,13 @@ sequenceDiagram
   participant FE as Frontend
   participant BE as Backend
   participant LD as Logo.dev
-  FE->>BE: transaction.list
+  FE->>BE: transaction.list, brand.list
   BE->>LD: The logo of each brand domain and security ISIN without a stored answer
   LD-->>BE: A PNG, or no logo known
   BE->>BE: Store the answer
-  BE->>BE: Match each cash transaction's counterparty against the brands' patterns
-  BE-->>FE: Every normalized transaction with the name and logo path of its brand or security
+  BE-->>FE: The transactions and brands with the logo path of each security and brand
   FE->>BE: GET /logos/<id>
   BE-->>FE: The stored PNG
 ```
 
-The user inserts brands, the companies behind counterparties, into the database by hand, and no app manages them.
+Deleting a brand or changing its domain deletes its stored logo, so the next read fetches the new domain's.

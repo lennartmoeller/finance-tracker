@@ -8,8 +8,12 @@ erDiagram
   securities ||--o{ depot_transactions : "appears in"
   securities ||--o{ prices : "priced by"
   securities |o--o| logos : "pictured by ISIN"
-  brands |o..o| logos : "pictured by domain"
-  brands |o..o{ cash_transactions : "matches by pattern"
+  brands |o--o| logos : "pictured by domain"
+  brands |o--o{ rules : "owns"
+  categories |o--o{ rules : "owns"
+  categories |o--o{ categories : "parent of"
+  brands |o--o{ rules : "required by"
+  rules |o..o{ cash_transactions : "assign a brand and a category by matching"
 
   accounts {
     integer id PK
@@ -56,14 +60,26 @@ erDiagram
     numeric price "in EUR"
   }
   brands {
-    integer id PK "creation order"
+    integer id PK
     text name "unique"
-    text pattern
     text domain "unique"
+  }
+  categories {
+    integer id PK
+    integer parent_id FK "optional"
+    text name "unique per parent"
+  }
+  rules {
+    integer id PK "creation order"
+    integer brand_id FK "optional: the owning brand, or"
+    integer category_id FK "optional: the owning category"
+    integer required_brand_id FK "optional, on a category's rule only"
+    text counterparty_pattern "optional"
+    text description_pattern "optional"
   }
   logos {
     integer id PK
-    text domain "optional, unique, instead of an isin"
+    text domain FK "optional, unique, instead of an isin"
     text isin FK "optional, unique, instead of a domain"
     bytea image "optional: a 256-pixel PNG"
   }

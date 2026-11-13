@@ -1,12 +1,21 @@
 import { useEffect, useState } from "react";
-import { ArrowRightLeft, ChartLine, LayoutDashboard } from "lucide-react";
+import {
+  ArrowRightLeft,
+  ChartLine,
+  LayoutDashboard,
+  ListFilter,
+} from "lucide-react";
+import type { ApiClient } from "@finance-tracker/shared/client";
 import { errorMessage } from "@finance-tracker/shared/error-message";
 import type {
   Account,
+  Brand,
+  Category,
   Price,
   Transaction,
 } from "@finance-tracker/shared/contract";
 import { Overview } from "./overview/Overview.tsx";
+import { Rules } from "./rules/Rules.tsx";
 import { Securities } from "./securities/Securities.tsx";
 import { Transactions } from "./transactions/Transactions.tsx";
 
@@ -14,7 +23,13 @@ export type Data = {
   accounts: Account[];
   transactions: Transaction[];
   prices: Price[];
+  brands: Brand[];
+  categories: Category[];
 };
+
+export type Api = Pick<ApiClient, "brand" | "category">;
+
+export type Change = (call: (api: Api) => Promise<unknown>) => Promise<void>;
 
 export type Loading = { data: Data | undefined; error: string };
 
@@ -24,12 +39,18 @@ const views = [
   { id: "overview", name: "Overview", Icon: LayoutDashboard },
   { id: "securities", name: "Securities", Icon: ChartLine },
   { id: "transactions", name: "Transactions", Icon: ArrowRightLeft },
+  { id: "rules", name: "Rules", Icon: ListFilter },
 ] as const;
 
 const byBankAndName = (a: Account, b: Account) =>
   a.bank.localeCompare(b.bank) || a.name.localeCompare(b.name);
 
-export function App({ load }: { load: () => Promise<Data> }) {
+const sorted = (data: Data) => ({
+  data: { ...data, accounts: data.accounts.toSorted(byBankAndName) },
+  error: "",
+});
+
+export function App({ load, api }: { load: () => Promise<Data>; api: Api }) {
   const [loading, setLoading] = useState<Loading>({
     data: undefined,
     error: "",
@@ -42,11 +63,7 @@ export function App({ load }: { load: () => Promise<Data> }) {
     setLoading({ data: undefined, error: "" });
     load().then(
       (data) => {
-        if (current)
-          setLoading({
-            data: { ...data, accounts: data.accounts.toSorted(byBankAndName) },
-            error: "",
-          });
+        if (current) setLoading(sorted(data));
       },
       (failure: unknown) => {
         if (current)
@@ -57,6 +74,11 @@ export function App({ load }: { load: () => Promise<Data> }) {
       current = false;
     };
   }, [load]);
+
+  const change: Change = async (call) => {
+    await call(api);
+    setLoading(sorted(await load()));
+  };
 
   return (
     <div className="app">
@@ -88,6 +110,8 @@ export function App({ load }: { load: () => Promise<Data> }) {
           />
         ) : view === "securities" ? (
           <Securities loading={loading} />
+        ) : view === "rules" ? (
+          <Rules loading={loading} onChange={change} />
         ) : (
           <Transactions
             key={`${scope.type}-${String(scope.accountId)}`}

@@ -59,6 +59,8 @@ export const formatQuantity = (value: string) =>
 
 export const formatShares = (value: string) => quantity.format(Number(value));
 
+export const formatCount = (count: number) => quantity.format(count);
+
 export const formatDate = (date: string) => dateFormat.format(day(date));
 
 export const formatMonth = (date: string) => monthFormat.format(day(date));
