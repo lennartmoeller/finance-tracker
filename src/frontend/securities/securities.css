@@ -113,7 +113,8 @@
 .holdings {
   display: flex;
   align-items: flex-start;
-  gap: 44px;
+  gap: 28px;
+  padding-bottom: 20px;
 }
 
 .holdings > table,
@@ -122,7 +123,7 @@
   min-width: 0;
 }
 
-.holdings th:last-child {
+.holdings th.num {
   width: 180px;
 }
 
@@ -132,8 +133,9 @@ tbody tr.hovered td {
 
 .donut {
   flex: none;
+  align-self: center;
   width: 260px;
-  padding: 0 0 20px 20px;
+  padding-left: 20px;
 }
 
 .donut .recharts-wrapper,
@@ -143,6 +145,13 @@ tbody tr.hovered td {
 
 .donut .recharts-pie-sector {
   cursor: pointer;
+}
+
+.donut .share {
+  fill: var(--muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
 }
 
 .donut .skeleton {

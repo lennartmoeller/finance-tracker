@@ -253,6 +253,25 @@ const securities = {
     133.4,
   ),
   amundi: security("LU2089238203", "Amundi Prime Global UCITS ETF", null, 35.2),
+  sap: security("DE0007164600", "SAP SE", tile("#0070f2", "#fff", "S"), 241.6),
+  siemens: security(
+    "DE0007236101",
+    "Siemens AG",
+    tile("#009999", "#fff", "S"),
+    214.3,
+  ),
+  microsoft: security(
+    "US5949181045",
+    "Microsoft Corp.",
+    tile("#737373", "#fff", "M"),
+    421.8,
+  ),
+  emergingMarkets: security(
+    "IE00BTJRMP35",
+    "Xtrackers MSCI Emerging Markets UCITS ETF 1C",
+    null,
+    57.4,
+  ),
 };
 
 const closedStartBalance = 1250;
@@ -564,14 +583,22 @@ export function fakeData(): Data {
     null,
     "Sell trade LU2089238203 Amundi",
   );
-  buy(etfs, daysAgo(790), securities.allianz, 1000, "Buy trade");
-  cash(
-    spending,
-    daysAgo(790),
-    -1000,
-    null,
-    "Buy trade DE0008404005 Allianz SE",
-  );
+  for (const [bought, ago, amount] of [
+    [securities.allianz, 790, 1000],
+    [securities.sap, 720, 400],
+    [securities.siemens, 560, 300],
+    [securities.microsoft, 430, 350],
+    [securities.emergingMarkets, 300, 200],
+  ] as const) {
+    buy(etfs, daysAgo(ago), bought, amount, "Buy trade");
+    cash(
+      spending,
+      daysAgo(ago),
+      -amount,
+      null,
+      `Buy trade ${bought.isin} ${bought.name}`,
+    );
+  }
   const appleShares = buy(
     etfs,
     daysAgo(610),

@@ -388,6 +388,11 @@ td.num {
   font-variant-numeric: tabular-nums;
 }
 
+td.num .percent {
+  display: inline-block;
+  min-width: 4.8em;
+}
+
 tbody tr {
   cursor: pointer;
 }

@@ -14,6 +14,7 @@ const percent = {
 } as const;
 const signedPercent = german({ ...percent, signDisplay: "exceptZero" });
 const unsignedPercent = german(percent);
+const wholePercent = german({ style: "percent" });
 const signedQuantity = german({
   maximumFractionDigits: 10,
   signDisplay: "exceptZero",
@@ -53,6 +54,8 @@ export const formatPercent = (share: number) => signedPercent.format(share);
 
 export const formatUnsignedPercent = (share: number) =>
   unsignedPercent.format(share);
+
+export const formatWholePercent = (share: number) => wholePercent.format(share);
 
 export const formatQuantity = (value: string) =>
   signedQuantity.format(Number(value));

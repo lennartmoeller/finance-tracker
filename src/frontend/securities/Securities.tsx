@@ -16,6 +16,7 @@ import { ColouredGain } from "../Gain.tsx";
 import { Intro } from "../Intro.tsx";
 import { Loaded, SkeletonRows } from "../Loaded.tsx";
 import { Logo } from "../Logo.tsx";
+import { MoneyWithPercent } from "../MoneyWithPercent.tsx";
 import { none } from "../none.tsx";
 import { MarketValueDonut, slicesOf, type Slice } from "./MarketValueDonut.tsx";
 import { ValueChart } from "./ValueChart.tsx";
@@ -185,6 +186,7 @@ function Analysis({ data }: { data: Data }) {
         )}
         <SecurityTable
           securities={listed}
+          totalMarketValue={Number(priced(figures)?.marketValue)}
           slices={slices}
           selectedIsin={selectedIsin}
           hoveredIsins={hoveredIsins}
@@ -259,12 +261,14 @@ function Figures({
 
 function SecurityTable({
   securities,
+  totalMarketValue,
   slices,
   selectedIsin,
   hoveredIsins,
   onSelect,
 }: {
   securities: Security[];
+  totalMarketValue: number;
   slices: Slice[];
   selectedIsin: string | null;
   hoveredIsins: string[];
@@ -275,11 +279,13 @@ function SecurityTable({
       <thead>
         <tr>
           <th>Security</th>
+          <th className="num">Market value</th>
           <th className="num">Gain</th>
         </tr>
       </thead>
       <tbody>
-        {securities.map(({ isin, name, logo, figures }) => {
+        {securities.map((security) => {
+          const { isin, name, logo, figures } = security;
           const known = priced(figures);
           return (
             <tr
@@ -308,6 +314,16 @@ function SecurityTable({
                   <Logo src={logo} name={name} />
                   <span>{name}</span>
                 </span>
+              </td>
+              <td className="num">
+                {known && isHeld(security) ? (
+                  <MoneyWithPercent
+                    amount={known.marketValue}
+                    percent={Number(known.marketValue) / totalMarketValue}
+                  />
+                ) : (
+                  none
+                )}
               </td>
               <td className="num">
                 {known ? (
