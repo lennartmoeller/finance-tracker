@@ -85,17 +85,37 @@ create table depot_transactions (
 create table brands (
   id integer primary key generated always as identity,
   name text not null unique,
-  pattern text not null,
   domain text not null unique,
   constraint brands_name_filled check (name <> ''),
-  -- PostgreSQL raises on an invalid pattern, and a pattern that matches the empty string matches every counterparty.
-  constraint brands_pattern_valid check (not ('' ~* pattern)),
   constraint brands_domain_format check (domain ~ '^([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$')
+);
+
+create table categories (
+  id integer primary key generated always as identity,
+  parent_id integer references categories,
+  name text not null,
+  constraint categories_parent_id_name_key unique nulls not distinct (parent_id, name),
+  constraint categories_name_filled check (name <> '')
+);
+
+create table rules (
+  id integer primary key generated always as identity,
+  brand_id integer references brands on delete cascade,
+  category_id integer references categories on delete cascade,
+  required_brand_id integer references brands,
+  counterparty_pattern text,
+  description_pattern text,
+  constraint rules_one_owner check (num_nonnulls(brand_id, category_id) = 1),
+  constraint rules_required_brand_of_category check (required_brand_id is null or category_id is not null),
+  constraint rules_condition_given check (num_nonnulls(required_brand_id, counterparty_pattern, description_pattern) > 0),
+  -- PostgreSQL raises on an invalid pattern, and a pattern that matches the empty string matches every transaction.
+  constraint rules_counterparty_pattern_valid check (not ('' ~* counterparty_pattern)),
+  constraint rules_description_pattern_valid check (not ('' ~* description_pattern))
 );
 
 create table logos (
   id integer primary key generated always as identity,
-  domain text unique,
+  domain text unique references brands (domain) on delete cascade,
   isin text unique references securities,
   image bytea,
   constraint logos_one_identifier check ((domain is null) <> (isin is null)),
@@ -133,5 +153,39 @@ create trigger transactions_unchanged before update on transactions
 create trigger accounts_bank_and_type_unchanged before update of bank, type on accounts
   for each row when (old.bank <> new.bank or old.type <> new.type)
   execute function reject_change('An account keeps its bank and type.');
+
+create function require_leaf_category() returns trigger language plpgsql as $$
+begin
+  if exists (select from categories where parent_id = new.category_id) then
+    raise exception 'Only a category without subcategories has rules.' using errcode = 'check_violation';
+  end if;
+  return new;
+end
+$$;
+
+create trigger rules_on_leaf_category before insert or update of category_id on rules
+  for each row execute function require_leaf_category();
+
+create function require_category_tree() returns trigger language plpgsql as $$
+begin
+  if exists (select from rules where category_id = new.parent_id) then
+    raise exception 'A category with rules has no subcategories.' using errcode = 'check_violation';
+  end if;
+  if exists (
+    with recursive ancestors (id) as (
+      select new.parent_id
+      union
+      select categories.parent_id from categories join ancestors on categories.id = ancestors.id
+    )
+    select from ancestors where id = new.id
+  ) then
+    raise exception 'A category cannot sit below itself.' using errcode = 'check_violation';
+  end if;
+  return new;
+end
+$$;
+
+create trigger categories_in_tree before insert or update of parent_id on categories
+  for each row execute function require_category_tree();
 
 commit;

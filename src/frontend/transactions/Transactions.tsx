@@ -3,7 +3,9 @@ import { Inbox } from "lucide-react";
 import {
   accountType,
   type Account,
+  type Brand,
   type CashTransaction,
+  type Category,
   type DepotTransaction,
   type Transaction,
 } from "@finance-tracker/shared/contract";
@@ -12,6 +14,8 @@ import { freshness, lastSyncText } from "@finance-tracker/shared/last-sync";
 import { AccountName } from "../AccountName.tsx";
 import type { Data, Loading, Scope } from "../App.tsx";
 import { banks } from "../banks.ts";
+import { byId } from "../by-id.ts";
+import { categoryPath } from "../category-path.ts";
 import {
   formatAmount,
   formatDate,
@@ -22,6 +26,7 @@ import { Intro } from "../Intro.tsx";
 import { Loaded, SkeletonRows } from "../Loaded.tsx";
 import { Logo } from "../Logo.tsx";
 import { none } from "../none.tsx";
+import { Tabs } from "../Tabs.tsx";
 import { TransactionPanel, type Field } from "./TransactionPanel.tsx";
 import "./transactions.css";
 
@@ -33,7 +38,13 @@ type Shown<P extends Part> = {
   title: string | null;
 };
 
-type Row<P extends Part = Part> = Transaction & Shown<P> & { account: Account };
+type Labelled = Transaction & {
+  brand: Brand | undefined;
+  category: Category | undefined;
+  categoryPath: string | undefined;
+};
+
+type Row<P extends Part = Part> = Labelled & Shown<P> & { account: Account };
 
 type Column<P extends Part> = {
   name: string;
@@ -43,7 +54,7 @@ type Column<P extends Part> = {
 };
 
 type Kind<P extends Part> = {
-  shown: (transaction: Transaction) => Shown<P> | null;
+  shown: (transaction: Labelled) => Shown<P> | null;
   columns: Column<P>[];
   fields: (row: Row<P>) => Field[];
 };
@@ -101,19 +112,21 @@ const cashKind: Kind<CashTransaction> = {
     dateColumn,
     {
       name: "Brand",
-      width: "170px",
+      width: "150px",
       cell: (row) => named(row, row.brand?.name ?? none),
     },
     {
-      name: "Counterparty",
-      width: "24%",
-      cell: ({ part }) => part.counterparty,
+      name: "Category",
+      width: "140px",
+      cell: ({ category }) => category?.name,
     },
+    { name: "Counterparty", cell: ({ part }) => part.counterparty },
     descriptionColumn,
     amountColumn,
   ],
-  fields: ({ part, brand }) => [
+  fields: ({ part, brand, categoryPath }) => [
     ["Brand", brand?.name],
+    ["Category", categoryPath],
     ["Counterparty", part.counterparty],
     ["Description", part.description],
   ],
@@ -176,20 +189,13 @@ export function Transactions({
     <>
       <header className="page-head">
         <h1>Transactions</h1>
-        <div className="tabs" role="tablist">
-          {accountType.options.map((type) => (
-            <button
-              key={type}
-              role="tab"
-              aria-selected={scope.type === type}
-              onClick={() => {
-                onScope({ type, accountId: null });
-              }}
-            >
-              {capitalized(type)}
-            </button>
-          ))}
-        </div>
+        <Tabs
+          tabs={accountType.options.map((type) => [type, capitalized(type)])}
+          value={scope.type}
+          onChange={(type) => {
+            onScope({ type, accountId: null });
+          }}
+        />
       </header>
       <div className="content">
         <Loaded loading={loading} skeleton={skeleton}>
@@ -229,10 +235,19 @@ function TransactionList<P extends Part>({
       .filter(({ id }) => scope.accountId === null || id === scope.accountId)
       .map((account) => [account.id, account]),
   );
+  const brands = byId(data.brands);
+  const categories = byId(data.categories);
   const rows = data.transactions.flatMap((transaction): Row<P>[] => {
-    const shown = kind.shown(transaction);
+    const category = categories.get(transaction.categoryId);
+    const labelled = {
+      ...transaction,
+      brand: brands.get(transaction.brandId),
+      category,
+      categoryPath: category && categoryPath(categories, category),
+    };
+    const shown = kind.shown(labelled);
     const account = scoped.get(transaction.accountId);
-    return shown && account ? [{ ...transaction, ...shown, account }] : [];
+    return shown && account ? [{ ...labelled, ...shown, account }] : [];
   });
   const columns =
     scope.accountId === null

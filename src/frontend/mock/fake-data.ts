@@ -1,12 +1,15 @@
 import type {
   Account,
+  Brand,
+  CashTransaction,
+  Category,
   DepotTransaction,
   Price,
+  Rule,
   Transaction,
 } from "@finance-tracker/shared/contract";
 import type { Data } from "../App.tsx";
 
-type Brand = NonNullable<Transaction["brand"]>;
 type Security = { isin: string; name: string; logo: string | null };
 
 export const deutscheBankShares = "DE0005140008";
@@ -16,28 +19,194 @@ const tile = (background: string, color: string, text: string) =>
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><rect width="40" height="40" fill="${background}"/><text x="20" y="27" font-family="system-ui,sans-serif" font-size="${text.length > 1 ? "15" : "21"}" font-weight="700" text-anchor="middle" fill="${color}">${text}</text></svg>`,
   )}`;
 
-const brand = (name: string, ...colours: [string, string, string] | []) => ({
-  name,
-  logo: colours.length ? tile(...colours) : null,
-});
+type FakeRule = { brand?: string; counterparty?: string; description?: string };
 
-const brands = {
-  rossmann: brand("Rossmann", "#d6001c", "#fff", "R"),
-  kaufland: brand("Kaufland", "#e10915", "#fff", "K"),
-  lidl: brand("Lidl", "#0050aa", "#fff000", "L"),
-  edeka: brand("EDEKA", "#ffe500", "#1b4a9c", "E"),
-  dm: brand("dm", "#fff", "#e2001a", "dm"),
-  uberEats: brand("Uber Eats", "#000", "#06c167", "U"),
-  netflix: brand("Netflix", "#000", "#e50914", "N"),
-  spotify: brand("Spotify", "#1db954", "#000", "S"),
-  amazon: brand("Amazon", "#232f3e", "#ff9900", "a"),
-  deutscheBahn: brand("Deutsche Bahn", "#fff", "#ec0016", "DB"),
-  shell: brand("Shell", "#fbce07", "#dd1d21", "S"),
-  paypal: brand("PayPal", "#003087", "#fff", "P"),
-  vodafone: brand("Vodafone", "#e60000", "#fff", "V"),
-  mcdonalds: brand("McDonald's", "#da291c", "#ffc72c", "M"),
-  bakery: brand("Stadtbäckerei"),
-} satisfies Record<string, Brand>;
+let ruleId = 0;
+const rulesOf = (rules: FakeRule[]): Rule[] =>
+  rules.map(({ brand, counterparty, description }) => ({
+    id: ++ruleId,
+    requiredBrandId: brands.find(({ name }) => name === brand)?.id ?? null,
+    counterpartyPattern: counterparty ?? null,
+    descriptionPattern: description ?? null,
+  }));
+
+const brands: Brand[] = [];
+for (const [name, domain, colours, ...rules] of [
+  [
+    "Rossmann",
+    "rossmann.de",
+    ["#d6001c", "#fff", "R"],
+    { counterparty: "rossmann" },
+  ],
+  [
+    "Kaufland",
+    "kaufland.de",
+    ["#e10915", "#fff", "K"],
+    { counterparty: "kaufland" },
+  ],
+  ["Lidl", "lidl.de", ["#0050aa", "#fff000", "L"], { counterparty: "lidl" }],
+  ["EDEKA", "edeka.de", ["#ffe500", "#1b4a9c", "E"], { counterparty: "edeka" }],
+  ["dm", "dm.de", ["#fff", "#e2001a", "dm"], { counterparty: "visa dm " }],
+  [
+    "Uber Eats",
+    "ubereats.com",
+    ["#000", "#06c167", "U"],
+    { counterparty: "uber \\*eats" },
+  ],
+  [
+    "Netflix",
+    "netflix.com",
+    ["#000", "#e50914", "N"],
+    { counterparty: "netflix" },
+  ],
+  [
+    "Spotify",
+    "spotify.com",
+    ["#1db954", "#000", "S"],
+    { counterparty: "spotify" },
+  ],
+  [
+    "Amazon",
+    "amazon.de",
+    ["#232f3e", "#ff9900", "a"],
+    { counterparty: "amazon" },
+  ],
+  [
+    "Deutsche Bahn",
+    "bahn.de",
+    ["#fff", "#ec0016", "DB"],
+    { counterparty: "db vertrieb" },
+    { description: "bahn\\.de" },
+  ],
+  ["Shell", "shell.de", ["#fbce07", "#dd1d21", "S"], { counterparty: "shell" }],
+  [
+    "PayPal",
+    "paypal.com",
+    ["#003087", "#fff", "P"],
+    { counterparty: "paypal" },
+  ],
+  [
+    "Vodafone",
+    "vodafone.de",
+    ["#e60000", "#fff", "V"],
+    { counterparty: "vodafone" },
+  ],
+  [
+    "McDonald's",
+    "mcdonalds.de",
+    ["#da291c", "#ffc72c", "M"],
+    { counterparty: "mcdonalds" },
+  ],
+  ["Sky", "sky.de", ["#000", "#fff", "sky"], { counterparty: "^sky " }],
+  [
+    "DAZN",
+    "dazn.com",
+    ["#0c161c", "#f8fc00", "D"],
+    { counterparty: "paypal", description: "dazn" },
+  ],
+  [
+    "Stadtbäckerei",
+    "stadtbaeckerei.de",
+    null,
+    { counterparty: "stadtbaeckerei" },
+  ],
+] satisfies [string, string, [string, string, string] | null, ...FakeRule[]][])
+  brands.push({
+    id: brands.length + 1,
+    name,
+    domain,
+    logo: colours && tile(...colours),
+    rules: rulesOf(rules),
+  });
+
+const leaves: [path: string, ...rules: FakeRule[]][] = [
+  ["Bank fees", { description: "entgelt" }],
+  [
+    "Food › Eating out",
+    { brand: "Uber Eats" },
+    { brand: "McDonald's" },
+    { counterparty: "cafe" },
+  ],
+  [
+    "Food › Groceries",
+    { brand: "Kaufland" },
+    { brand: "Lidl" },
+    { brand: "EDEKA" },
+  ],
+  ["Housing › Rent", { counterparty: "hausverwaltung" }],
+  ["Housing › Utilities", { counterparty: "stadtwerke" }],
+  ["Income › Interest", { description: "zinsen|interest payment" }],
+  ["Income › Salary", { description: "lohn/gehalt" }],
+  ["Personal care", { brand: "Rossmann" }, { brand: "dm" }],
+  ["Shopping", { brand: "Amazon" }, { brand: "PayPal" }],
+  ["Streaming › Netflix", { brand: "Netflix" }],
+  ["Streaming › Sport streaming › DAZN", { brand: "DAZN" }],
+  ["Streaming › Sport streaming › Sky", { brand: "Sky" }],
+  [
+    "Subscriptions",
+    { brand: "Spotify" },
+    { brand: "Vodafone" },
+    { brand: "Amazon", description: "prime video" },
+  ],
+  ["Transport", { brand: "Deutsche Bahn" }, { brand: "Shell" }],
+];
+
+const categories: Category[] = [];
+for (const [path, ...rules] of leaves) {
+  const leaf = path
+    .split(" › ")
+    .reduce<Category | undefined>((parent, name) => {
+      const parentId = parent?.id ?? null;
+      const found = categories.find(
+        (category) => category.parentId === parentId && category.name === name,
+      );
+      if (found) return found;
+      const created = { id: categories.length + 1, parentId, name, rules: [] };
+      categories.push(created);
+      return created;
+    }, undefined);
+  leaf?.rules.push(...rulesOf(rules));
+}
+
+const matches = (pattern: string | null, text: string | null) =>
+  pattern === null || (text !== null && new RegExp(pattern, "i").test(text));
+
+const conditions = (rule: Rule) =>
+  [
+    rule.requiredBrandId,
+    rule.counterpartyPattern,
+    rule.descriptionPattern,
+  ].filter((condition) => condition !== null).length;
+
+const ranked = (owners: { id: number; rules: Rule[] }[]) =>
+  owners
+    .flatMap(({ id, rules }) => rules.map((rule) => ({ ...rule, ownerId: id })))
+    .sort((a, b) => conditions(b) - conditions(a) || a.id - b.id);
+
+export function matchTransactions(data: Data): Data {
+  const brandRules = ranked(data.brands);
+  const categoryRules = ranked(data.categories);
+  const match = (
+    rules: typeof brandRules,
+    { counterparty, description }: CashTransaction,
+    brandId: number | null,
+  ) =>
+    rules.find(
+      (rule) =>
+        (rule.requiredBrandId === null || rule.requiredBrandId === brandId) &&
+        matches(rule.counterpartyPattern, counterparty) &&
+        matches(rule.descriptionPattern, description),
+    )?.ownerId ?? null;
+  return {
+    ...data,
+    transactions: data.transactions.map((transaction) => {
+      if (!transaction.cash) return transaction;
+      const brandId = match(brandRules, transaction.cash, null);
+      const categoryId = match(categoryRules, transaction.cash, brandId);
+      return { ...transaction, brandId, categoryId };
+    }),
+  };
+}
 
 const security = (
   isin: string,
@@ -115,20 +284,20 @@ const [
   closed,
 ] = [1, 2, 3, 4, 5, 6, 7, 8];
 
-const purchases: [number, [number, number], string, Brand | null][] = [
-  [0.15, [8, 85], "VISA KAUFLAND 2345", brands.kaufland],
-  [0.15, [8, 85], "VISA LIDL SAGT DANKE", brands.lidl],
-  [0.15, [8, 85], "EDEKA CENTER SCHMIDT", brands.edeka],
-  [0.06, [3, 35], "VISA ROSSMANN 1234", brands.rossmann],
-  [0.06, [3, 35], "VISA DM FIL.2345", brands.dm],
-  [0.15, [2, 9], "VISA STADTBAECKEREI 12", brands.bakery],
-  [0.07, [3, 12], "VISA CAFE MILCHBAR", null],
-  [0.07, [14, 38], "VISA UBER *EATS HELP.UBER.C", brands.uberEats],
-  [0.05, [9, 89], "VISA DB VERTRIEB GMBH", brands.deutscheBahn],
-  [0.04, [30, 75], "VISA SHELL 1234", brands.shell],
-  [0.08, [9, 120], "AMAZON PAYMENTS EUROPE S.C.A.", brands.amazon],
-  [0.05, [5, 60], "PayPal Europe S.a.r.l. et Cie S.C.A", brands.paypal],
-  [0.04, [6, 14], "VISA MCDONALDS 1234", brands.mcdonalds],
+const purchases: [number, [number, number], string][] = [
+  [0.15, [8, 85], "VISA KAUFLAND 2345"],
+  [0.15, [8, 85], "VISA LIDL SAGT DANKE"],
+  [0.15, [8, 85], "EDEKA CENTER SCHMIDT"],
+  [0.06, [3, 35], "VISA ROSSMANN 1234"],
+  [0.06, [3, 35], "VISA DM FIL.2345"],
+  [0.15, [2, 9], "VISA STADTBAECKEREI 12"],
+  [0.07, [3, 12], "VISA CAFE MILCHBAR"],
+  [0.07, [14, 38], "VISA UBER *EATS HELP.UBER.C"],
+  [0.05, [9, 89], "VISA DB VERTRIEB GMBH"],
+  [0.04, [30, 75], "VISA SHELL 1234"],
+  [0.08, [9, 120], "AMAZON PAYMENTS EUROPE S.C.A."],
+  [0.05, [5, 60], "PayPal Europe S.a.r.l. et Cie S.C.A"],
+  [0.04, [6, 14], "VISA MCDONALDS 1234"],
 ];
 
 export function fakeData(): Data {
@@ -183,7 +352,6 @@ export function fakeData(): Data {
     amount: number,
     counterparty: string | null,
     description: string | null,
-    brand: Brand | null = null,
   ) =>
     transactions.push({
       id: transactions.length + 1,
@@ -196,7 +364,8 @@ export function fakeData(): Data {
         description,
       },
       depot: null,
-      brand,
+      brandId: null,
+      categoryId: null,
     });
   const depot = (
     accountId: number,
@@ -222,7 +391,8 @@ export function fakeData(): Data {
         currency: amount === null ? null : "EUR",
         description,
       },
-      brand: null,
+      brandId: null,
+      categoryId: null,
     });
     return quantity ?? 0;
   };
@@ -291,25 +461,33 @@ export function fakeData(): Data {
           -13.99,
           "Netflix International B.V.",
           "Netflix Monatsabo",
-          brands.netflix,
         ),
-      12: () =>
+      8: () =>
         cash(
           everyday,
           date,
-          -10.99,
-          "Spotify AB",
-          "Spotify Premium",
-          brands.spotify,
+          -30,
+          "Sky Deutschland Fernsehen GmbH",
+          "Sky Ticket Supersport",
         ),
+      12: () => cash(everyday, date, -10.99, "Spotify AB", "Spotify Premium"),
       15: () =>
+        cash(everyday, date, -39.99, "Vodafone GmbH", "Kundennr. 123456789"),
+      20: () =>
         cash(
           everyday,
           date,
-          -39.99,
-          "Vodafone GmbH",
-          "Kundennr. 123456789",
-          brands.vodafone,
+          -44.99,
+          "PayPal Europe S.a.r.l. et Cie S.C.A",
+          "1046793210354/. DAZN Limited, Ihr Einkauf bei DAZN Limited",
+        ),
+      22: () =>
+        cash(
+          everyday,
+          date,
+          -8.99,
+          "AMAZON PAYMENTS EUROPE S.C.A.",
+          "Prime Video Kanal-Abo",
         ),
       27: () =>
         cash(everyday, date, 3120, "Beispiel AG", `LOHN/GEHALT ${period}`),
@@ -328,9 +506,9 @@ export function fakeData(): Data {
         "Abschluss\nZinsen 2,75 % p.a.",
       );
     if (date.getDay() === 0) continue;
-    for (const [chance, range, counterparty, shop] of purchases)
+    for (const [chance, range, counterparty] of purchases)
       if (random() < chance)
-        cash(everyday, date, -between(range), counterparty, card(date), shop);
+        cash(everyday, date, -between(range), counterparty, card(date));
     if (random() < 0.02)
       cash(everyday, date, between([10, 60]), "Erika Musterfrau", "Danke!");
   }
@@ -496,7 +674,7 @@ export function fakeData(): Data {
 
   const dateOf = ({ cash, depot }: Transaction) =>
     cash?.date ?? depot?.date ?? "";
-  return {
+  return matchTransactions({
     accounts: accounts.map(
       ([bank, type, name, syncedDaysAgo, startBalance = null], index) => ({
         id: index + 1,
@@ -518,5 +696,7 @@ export function fakeData(): Data {
         price: close.toFixed(2),
       })),
     ),
-  };
+    brands,
+    categories,
+  });
 }

@@ -59,10 +59,46 @@ const transaction = z.object({
   accountId: z.int(),
   cash: cashTransaction.nullable(),
   depot: depotTransaction.nullable(),
-  brand: z.object({ name: z.string(), logo: z.string().nullable() }).nullable(),
+  brandId: z.int().nullable(),
+  categoryId: z.int().nullable(),
 });
 
 export type Transaction = z.infer<typeof transaction>;
+
+const rule = z.object({
+  id: z.int(),
+  requiredBrandId: z.int().nullable(),
+  counterpartyPattern: z.string().nullable(),
+  descriptionPattern: z.string().nullable(),
+});
+
+export type Rule = z.infer<typeof rule>;
+
+const ruleInput = rule.partial({ id: true });
+
+export type RuleInput = z.infer<typeof ruleInput>;
+
+const newRules = z.array(rule.omit({ id: true }));
+const changedRules = z.array(ruleInput);
+
+const brand = z.object({
+  id: z.int(),
+  name: z.string().trim(),
+  domain: z.string(),
+  logo: z.string().nullable(),
+  rules: z.array(rule),
+});
+
+export type Brand = z.infer<typeof brand>;
+
+const category = z.object({
+  id: z.int(),
+  parentId: z.int().nullable(),
+  name: z.string().trim(),
+  rules: z.array(rule),
+});
+
+export type Category = z.infer<typeof category>;
 
 const price = z.object({
   isin: z.string(),
@@ -86,6 +122,30 @@ export const contract = {
     .output(z.object({ imported: z.int(), skipped: z.int() })),
   transaction: {
     list: oc.output(z.array(transaction)),
+  },
+  brand: {
+    list: oc.output(z.array(brand)),
+    create: oc.input(
+      brand.pick({ name: true, domain: true }).extend({ rules: newRules }),
+    ),
+    update: oc.input(
+      brand
+        .pick({ id: true, name: true, domain: true })
+        .extend({ rules: changedRules }),
+    ),
+    remove: oc.input(brand.pick({ id: true })),
+  },
+  category: {
+    list: oc.output(z.array(category)),
+    create: oc.input(
+      category.pick({ parentId: true, name: true }).extend({ rules: newRules }),
+    ),
+    update: oc.input(
+      category
+        .pick({ id: true, parentId: true, name: true })
+        .extend({ rules: changedRules }),
+    ),
+    remove: oc.input(category.pick({ id: true })),
   },
   price: {
     fill: oc.output(z.object({ stored: z.int() })),

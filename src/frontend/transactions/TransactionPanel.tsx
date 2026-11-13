@@ -1,11 +1,11 @@
-import { useEffect, type ReactNode } from "react";
-import { X } from "lucide-react";
+import type { ReactNode } from "react";
 import { accountTypeNames } from "@finance-tracker/shared/account-type-names";
 import type { Account } from "@finance-tracker/shared/contract";
 import { AccountName } from "../AccountName.tsx";
 import { formatDate } from "../format.ts";
 import { Logo } from "../Logo.tsx";
 import { none } from "../none.tsx";
+import { Panel } from "../Panel.tsx";
 
 export type Field = [name: string, value: ReactNode];
 
@@ -26,16 +26,6 @@ export function TransactionPanel({
   fields: Field[];
   onClose: () => void;
 }) {
-  useEffect(() => {
-    const close = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    addEventListener("keydown", close);
-    return () => {
-      removeEventListener("keydown", close);
-    };
-  }, [onClose]);
-
   const allFields: Field[] = [
     ["Date", formatDate(date)],
     [
@@ -50,17 +40,19 @@ export function TransactionPanel({
   ];
 
   return (
-    <aside className="panel" aria-label="Transaction">
-      <div className="panel-head">
-        <Logo src={logo} name={title} />
-        <div className="panel-title">
-          <div className="panel-name">{title ?? none}</div>
-          <div className="panel-amount">{amount ?? none}</div>
-        </div>
-        <button className="icon-button" aria-label="Close" onClick={onClose}>
-          <X />
-        </button>
-      </div>
+    <Panel
+      label="Transaction"
+      head={
+        <>
+          <Logo src={logo} name={title} />
+          <div className="panel-title">
+            <div className="panel-name">{title ?? none}</div>
+            <div className="panel-amount">{amount ?? none}</div>
+          </div>
+        </>
+      }
+      onClose={onClose}
+    >
       <dl className="fields">
         {allFields.map(([name, value]) => (
           <div key={name}>
@@ -69,6 +61,6 @@ export function TransactionPanel({
           </div>
         ))}
       </dl>
-    </aside>
+    </Panel>
   );
 }

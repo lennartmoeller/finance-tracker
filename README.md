@@ -23,7 +23,7 @@ flowchart LR
   onvista["onvista"]
   extension -- "reads raw transactions<br/>in the user's session" --> banks
   extension -- "accounts, syncs" --> backend
-  frontend -- "accounts, transactions, prices" --> backend
+  frontend -- "accounts, transactions, prices,<br/>brands, categories" --> backend
   backend --> postgres
   backend -- "logos of brands and securities" --> logodev
   backend -- "prices of securities" --> onvista
@@ -46,7 +46,8 @@ The frontend and the browser extension reach the data only through the backend's
 - [API](./docs/contract/api.md): the backend's procedures and who calls them.
 - [Prices](./docs/contract/prices.md): how security prices come from onvista.
 - [Figures](./docs/contract/figures.md): how the frontend adds up its views' figures from transactions and prices.
-- [Logos](./docs/contract/logos.md): how transactions get their brands, and brands and securities their logos from Logo.dev.
+- [Rules](./docs/contract/rules.md): how cash transactions get their brands and categories from rules.
+- [Logos](./docs/contract/logos.md): how brands and securities get their logos from Logo.dev.
 - [Hosting](./docs/contract/hosting.md): where the apps run and how they are released.
 - [Context](./docs/context/index.md): why the system is built as it is.
 - [Contributing](./CONTRIBUTING.md): how to set up, run and change the system.

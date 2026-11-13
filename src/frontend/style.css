@@ -141,6 +141,101 @@ button {
   margin: 0;
 }
 
+.tabs {
+  display: flex;
+  gap: 20px;
+}
+
+.tabs button {
+  margin-bottom: -1px;
+  padding: 6px 0 9px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--muted);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.tabs button:hover {
+  color: var(--text);
+}
+
+.tabs button[aria-selected="true"] {
+  border-bottom-color: var(--ink);
+  color: var(--text);
+}
+
+.panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  width: 380px;
+  overflow: auto;
+  border-left: 1px solid var(--border);
+  background: var(--raised);
+  box-shadow: var(--shadow);
+}
+
+.panel-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 18px 14px 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.panel-head .logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  font-size: 18px;
+}
+
+.panel-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.panel-name {
+  font-size: 14px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.icon-button {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 7px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.icon-button:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.icon-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.content {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
 .scroll {
   flex: 1;
   overflow: auto;
@@ -277,6 +372,11 @@ td:first-child {
 th:last-child,
 td:last-child {
   padding-right: 20px;
+}
+
+td.muted {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
 }
 
 th.num,

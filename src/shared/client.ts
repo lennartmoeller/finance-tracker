@@ -5,10 +5,9 @@ import type { contract } from "./contract.ts";
 
 class Unreachable extends Error {}
 
-export const createApiClient = (
-  url: string,
-  token?: string,
-): ContractRouterClient<typeof contract> =>
+export type ApiClient = ContractRouterClient<typeof contract>;
+
+export const createApiClient = (url: string, token?: string): ApiClient =>
   createORPCClient(
     new RPCLink({
       url,

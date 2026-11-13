@@ -13,6 +13,13 @@ import {
   removeAccount,
   renameAccount,
 } from "./accounts.ts";
+import { createBrand, listBrands, removeBrand, updateBrand } from "./brands.ts";
+import {
+  createCategory,
+  listCategories,
+  removeCategory,
+  updateCategory,
+} from "./categories.ts";
 import { fetchMissingLogos, logoIdOf, storedLogo } from "./logos.ts";
 import { fillPrices, listPrices } from "./prices.ts";
 import { sync } from "./sync.ts";
@@ -57,6 +64,27 @@ const handler = new RPCHandler(
         await fetchMissingLogos(db, LOGO_DEV_SECRET_KEY);
         return listTransactions(db);
       }),
+    },
+    brand: {
+      list: os.brand.list.handler(async () => {
+        await fetchMissingLogos(db, LOGO_DEV_SECRET_KEY);
+        return listBrands(db);
+      }),
+      create: os.brand.create.handler(({ input }) => createBrand(db, input)),
+      update: os.brand.update.handler(({ input }) => updateBrand(db, input)),
+      remove: os.brand.remove.handler(({ input }) => removeBrand(db, input)),
+    },
+    category: {
+      list: os.category.list.handler(() => listCategories(db)),
+      create: os.category.create.handler(({ input }) =>
+        createCategory(db, input),
+      ),
+      update: os.category.update.handler(({ input }) =>
+        updateCategory(db, input),
+      ),
+      remove: os.category.remove.handler(({ input }) =>
+        removeCategory(db, input),
+      ),
     },
     price: {
       fill: os.price.fill.handler(() => fillPrices(db)),

@@ -76,6 +76,8 @@ Why the finance tracker is built the way it is, in the [Keep the Why](https://ke
 
 ## R
 
+- [rules.md](rules.md) — why brands and categories follow from rules matched in PostgreSQL, which rule wins, how categories nest, and how rules are saved and deleted
+
 ## S
 
 ## T

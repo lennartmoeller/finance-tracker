@@ -1,17 +1,23 @@
-import { useCallback, useEffect, useState } from "react";
-import { App, type Data } from "../App.tsx";
-import { deutscheBankShares, fakeData } from "./fake-data.ts";
+import { useEffect, useMemo, useState } from "react";
+import type { Rule, RuleInput } from "@finance-tracker/shared/contract";
+import { App, type Api, type Data } from "../App.tsx";
+import {
+  deutscheBankShares,
+  fakeData,
+  matchTransactions,
+} from "./fake-data.ts";
 import "./mock.css";
 
 const data = fakeData();
 
 const dataStates = {
   normal: ["Normal", () => Promise.resolve(data)],
-  loading: ["Loading", () => new Promise(() => undefined)],
+  loading: ["Loading", () => new Promise<Data>(() => undefined)],
   error: ["Error", () => Promise.reject(new Error("Can't reach the backend."))],
   noAccounts: [
     "No accounts",
-    () => Promise.resolve({ accounts: [], transactions: [], prices: [] }),
+    () =>
+      Promise.resolve({ ...data, accounts: [], transactions: [], prices: [] }),
   ],
   noTransactions: [
     "No transactions",
@@ -25,7 +31,93 @@ const dataStates = {
         prices: data.prices.filter(({ isin }) => isin !== deutscheBankShares),
       }),
   ],
+  noBrandsOrCategories: [
+    "No brands or categories",
+    () =>
+      Promise.resolve(
+        matchTransactions({ ...data, brands: [], categories: [] }),
+      ),
+  ],
+  rejectedSave: ["Rejected save", () => Promise.resolve(data)],
 } satisfies Record<string, [string, () => Promise<Data>]>;
+
+const nextId = (items: { id: number }[]) =>
+  Math.max(0, ...items.map(({ id }) => id)) + 1;
+
+function fakeBackend(state: keyof typeof dataStates) {
+  let stored: Promise<Data> | undefined;
+  const load = () => (stored ??= dataStates[state][1]());
+  const store = async (change: (data: Data) => Partial<Data>) => {
+    if (state === "rejectedSave")
+      throw new Error(
+        "invalid regular expression: parentheses () not balanced",
+      );
+    const data = await load();
+    stored = Promise.resolve(matchTransactions({ ...data, ...change(data) }));
+  };
+  const identified = (data: Data, rules: RuleInput[]): Rule[] => {
+    let next = nextId(
+      [...data.brands, ...data.categories].flatMap(({ rules }) => rules),
+    );
+    return rules.map(({ id, ...rule }) => ({ ...rule, id: id ?? next++ }));
+  };
+  const api: Api = {
+    brand: {
+      list: async () => (await load()).brands,
+      create: (input) =>
+        store((data) => ({
+          brands: [
+            ...data.brands,
+            {
+              ...input,
+              id: nextId(data.brands),
+              logo: null,
+              rules: identified(data, input.rules),
+            },
+          ],
+        })),
+      update: ({ id, ...input }) =>
+        store((data) => ({
+          brands: data.brands.map((brand) =>
+            brand.id === id
+              ? { ...brand, ...input, rules: identified(data, input.rules) }
+              : brand,
+          ),
+        })),
+      remove: ({ id }) =>
+        store(({ brands }) => ({
+          brands: brands.filter((brand) => brand.id !== id),
+        })),
+    },
+    category: {
+      list: async () => (await load()).categories,
+      create: (input) =>
+        store((data) => ({
+          categories: [
+            ...data.categories,
+            {
+              ...input,
+              id: nextId(data.categories),
+              rules: identified(data, input.rules),
+            },
+          ],
+        })),
+      update: ({ id, ...input }) =>
+        store((data) => ({
+          categories: data.categories.map((category) =>
+            category.id === id
+              ? { ...category, ...input, rules: identified(data, input.rules) }
+              : category,
+          ),
+        })),
+      remove: ({ id }) =>
+        store(({ categories }) => ({
+          categories: categories.filter((category) => category.id !== id),
+        })),
+    },
+  };
+  return { load, api };
+}
 
 const themes = { "light dark": "Auto", light: "Light", dark: "Dark" };
 
@@ -63,7 +155,7 @@ function Choice<Key extends string>({
 export function Mock() {
   const [state, setState] = useState<keyof typeof dataStates>("normal");
   const [theme, setTheme] = useState<keyof typeof themes>("light dark");
-  const load = useCallback(() => dataStates[state][1](), [state]);
+  const { load, api } = useMemo(() => fakeBackend(state), [state]);
 
   useEffect(() => {
     document.documentElement.style.colorScheme = theme;
@@ -90,7 +182,7 @@ export function Mock() {
           onChange={setTheme}
         />
       </div>
-      <App load={load} />
+      <App load={load} api={api} />
     </>
   );
 }
