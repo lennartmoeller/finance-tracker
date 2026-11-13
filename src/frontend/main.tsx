@@ -16,12 +16,15 @@ if (import.meta.env.MODE === "mock")
 else {
   const api = createApiClient(`${location.origin}/rpc`);
   const load = async () => {
-    const [accounts, transactions, prices] = await Promise.all([
-      api.account.list(),
-      api.transaction.list(),
-      api.price.list(),
-    ]);
-    return { accounts, transactions, prices };
+    const [accounts, transactions, prices, brands, categories] =
+      await Promise.all([
+        api.account.list(),
+        api.transaction.list(),
+        api.price.list(),
+        api.brand.list(),
+        api.category.list(),
+      ]);
+    return { accounts, transactions, prices, brands, categories };
   };
-  render(<App load={load} />);
+  render(<App load={load} api={api} />);
 }

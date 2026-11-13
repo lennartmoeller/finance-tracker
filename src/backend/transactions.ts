@@ -1,6 +1,7 @@
 import type { Pool } from "pg";
 import type { Transaction } from "@finance-tracker/shared/contract";
 import { logoRoute } from "./logos.ts";
+import { matchingRule } from "./rules.ts";
 
 export const listTransactions = async (db: Pool) =>
   (
@@ -26,23 +27,15 @@ export const listTransactions = async (db: Pool) =>
           'currency', depot.currency,
           'description', depot.description
         ) end as depot,
-        case when brand.name is not null then json_build_object(
-          'name', brand.name,
-          'logo', $1::text || brand.logo_id
-        ) end as brand
+        brand.id as "brandId",
+        category.id as "categoryId"
       from transactions
       left join cash_transactions cash on cash.transaction_id = transactions.id
       left join depot_transactions depot on depot.transaction_id = transactions.id
       left join securities on securities.isin = depot.isin
       left join logos security_logo on security_logo.isin = depot.isin and security_logo.image is not null
-      left join lateral (
-        select brands.name, logos.id as logo_id
-        from brands
-        left join logos on logos.domain = brands.domain and logos.image is not null
-        where cash.counterparty ~* brands.pattern
-        order by brands.id
-        limit 1
-      ) brand on true
+      left join lateral (${matchingRule("brand_id", "null")}) brand on true
+      left join lateral (${matchingRule("category_id", "brand.id")}) category on true
       where cash.transaction_id is not null or depot.transaction_id is not null
       order by coalesce(cash.date, depot.date) desc, transactions.id desc`,
       [logoRoute],
