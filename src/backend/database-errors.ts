@@ -12,6 +12,9 @@ const messages: Record<string, string> = {
   accounts_bank_name_key: "This bank already has an account with this name.",
   accounts_bank_number_key:
     "This bank already has an account with this number.",
+  accounts_name_filled: "Name the account.",
+  accounts_start_balance_of_cash: "Only a cash account has a start balance.",
+  accounts_start_balance_in_cents: "Give the start balance in whole cents.",
   brands_name_key: "Another brand has this name.",
   brands_name_filled: "Name the brand.",
   brands_domain_key: "Another brand has this domain.",

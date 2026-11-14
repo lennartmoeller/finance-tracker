@@ -24,6 +24,7 @@ Why the finance tracker is built the way it is, in the [Keep the Why](https://ke
 
 ## A
 
+- [accounts.md](accounts.md) — why an account's figures live in the Accounts view without its transactions, why closing an account is a flag that takes it out of syncing, and why deleting one takes typing its name
 - [apps.md](apps.md) — why the system is one backend, one frontend and a browser extension, what the frontend shows, and how it draws charts
 
 ## B
@@ -42,7 +43,7 @@ Why the finance tracker is built the way it is, in the [Keep the Why](https://ke
 
 ## F
 
-- [figures.md](figures.md) — how the frontend's balances, gains and distributions count, and why the frontend computes them
+- [figures.md](figures.md) — how the frontend's balances, gains and distributions count, why the frontend computes them, and why the start balance keeps its meaning when the frontend sets it
 
 ## G
 

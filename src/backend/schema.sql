@@ -8,6 +8,7 @@ create table accounts (
   number text not null,
   last_synced_at timestamptz,
   start_balance numeric,
+  closed boolean not null default false,
   constraint accounts_bank_number_key unique (bank, number),
   constraint accounts_bank_name_key unique (bank, name),
   constraint accounts_name_filled check (name <> ''),

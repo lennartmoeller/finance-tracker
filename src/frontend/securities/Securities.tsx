@@ -1,4 +1,4 @@
-import { useDeferredValue, useMemo, useState, type ReactNode } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import { ChartLine, ChevronRight } from "lucide-react";
 import type { DepotTransaction } from "@finance-tracker/shared/contract";
 import type { Data, Loading } from "../App.tsx";
@@ -8,18 +8,19 @@ import {
   lastSale,
   priced,
   shares,
+  today,
   withoutPrices,
   type DepotFigures,
 } from "../figures.ts";
-import { formatMoney, formatShares } from "../format.ts";
+import { DepotSummary } from "../DepotSummary.tsx";
+import { Donut, slicesOf, type Slice } from "../Donut.tsx";
 import { ColouredGain } from "../Gain.tsx";
 import { Intro } from "../Intro.tsx";
 import { Loaded, SkeletonRows } from "../Loaded.tsx";
 import { Logo } from "../Logo.tsx";
 import { MoneyWithPercent } from "../MoneyWithPercent.tsx";
 import { none } from "../none.tsx";
-import { MarketValueDonut, slicesOf, type Slice } from "./MarketValueDonut.tsx";
-import { ValueChart } from "./ValueChart.tsx";
+import { depotSeries, ValueChart } from "../ValueChart.tsx";
 import "./securities.css";
 
 type Security = {
@@ -43,7 +44,7 @@ const skeleton = (
       <span className="skeleton big" />
       <span className="skeleton chart-skeleton" />
     </div>
-    <div className="holdings">
+    <div className="donut-table">
       <div className="donut">
         <span className="skeleton" />
       </div>
@@ -109,7 +110,7 @@ function securitiesOf({ transactions, prices }: Data) {
     slices: slicesOf(
       held.flatMap(({ isin, figures }) => {
         const known = priced(figures);
-        return known ? [{ isin, marketValue: known.marketValue }] : [];
+        return known ? [{ key: isin, value: known.marketValue }] : [];
       }),
     ),
   };
@@ -125,7 +126,12 @@ function Analysis({ data }: { data: Data }) {
   const selected = listed.find(({ isin }) => isin === selectedIsin);
   const charted = useDeferredValue(selected);
   const values = useMemo(
-    () => dailyValues(charted?.transactions ?? pricedTransactions, data.prices),
+    () =>
+      dailyValues(
+        charted?.transactions ?? pricedTransactions,
+        data.prices,
+        today(),
+      ),
     [charted, pricedTransactions, data.prices],
   );
   if (!listed.length)
@@ -169,16 +175,19 @@ function Analysis({ data }: { data: Data }) {
             </>
           )}
         </nav>
-        <Figures figures={shown} shares={selected?.shares} />
+        <DepotSummary figures={shown} shares={selected?.shares} />
         {note && <span className="note">{note}</span>}
-        <ValueChart values={values} />
+        <ValueChart values={values} series={depotSeries} />
       </section>
-      <div className="holdings">
+      <div className="donut-table">
         {slices.length > 0 && (
-          <aside className="donut" aria-label="Market value by security">
-            <MarketValueDonut
+          <aside
+            className="donut selectable"
+            aria-label="Market value by security"
+          >
+            <Donut
               slices={slices}
-              selectedIsin={selectedIsin}
+              selectedKey={selectedIsin}
               onSelect={select}
               onHover={setHoveredIsins}
             />
@@ -192,68 +201,6 @@ function Analysis({ data }: { data: Data }) {
           hoveredIsins={hoveredIsins}
           onSelect={select}
         />
-      </div>
-    </div>
-  );
-}
-
-function Part({ name, children }: { name: string; children: ReactNode }) {
-  return (
-    <div>
-      <span>{name}</span>
-      <strong>{children}</strong>
-    </div>
-  );
-}
-
-function Figures({
-  figures,
-  shares,
-}: {
-  figures: DepotFigures | null;
-  shares: string | undefined;
-}) {
-  const known = priced(figures);
-  const held = shares === undefined || Number(shares) > 0;
-  return (
-    <div className="hero-row">
-      <div className="hero-value">
-        <span className="hero-amount">
-          {known ? formatMoney(known.marketValue) : none}
-        </span>
-        {known && (
-          <span className="hero-gain">
-            <ColouredGain
-              amount={known.gain}
-              purchases={known.purchases}
-              withArrow
-            />
-          </span>
-        )}
-      </div>
-      <div className="hero-parts">
-        {held && shares !== undefined && (
-          <Part name="Shares">{formatShares(shares)}</Part>
-        )}
-        {held && (
-          <Part name="Invested money">
-            {figures ? formatMoney(figures.invested) : none}
-          </Part>
-        )}
-        {known &&
-          (
-            [
-              ["Dist. paid out", known.paidOut],
-              ["Dist. reinvested", known.reinvested],
-            ] as const
-          ).map(
-            ([name, amount]) =>
-              Math.round(Number(amount) * 100) !== 0 && (
-                <Part key={name} name={name}>
-                  {formatMoney(amount)}
-                </Part>
-              ),
-          )}
       </div>
     </div>
   );
@@ -306,9 +253,8 @@ function SecurityTable({
                   <span
                     className="dot"
                     style={{
-                      background: slices.find(({ isins }) =>
-                        isins.includes(isin),
-                      )?.fill,
+                      background: slices.find(({ keys }) => keys.includes(isin))
+                        ?.fill,
                     }}
                   />
                   <Logo src={logo} name={name} />

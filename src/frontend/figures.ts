@@ -1,4 +1,5 @@
 import type {
+  Account,
   DepotTransaction,
   Price,
   Transaction,
@@ -25,6 +26,9 @@ export type DayValues = {
 };
 
 type PriceOn = (isin: string, day?: string) => string | undefined;
+
+// Swedish writes a date as YYYY-MM-DD, the format the transactions' dates use.
+export const today = () => new Date().toLocaleDateString("sv-SE");
 
 const nextDay = (day: string, days = 1) =>
   new Date(Date.parse(`${day}T00:00Z`) + days * 86_400_000)
@@ -150,19 +154,55 @@ export const depotFigures = (
     ? figuresOn(positionOf(transactions), latestPrices(prices))
     : null;
 
+export function withFigures(
+  accounts: Account[],
+  transactions: Transaction[],
+  prices: Price[],
+) {
+  return accounts.map((account) => {
+    const own = transactions.filter(
+      ({ accountId }) => accountId === account.id,
+    );
+    return {
+      ...account,
+      transactions: own,
+      balance: balance(account.startBalance, own),
+      figures: depotFigures(
+        own.flatMap(({ depot }) => depot ?? []),
+        prices,
+      ),
+    };
+  });
+}
+
+export type AccountWithFigures = ReturnType<typeof withFigures>[number];
+
+export const accountValue = (account: AccountWithFigures) =>
+  account.type === "cash"
+    ? account.balance
+    : (priced(account.figures)?.marketValue ?? null);
+
+export const totalValue = (accounts: AccountWithFigures[]) =>
+  decimalSum(accounts.flatMap((account) => accountValue(account) ?? []));
+
+export const unpricedAccounts = (accounts: AccountWithFigures[]) =>
+  accounts.flatMap(({ name, figures }) =>
+    figures && "unpriced" in figures ? [name] : [],
+  );
+
 export function dailyValues(
   transactions: DepotTransaction[],
   prices: Price[],
+  today: string,
 ): DayValues[] {
   const dates = new Set(transactions.map(({ date }) => date));
   const [first, ...rest] = [...dates].sort();
   if (!first) return [];
-  const latestPrice = prices.reduce(
-    (latest, { date }) => (date > latest ? date : latest),
-    rest.at(-1) ?? first,
-  );
+  const last = rest.at(-1) ?? first;
   const end = holdings(transactions).length
-    ? latestPrice
+    ? today > last
+      ? today
+      : last
     : nextDay(lastSale(transactions) || first, -1);
   const priceOn = latestPrices(prices);
   const values: DayValues[] = [];
@@ -180,4 +220,74 @@ export function dailyValues(
     });
   }
   return values;
+}
+
+export type DayBalance = { date: string; balance: number };
+
+export function dailyBalances(
+  accounts: {
+    startBalance: string | null;
+    closed: boolean;
+    transactions: Transaction[];
+  }[],
+  today: string,
+): DayBalance[] {
+  const changes = new Map<string, number>();
+  const add = (date: string, amount: string) => {
+    changes.set(
+      date,
+      (changes.get(date) ?? 0) + Math.round(Number(amount) * 100),
+    );
+  };
+  for (const { startBalance, transactions } of accounts) {
+    const amounts = transactions.flatMap(({ cash }) => cash ?? []);
+    const [first] = amounts.map(({ date }) => date).sort();
+    if (first && startBalance) add(first, startBalance);
+    for (const { date, amount } of amounts) add(date, amount);
+  }
+  const dates = [...changes.keys()].sort();
+  const [first] = dates;
+  const last = dates.at(-1);
+  if (!first || !last) return [];
+  const end =
+    accounts.some(({ closed }) => !closed) && today > last ? today : last;
+  const values: DayBalance[] = [];
+  let cents = 0;
+  for (let day = first; day <= end; day = nextDay(day)) {
+    cents += changes.get(day) ?? 0;
+    values.push({ date: day, balance: cents / 100 });
+  }
+  return values;
+}
+
+export type DayTotal = {
+  date: string;
+  total: number | null;
+  cash: number;
+  depots: number | null;
+};
+
+export function dailyTotals(
+  balances: DayBalance[],
+  values: DayValues[],
+): DayTotal[] {
+  const cash = new Map(balances.map(({ date, balance }) => [date, balance]));
+  const depots = new Map(
+    values.map(({ date, marketValue }) => [date, marketValue]),
+  );
+  const [first, ...rest] = [...cash.keys(), ...depots.keys()].sort();
+  const last = rest.at(-1) ?? first;
+  const totals: DayTotal[] = [];
+  let balance = 0;
+  for (let day = first; day && last && day <= last; day = nextDay(day)) {
+    balance = cash.get(day) ?? balance;
+    const marketValue = depots.has(day) ? (depots.get(day) ?? null) : 0;
+    totals.push({
+      date: day,
+      total: marketValue === null ? null : balance + marketValue,
+      cash: balance,
+      depots: marketValue,
+    });
+  }
+  return totals;
 }

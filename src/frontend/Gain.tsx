@@ -1,10 +1,6 @@
-import { formatAmount, formatPercent } from "./format.ts";
 import { MoneyWithPercent } from "./MoneyWithPercent.tsx";
 
 type Props = { amount: string; purchases: string };
-
-export const Gain = ({ amount, purchases }: Props) =>
-  `${formatAmount(amount, "EUR")} · ${formatPercent(Number(amount) / Number(purchases))}`;
 
 export function ColouredGain({
   amount,

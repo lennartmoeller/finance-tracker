@@ -9,6 +9,7 @@ import type {
   Transaction,
 } from "@finance-tracker/shared/contract";
 import type { Data } from "../App.tsx";
+import { banks } from "../banks.ts";
 
 type Security = { isin: string; name: string; logo: string | null };
 
@@ -276,12 +277,26 @@ const securities = {
 
 const closedStartBalance = 1250;
 
+function fakeNumber(bank: string, type: Account["type"], index: number) {
+  if (type === "depot")
+    return String(index + 1)
+      .repeat(12)
+      .slice(
+        0,
+        banks.find(({ name }) => name === bank)?.accounts.depot?.length,
+      );
+  const bban = `37040044${String(532013000 + index).padStart(10, "0")}`;
+  const check = 98n - (BigInt(`${bban}131400`) % 97n);
+  return `DE${check.toString().padStart(2, "0")}${bban}`;
+}
+
 const accounts: [
   Account["bank"],
   Account["type"],
   string,
   number,
   Account["startBalance"]?,
+  Account["closed"]?,
 ][] = [
   ["ING", "cash", "Everyday", 0.1],
   ["ING", "cash", "Reserve", 3],
@@ -290,7 +305,7 @@ const accounts: [
   ["Trade Republic", "depot", "ETFs", 9],
   ["Deutsche Bank", "depot", "Employee shares", 120],
   ["finvesto", "depot", "Fund plan", 14],
-  ["Sparkasse", "cash", "Closed", 480, closedStartBalance.toFixed(2)],
+  ["Sparkasse", "cash", "Closed", 480, closedStartBalance.toFixed(2), true],
 ];
 const [
   everyday,
@@ -703,14 +718,18 @@ export function fakeData(): Data {
     cash?.date ?? depot?.date ?? "";
   return matchTransactions({
     accounts: accounts.map(
-      ([bank, type, name, syncedDaysAgo, startBalance = null], index) => ({
+      (
+        [bank, type, name, syncedDaysAgo, startBalance = null, closed = false],
+        index,
+      ) => ({
         id: index + 1,
         bank,
         type,
         name,
-        number: `FAKE${String(index + 1)}`,
+        number: fakeNumber(bank, type, index),
         lastSyncedAt: new Date(Date.now() - syncedDaysAgo * 86_400_000),
         startBalance,
+        closed,
       }),
     ),
     transactions: transactions.sort(

@@ -4,7 +4,7 @@ import type { Data } from "../App.tsx";
 import { byId } from "../by-id.ts";
 import { categoryPath } from "../category-path.ts";
 import { Intro } from "../Intro.tsx";
-import { EditPanel } from "./EditPanel.tsx";
+import { OwnerForm } from "./OwnerForm.tsx";
 import { byName, type Kind, type OwnerPanelProps } from "./RuleList.tsx";
 
 const isFolder = (data: Data, { id }: Category) =>
@@ -58,7 +58,7 @@ function CategoryPanel({
   const categories = byId(data.categories);
   const parent = categories.get(category?.parentId ?? null);
   return (
-    <EditPanel
+    <OwnerForm
       title={category?.name ?? "New category"}
       subtitle={parent ? categoryPath(categories, parent) : "Category"}
       fields={[

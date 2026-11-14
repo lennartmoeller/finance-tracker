@@ -12,7 +12,6 @@ const percent = {
   minimumFractionDigits: 1,
   maximumFractionDigits: 1,
 } as const;
-const signedPercent = german({ ...percent, signDisplay: "exceptZero" });
 const unsignedPercent = german(percent);
 const wholePercent = german({ style: "percent" });
 const signedQuantity = german({
@@ -20,6 +19,10 @@ const signedQuantity = german({
   signDisplay: "exceptZero",
 });
 const quantity = german({ maximumFractionDigits: 10 });
+const moneyInput = german({
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
 const amounts = new Map<string, Intl.NumberFormat>();
 
 const day = (date: string) => new Date(`${date}T00:00`);
@@ -50,8 +53,6 @@ export const formatMoney = (amount: string) => money.format(Number(amount));
 
 export const formatWholeMoney = (amount: number) => wholeMoney.format(amount);
 
-export const formatPercent = (share: number) => signedPercent.format(share);
-
 export const formatUnsignedPercent = (share: number) =>
   unsignedPercent.format(share);
 
@@ -70,3 +71,17 @@ export const formatMonth = (date: string) => monthFormat.format(day(date));
 
 export const formatShortMonth = (date: string) =>
   shortMonthFormat.format(day(date));
+
+export const formatMoneyInput = (amount: string) =>
+  moneyInput.format(Number(amount));
+
+export function parseMoneyInput(text: string): string | undefined {
+  const [, sign, whole, cents = ""] =
+    /^(-?)(\d{1,3}(?:\.?\d{3})*)(?:,(\d{1,2}))?$/.exec(text.trim()) ?? [];
+  return whole === undefined
+    ? undefined
+    : `${sign ?? ""}${whole.replaceAll(".", "")}.${cents.padEnd(2, "0")}`;
+}
+
+export const capitalized = (term: string) =>
+  term.charAt(0).toUpperCase() + term.slice(1);

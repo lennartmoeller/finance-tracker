@@ -1,3 +1,5 @@
+import type { Account } from "./contract.ts";
+
 export type AccountNumberFormat = {
   label: "IBAN" | "Depot number";
   length: number;
@@ -35,6 +37,15 @@ export function accountNumberIssue(
     return `A ${bank} depot number has ${length.toString()} digits; this one has ${number.length.toString()}.`;
   return undefined;
 }
+
+export const takenAccountNumberIssue = (
+  accounts: readonly Account[],
+  bank: string,
+  number: string,
+) =>
+  accounts.some((account) => account.bank === bank && account.number === number)
+    ? `${bank} already has an account with this number.`
+    : undefined;
 
 export function groupAccountNumber(
   number: string,
