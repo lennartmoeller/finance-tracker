@@ -30,11 +30,12 @@ The apps find the folders by file name, the frontend and the extension through V
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
-**Source:** maintainer decision in a planning dialogue, 2026-11-12
+**Source:** maintainer decision in a planning dialogue, 2026-11-12, kept for the frontend's add form in a planning dialogue, 2026-11-13
 **See:** banks.md#every-bank-is-one-folder-that-the-apps-discover — d2f8114b-dd33-47e2-bbf3-8f54bf4bff7e — as of 2026-11-12
+**See:** accounts.md#a-closed-account-is-a-flag-that-takes-it-out-of-syncing — 8dcdf615-992f-404a-a497-99c69d4320f6 — as of 2026-11-14
 
 A bank's `bank.ts` declares only the account types the browser extension syncs, so a bank the extension doesn't sync, such as Sparkasse, declares none and has no `adapter.ts`.
-That one rule decides three places: `account.create` accepts only a declared type, the popup lists only accounts of a declared type, and the frontend marks only those with a sync's freshness.
+That one rule decides four places: `account.create` accepts only a declared type, the frontend's add form offers only declared types, and the popup lists and the frontend marks with a sync's freshness only accounts of a declared type that are not closed.
 
 **Reason:** a declared type already meant one the extension syncs, as `account.create`'s answer to any other says, so no new field was needed, and an account the extension can't sync shows neither a sync button that fails nor a freshness mark that stays stale.
 

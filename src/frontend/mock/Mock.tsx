@@ -47,11 +47,11 @@ const nextId = (items: { id: number }[]) =>
 function fakeBackend(state: keyof typeof dataStates) {
   let stored: Promise<Data> | undefined;
   const load = () => (stored ??= dataStates[state][1]());
-  const store = async (change: (data: Data) => Partial<Data>) => {
-    if (state === "rejectedSave")
-      throw new Error(
-        "invalid regular expression: parentheses () not balanced",
-      );
+  const store = async (
+    change: (data: Data) => Partial<Data>,
+    refusal = "invalid regular expression: parentheses () not balanced",
+  ) => {
+    if (state === "rejectedSave") throw new Error(refusal);
     const data = await load();
     stored = Promise.resolve(matchTransactions({ ...data, ...change(data) }));
   };
@@ -61,7 +61,45 @@ function fakeBackend(state: keyof typeof dataStates) {
     );
     return rules.map(({ id, ...rule }) => ({ ...rule, id: id ?? next++ }));
   };
+  const accountRefusal = "This bank already has an account with this name.";
   const api: Api = {
+    account: {
+      list: async () => (await load()).accounts,
+      create: async (input) => {
+        const { accounts } = await load();
+        const account = {
+          ...input,
+          id: nextId(accounts),
+          lastSyncedAt: null,
+          startBalance: null,
+          closed: false,
+        };
+        await store(
+          () => ({ accounts: [...accounts, account] }),
+          accountRefusal,
+        );
+        return account;
+      },
+      update: ({ id, ...input }) =>
+        store(
+          ({ accounts }) => ({
+            accounts: accounts.map((account) =>
+              account.id === id ? { ...account, ...input } : account,
+            ),
+          }),
+          accountRefusal,
+        ),
+      remove: ({ id }) =>
+        store(
+          ({ accounts, transactions }) => ({
+            accounts: accounts.filter((account) => account.id !== id),
+            transactions: transactions.filter(
+              ({ accountId }) => accountId !== id,
+            ),
+          }),
+          accountRefusal,
+        ),
+    },
     brand: {
       list: async () => (await load()).brands,
       create: (input) =>

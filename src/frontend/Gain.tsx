@@ -1,14 +1,6 @@
-import {
-  formatAmount,
-  formatMoney,
-  formatPercent,
-  formatUnsignedPercent,
-} from "./format.ts";
+import { MoneyWithPercent } from "./MoneyWithPercent.tsx";
 
 type Props = { amount: string; purchases: string };
-
-export const Gain = ({ amount, purchases }: Props) =>
-  `${formatAmount(amount, "EUR")} · ${formatPercent(Number(amount) / Number(purchases))}`;
 
 export function ColouredGain({
   amount,
@@ -20,8 +12,10 @@ export function ColouredGain({
   return (
     <span className={sign > 0 ? "gain" : sign < 0 ? "loss" : ""}>
       {withArrow && (sign > 0 ? "▲ " : sign < 0 ? "▼ " : "")}
-      {formatMoney(size)} (
-      {formatUnsignedPercent(Number(size) / Number(purchases))})
+      <MoneyWithPercent
+        amount={size}
+        percent={Number(size) / Number(purchases)}
+      />
     </span>
   );
 }

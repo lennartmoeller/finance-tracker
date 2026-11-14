@@ -1,4 +1,4 @@
-import type { Account } from "@finance-tracker/shared/contract";
+import type { Account } from "./contract.ts";
 
 export const accountNameIssue = (
   accounts: readonly Account[],

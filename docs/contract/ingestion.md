@@ -31,11 +31,16 @@ A sync leaves the overlap with earlier syncs to the identities already stored, s
 sequenceDiagram
   actor User
   participant DB as PostgreSQL
+  participant FE as Frontend
   participant BE as Backend
-  User->>DB: Insert the account, with a start balance where its stored history begins after its opening
+  User->>DB: Insert the account
   User->>BE: sync the raw transactions of a bank export with their shape version
   BE->>BE: Store each raw transaction with a new identity, and the normalized transaction extracted from it
   BE-->>User: Imported and skipped counts
+  opt the stored history begins after the account's opening
+    User->>FE: Set the start balance in the Accounts view
+    FE->>BE: account.update
+  end
 ```
 
 The user inserts the account by hand, because `account.create` takes only the account types the browser extension syncs, and sends its raw transactions through the same `sync` as an adapter.

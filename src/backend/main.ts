@@ -11,7 +11,7 @@ import {
   createAccount,
   listAccounts,
   removeAccount,
-  renameAccount,
+  updateAccount,
 } from "./accounts.ts";
 import { createBrand, listBrands, removeBrand, updateBrand } from "./brands.ts";
 import {
@@ -51,8 +51,8 @@ const handler = new RPCHandler(
         createAccount(db, input),
       ),
       list: os.account.list.handler(() => listAccounts(db)),
-      rename: os.account.rename.handler(({ input }) =>
-        renameAccount(db, input),
+      update: os.account.update.handler(({ input }) =>
+        updateAccount(db, input),
       ),
       remove: os.account.remove.handler(({ input }) =>
         removeAccount(db, input),

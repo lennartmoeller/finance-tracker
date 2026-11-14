@@ -14,8 +14,9 @@ export type Bank = {
 
 export const syncedBy = (
   banks: readonly Bank[],
-  { bank, type }: Pick<Account, "bank" | "type">,
+  { bank, type, closed }: Pick<Account, "bank" | "type" | "closed">,
 ) =>
+  !closed &&
   banks.some(
     ({ name, accounts }) => name === bank && accounts[type] !== undefined,
   );

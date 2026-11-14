@@ -9,6 +9,7 @@ import type {
   Transaction,
 } from "@finance-tracker/shared/contract";
 import type { Data } from "../App.tsx";
+import { banks } from "../banks.ts";
 
 type Security = { isin: string; name: string; logo: string | null };
 
@@ -253,9 +254,41 @@ const securities = {
     133.4,
   ),
   amundi: security("LU2089238203", "Amundi Prime Global UCITS ETF", null, 35.2),
+  sap: security("DE0007164600", "SAP SE", tile("#0070f2", "#fff", "S"), 241.6),
+  siemens: security(
+    "DE0007236101",
+    "Siemens AG",
+    tile("#009999", "#fff", "S"),
+    214.3,
+  ),
+  microsoft: security(
+    "US5949181045",
+    "Microsoft Corp.",
+    tile("#737373", "#fff", "M"),
+    421.8,
+  ),
+  emergingMarkets: security(
+    "IE00BTJRMP35",
+    "Xtrackers MSCI Emerging Markets UCITS ETF 1C",
+    null,
+    57.4,
+  ),
 };
 
 const closedStartBalance = 1250;
+
+function fakeNumber(bank: string, type: Account["type"], index: number) {
+  if (type === "depot")
+    return String(index + 1)
+      .repeat(12)
+      .slice(
+        0,
+        banks.find(({ name }) => name === bank)?.accounts.depot?.length,
+      );
+  const bban = `37040044${String(532013000 + index).padStart(10, "0")}`;
+  const check = 98n - (BigInt(`${bban}131400`) % 97n);
+  return `DE${check.toString().padStart(2, "0")}${bban}`;
+}
 
 const accounts: [
   Account["bank"],
@@ -263,6 +296,7 @@ const accounts: [
   string,
   number,
   Account["startBalance"]?,
+  Account["closed"]?,
 ][] = [
   ["ING", "cash", "Everyday", 0.1],
   ["ING", "cash", "Reserve", 3],
@@ -271,7 +305,7 @@ const accounts: [
   ["Trade Republic", "depot", "ETFs", 9],
   ["Deutsche Bank", "depot", "Employee shares", 120],
   ["finvesto", "depot", "Fund plan", 14],
-  ["Sparkasse", "cash", "Closed", 480, closedStartBalance.toFixed(2)],
+  ["Sparkasse", "cash", "Closed", 480, closedStartBalance.toFixed(2), true],
 ];
 const [
   everyday,
@@ -564,14 +598,22 @@ export function fakeData(): Data {
     null,
     "Sell trade LU2089238203 Amundi",
   );
-  buy(etfs, daysAgo(790), securities.allianz, 1000, "Buy trade");
-  cash(
-    spending,
-    daysAgo(790),
-    -1000,
-    null,
-    "Buy trade DE0008404005 Allianz SE",
-  );
+  for (const [bought, ago, amount] of [
+    [securities.allianz, 790, 1000],
+    [securities.sap, 720, 400],
+    [securities.siemens, 560, 300],
+    [securities.microsoft, 430, 350],
+    [securities.emergingMarkets, 300, 200],
+  ] as const) {
+    buy(etfs, daysAgo(ago), bought, amount, "Buy trade");
+    cash(
+      spending,
+      daysAgo(ago),
+      -amount,
+      null,
+      `Buy trade ${bought.isin} ${bought.name}`,
+    );
+  }
   const appleShares = buy(
     etfs,
     daysAgo(610),
@@ -676,14 +718,18 @@ export function fakeData(): Data {
     cash?.date ?? depot?.date ?? "";
   return matchTransactions({
     accounts: accounts.map(
-      ([bank, type, name, syncedDaysAgo, startBalance = null], index) => ({
+      (
+        [bank, type, name, syncedDaysAgo, startBalance = null, closed = false],
+        index,
+      ) => ({
         id: index + 1,
         bank,
         type,
         name,
-        number: `FAKE${String(index + 1)}`,
+        number: fakeNumber(bank, type, index),
         lastSyncedAt: new Date(Date.now() - syncedDaysAgo * 86_400_000),
         startBalance,
+        closed,
       }),
     ),
     transactions: transactions.sort(

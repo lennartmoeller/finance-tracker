@@ -17,6 +17,7 @@ import { banks } from "../banks.ts";
 import { byId } from "../by-id.ts";
 import { categoryPath } from "../category-path.ts";
 import {
+  capitalized,
   formatAmount,
   formatDate,
   formatMonth,
@@ -58,9 +59,6 @@ type Kind<P extends Part> = {
   columns: Column<P>[];
   fields: (row: Row<P>) => Field[];
 };
-
-const capitalized = (term: string) =>
-  term.charAt(0).toUpperCase() + term.slice(1);
 
 const amountOf = ({ amount, currency }: Part) =>
   amount && currency ? formatAmount(amount, currency) : null;

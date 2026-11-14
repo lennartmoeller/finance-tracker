@@ -18,6 +18,7 @@ const account = z.object({
   number: z.string(),
   lastSyncedAt: z.date().nullable(),
   startBalance: decimal.nullable(),
+  closed: z.boolean(),
 });
 
 export type Account = z.infer<typeof account>;
@@ -114,7 +115,9 @@ export const contract = {
       .input(account.pick({ name: true, bank: true, type: true, number: true }))
       .output(account),
     list: oc.output(z.array(account)),
-    rename: oc.input(account.pick({ id: true, name: true })),
+    update: oc.input(
+      account.pick({ id: true, name: true, startBalance: true, closed: true }),
+    ),
     remove: oc.input(account.pick({ id: true })),
   },
   sync: oc

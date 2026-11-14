@@ -23,6 +23,7 @@ erDiagram
     text number "unique per bank"
     timestamptz last_synced_at "optional"
     numeric start_balance "optional: a cash account's balance before its first stored transaction"
+    boolean closed "set once the account is closed at its bank"
   }
   transactions {
     integer id PK

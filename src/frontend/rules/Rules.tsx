@@ -23,19 +23,17 @@ export function Rules({
   return (
     <>
       <header className="page-head">
-        <div className="page-title">
-          <h1>Rules</h1>
-          <button
-            className="button secondary"
-            disabled={!loading.data?.accounts.length}
-            onClick={() => {
-              setEditing({});
-            }}
-          >
-            <Plus />
-            New {(tab === "brands" ? brandKind : categoryKind).noun}
-          </button>
-        </div>
+        <h1>Rules</h1>
+        <button
+          className="button secondary"
+          disabled={!loading.data?.accounts.length}
+          onClick={() => {
+            setEditing({});
+          }}
+        >
+          <Plus />
+          New {(tab === "brands" ? brandKind : categoryKind).noun}
+        </button>
         <Tabs
           tabs={[
             ["brands", "Brands"],

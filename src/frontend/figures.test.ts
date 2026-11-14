@@ -4,7 +4,13 @@ import type {
   Price,
   Transaction,
 } from "@finance-tracker/shared/contract";
-import { balance, dailyValues, depotFigures } from "./figures.ts";
+import {
+  balance,
+  dailyBalances,
+  dailyTotals,
+  dailyValues,
+  depotFigures,
+} from "./figures.ts";
 
 const fund = "IE00B3RBWM25";
 const amazon = "US0231351067";
@@ -52,6 +58,31 @@ test("a cash account's balance adds its amounts to its start balance, and an acc
   expect(balance(null, [])).toBeNull();
 });
 
+test("the daily balances start with the start balance on the first transaction's day, step by each day's amounts, and end today unless the account is closed", () => {
+  const cash = (date: string, amount: string) =>
+    ({ cash: { date, amount } }) as Transaction;
+  const account = {
+    startBalance: "100.00",
+    transactions: [
+      cash("2026-11-03", "20.00"),
+      cash("2026-11-01", "-10.50"),
+      cash("2026-11-03", "-0.50"),
+    ],
+  };
+  const balances = [
+    { date: "2026-11-01", balance: 89.5 },
+    { date: "2026-11-02", balance: 89.5 },
+    { date: "2026-11-03", balance: 109 },
+  ];
+  expect(dailyBalances([{ ...account, closed: false }], "2026-11-04")).toEqual([
+    ...balances,
+    { date: "2026-11-04", balance: 109 },
+  ]);
+  expect(dailyBalances([{ ...account, closed: true }], "2026-11-04")).toEqual(
+    balances,
+  );
+});
+
 test("a reinvested distribution is no paid-out one, even where the shares it bought are worth cents more", () => {
   expect(depotFigures(fundAndTalanx, prices)).toEqual({
     invested: "320.00",
@@ -88,22 +119,27 @@ test("a held security without a price is named instead of a market value", () =>
   });
 });
 
-test("the daily values carry Friday's price over the weekend, step invested money on a trade's day, and end on the last day held", () => {
+test("the daily values carry Friday's price over the weekend, step invested money on a trade's day, and end on the last day held or today", () => {
+  const trades = [
+    depot("2026-11-06", fund, "trade", "1", "100.00"),
+    depot("2026-11-09", fund, "trade", "1", "105.00"),
+    depot("2026-11-10", fund, "trade", "-2", "-224.00"),
+  ];
+  const fundPrices = [
+    { isin: fund, date: "2026-11-06", price: "100" },
+    { isin: fund, date: "2026-11-09", price: "105" },
+    { isin: fund, date: "2026-11-10", price: "112" },
+    { isin: fund, date: "2026-11-11", price: "115" },
+  ];
   expect(
-    dailyValues(
-      [
-        depot("2026-11-06", fund, "trade", "1", "100.00"),
-        depot("2026-11-09", fund, "trade", "1", "105.00"),
-        depot("2026-11-10", fund, "trade", "-2", "-224.00"),
-      ],
-      [
-        { isin: fund, date: "2026-11-06", price: "100" },
-        { isin: fund, date: "2026-11-09", price: "105" },
-        { isin: fund, date: "2026-11-10", price: "112" },
-        { isin: fund, date: "2026-11-11", price: "115" },
-      ],
-    ),
-  ).toEqual([
+    dailyValues(trades.slice(0, 2), fundPrices, "2026-11-12").at(-1),
+  ).toEqual({
+    date: "2026-11-12",
+    marketValue: 230,
+    invested: 205,
+    gain: 25,
+  });
+  expect(dailyValues(trades, fundPrices, "2026-11-12")).toEqual([
     { date: "2026-11-06", marketValue: 100, invested: 100, gain: 0 },
     { date: "2026-11-07", marketValue: 100, invested: 100, gain: 0 },
     { date: "2026-11-08", marketValue: 100, invested: 100, gain: 0 },
@@ -116,6 +152,28 @@ test("a security neither held nor sold, such as one that only paid a distributio
     dailyValues(
       [depot("2026-03-02", fund, "distribution", null, "4.10")],
       prices,
+      "2026-11-12",
     ),
   ).toEqual([]);
+});
+
+test("the daily totals add the cash balance, carried past its last day, to the depots' market value, which counts 0 before their first day", () => {
+  expect(
+    dailyTotals(
+      [
+        { date: "2026-11-01", balance: 100 },
+        { date: "2026-11-02", balance: 50 },
+      ],
+      [
+        { date: "2026-11-02", marketValue: 10, invested: 10, gain: 0 },
+        { date: "2026-11-03", marketValue: null, invested: 10, gain: null },
+        { date: "2026-11-04", marketValue: 12, invested: 10, gain: 2 },
+      ],
+    ),
+  ).toEqual([
+    { date: "2026-11-01", total: 100, cash: 100, depots: 0 },
+    { date: "2026-11-02", total: 60, cash: 50, depots: 10 },
+    { date: "2026-11-03", total: null, cash: 50, depots: null },
+    { date: "2026-11-04", total: 62, cash: 50, depots: 12 },
+  ]);
 });

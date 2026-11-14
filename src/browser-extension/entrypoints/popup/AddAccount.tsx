@@ -1,17 +1,18 @@
-import { Fragment, useState, type ChangeEvent, type SubmitEvent } from "react";
+import { Fragment, useState, type SubmitEvent } from "react";
 import { Check } from "lucide-react";
+import { accountNameIssue } from "@finance-tracker/shared/account-name";
 import {
   accountNumberIssue,
   groupAccountNumber,
-  type AccountNumberFormat,
+  takenAccountNumberIssue,
 } from "@finance-tracker/shared/account-number";
+import { typeAccountNumber } from "@finance-tracker/shared/account-number-input";
 import { accountTypeNames } from "@finance-tracker/shared/account-type-names";
 import type { Bank } from "@finance-tracker/shared/bank";
 import { errorMessage } from "@finance-tracker/shared/error-message";
 import type { Account } from "@finance-tracker/shared/contract";
 import { apiClient } from "../../api.ts";
 import { banks } from "../../banks.ts";
-import { accountNameIssue } from "./account-name.ts";
 import { BankLogo } from "./BankLogo.tsx";
 
 const accountTypes = (bank: Bank) =>
@@ -38,11 +39,7 @@ export function AddAccount({
     bank &&
     format &&
     (accountNumberIssue(bank.name, format, number) ??
-      (accounts.some(
-        (account) => account.bank === bank.name && account.number === number,
-      )
-        ? `${bank.name} already has an account with this number.`
-        : undefined));
+      takenAccountNumberIssue(accounts, bank.name, number));
   const complete = number.length === format?.length;
   const numberError = complete || touched ? numberIssue : undefined;
 
@@ -51,35 +48,6 @@ export function AddAccount({
     setType(nextType);
     setNumber("");
     setTouched(false);
-  }
-
-  function typeNumber(
-    event: ChangeEvent<HTMLInputElement>,
-    { length, groups }: AccountNumberFormat,
-  ) {
-    const input = event.currentTarget;
-    const clean = (text: string) =>
-      iban
-        ? text.toUpperCase().replace(/[^A-Z\d]/g, "")
-        : text.replace(/\D/g, "");
-    let typed = clean(input.value);
-    let caret = clean(
-      input.value.slice(0, input.selectionStart ?? undefined),
-    ).length;
-    // A backspace after a group's space deletes only the space, which grouping puts back, so it deletes the character before the space instead.
-    if (
-      typed === number &&
-      caret > 0 &&
-      (event.nativeEvent as InputEvent).inputType === "deleteContentBackward"
-    ) {
-      typed = typed.slice(0, caret - 1) + typed.slice(caret);
-      caret--;
-    }
-    typed = typed.slice(0, length);
-    input.value = groupAccountNumber(typed, groups);
-    const position = groupAccountNumber(typed.slice(0, caret), groups).length;
-    input.setSelectionRange(position, position);
-    setNumber(typed);
   }
 
   async function add(event: SubmitEvent<HTMLFormElement>) {
@@ -190,7 +158,7 @@ export function AddAccount({
                   )}
                   value={groupAccountNumber(number, format.groups)}
                   onChange={(event) => {
-                    typeNumber(event, format);
+                    setNumber(typeAccountNumber(event, number, format));
                   }}
                   onBlur={() => {
                     if (number) setTouched(true);

@@ -1,85 +1,3 @@
-.page-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
-
-.page-head .page-title h1 {
-  margin: 0;
-}
-
-.page-title .button {
-  margin: -5px 0;
-}
-
-.button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  height: 30px;
-  padding: 0 12px;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.button svg {
-  width: 14px;
-  height: 14px;
-}
-
-.button.primary {
-  background: var(--ink);
-  color: var(--on-ink);
-}
-
-.button.secondary {
-  border-color: var(--border-strong);
-  background: var(--bg);
-}
-
-.button.secondary:hover {
-  background: var(--hover);
-}
-
-.button.danger {
-  border-color: var(--danger-line);
-  background: var(--danger-soft);
-  color: var(--danger-text);
-}
-
-.button.ghost {
-  padding: 0 8px;
-  background: none;
-  color: var(--muted);
-}
-
-.button.ghost:hover {
-  background: var(--hover);
-  color: var(--text);
-}
-
-.button.ghost-danger {
-  margin-left: -10px;
-  padding: 0 10px;
-  background: none;
-  color: var(--danger-text);
-}
-
-.button.ghost-danger:hover {
-  background: var(--danger-soft);
-}
-
-.button:disabled {
-  border-color: transparent;
-  background: var(--selected);
-  color: var(--faint);
-  cursor: default;
-}
-
 .owner {
   display: flex;
   align-items: center;
@@ -182,26 +100,6 @@
   text-align: right;
 }
 
-.panel-subtitle {
-  margin-top: 2px;
-  color: var(--muted);
-  font-size: 12px;
-  overflow-wrap: anywhere;
-}
-
-.edit-form {
-  display: grid;
-  gap: 14px;
-  padding: 18px 20px;
-}
-
-.edit-label {
-  display: block;
-  margin-bottom: 6px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
 .rules-head {
   display: flex;
   align-items: center;
@@ -238,48 +136,6 @@
   right: 0;
 }
 
-.input {
-  width: 100%;
-  height: 32px;
-  padding: 0 10px;
-  border: 1px solid var(--border-strong);
-  border-radius: 8px;
-  background: var(--bg);
-  color: var(--text);
-  font: inherit;
-}
-
-.input::placeholder {
-  color: var(--faint);
-}
-
-.input:focus {
-  border-color: var(--muted);
-  outline: none;
-}
-
 .input.pattern {
   font-size: 12.5px;
-}
-
-.edit-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.edit-error {
-  margin: 0;
-  color: var(--danger-text);
-  font-size: 12.5px;
-  overflow-wrap: anywhere;
-}
-
-.edit-removal {
-  margin: 0 20px;
-  padding: 14px 0;
-  border-top: 1px solid var(--border);
-}
-
-.edit-removal p {
-  margin: 0 0 10px;
 }

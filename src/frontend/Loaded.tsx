@@ -34,7 +34,7 @@ export function Loaded({
       <Intro
         icon={<Wallet />}
         title="No accounts yet"
-        text="Add an account in the browser extension's popup and sync it."
+        text="Add an account under Accounts or in the browser extension's popup, then sync it in the popup."
       />
     );
   return children(data);

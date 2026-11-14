@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import {
   ArrowRightLeft,
   ChartLine,
+  Landmark,
   LayoutDashboard,
   ListFilter,
 } from "lucide-react";
@@ -14,6 +15,7 @@ import type {
   Price,
   Transaction,
 } from "@finance-tracker/shared/contract";
+import { Accounts } from "./accounts/Accounts.tsx";
 import { Overview } from "./overview/Overview.tsx";
 import { Rules } from "./rules/Rules.tsx";
 import { Securities } from "./securities/Securities.tsx";
@@ -27,7 +29,7 @@ export type Data = {
   categories: Category[];
 };
 
-export type Api = Pick<ApiClient, "brand" | "category">;
+export type Api = Pick<ApiClient, "account" | "brand" | "category">;
 
 export type Change = (call: (api: Api) => Promise<unknown>) => Promise<void>;
 
@@ -37,8 +39,9 @@ export type Scope = { type: Account["type"]; accountId: number | null };
 
 const views = [
   { id: "overview", name: "Overview", Icon: LayoutDashboard },
-  { id: "securities", name: "Securities", Icon: ChartLine },
   { id: "transactions", name: "Transactions", Icon: ArrowRightLeft },
+  { id: "accounts", name: "Accounts", Icon: Landmark },
+  { id: "securities", name: "Securities", Icon: ChartLine },
   { id: "rules", name: "Rules", Icon: ListFilter },
 ] as const;
 
@@ -101,8 +104,11 @@ export function App({ load, api }: { load: () => Promise<Data>; api: Api }) {
       </aside>
       <main className="main">
         {view === "overview" ? (
-          <Overview
+          <Overview />
+        ) : view === "accounts" ? (
+          <Accounts
             loading={loading}
+            onChange={change}
             onOpen={(next) => {
               setScope(next);
               setView("transactions");
