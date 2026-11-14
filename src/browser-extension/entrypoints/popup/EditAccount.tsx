@@ -1,10 +1,10 @@
 import { useState, type SubmitEvent } from "react";
 import { Trash } from "lucide-react";
+import { accountNameIssue } from "@finance-tracker/shared/account-name";
 import { accountTypeNames } from "@finance-tracker/shared/account-type-names";
 import { errorMessage } from "@finance-tracker/shared/error-message";
 import type { Account } from "@finance-tracker/shared/contract";
 import { apiClient } from "../../api.ts";
-import { accountNameIssue } from "./account-name.ts";
 import { BankLogo } from "./BankLogo.tsx";
 
 type Api = Awaited<ReturnType<typeof apiClient>>;
@@ -110,7 +110,12 @@ export function EditAccount({
           aria-labelledby="dialog-title"
           onSubmit={(event) =>
             void submit(event, (api) =>
-              api.account.rename({ id: account.id, name: name.trim() }),
+              api.account.update({
+                id: account.id,
+                name: name.trim(),
+                startBalance: account.startBalance,
+                closed: account.closed,
+              }),
             )
           }
         >

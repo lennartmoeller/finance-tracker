@@ -2,7 +2,7 @@ import { Store } from "lucide-react";
 import type { Brand } from "@finance-tracker/shared/contract";
 import { Intro } from "../Intro.tsx";
 import { Logo } from "../Logo.tsx";
-import { EditPanel } from "./EditPanel.tsx";
+import { OwnerForm } from "./OwnerForm.tsx";
 import { byName, type Kind, type OwnerPanelProps } from "./RuleList.tsx";
 
 export const brandKind: Kind<Brand> = {
@@ -39,7 +39,7 @@ function BrandPanel({
   onClose,
 }: OwnerPanelProps<Brand>) {
   return (
-    <EditPanel
+    <OwnerForm
       title={brand?.name ?? "New brand"}
       icon={brand && <Logo src={brand.logo} name={brand.name} />}
       subtitle="Brand"

@@ -8,7 +8,7 @@
 **Evidence:** confirmed
 **Source:** maintainer decision in a design review, 2026-11-11
 
-The frontend shows each gain with its percent of what the purchases cost, fees included: the sum of the amounts of the trades that bought shares, for a depot, a security or all securities, on the Overview and the Securities view alike.
+The frontend shows each gain with its percent of what the purchases cost, fees included: the sum of the amounts of the trades that bought shares, for a depot, a security or all securities, in the Accounts and the Securities view alike.
 
 **Reason:** invested money, the obvious base, turns negative once sales paid out more than purchases cost, so a security sold at a profit showed a negative percent and a security sold in full had no meaningful one; what the purchases cost is never negative and exists for every security, held or sold.
 
@@ -76,4 +76,21 @@ A cash account's balance in the frontend is its start balance, where set, plus t
 
 **Rejected alternative:** `not null default 0` on every account, which gives depots a 0 that means "does not apply".
 
-**Consequence:** no interface sets it, so it is inserted by hand together with the account it belongs to.
+**Consequence:** the frontend's Accounts view sets it, as [the start balance's editing](#the-frontend-sets-the-start-balance-which-keeps-its-meaning) records; before, it was inserted by hand together with the account it belongs to.
+
+## The frontend sets the start balance, which keeps its meaning
+
+**Id:** 0f826bf1-d573-4f96-ae0f-64ded8c40861
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer decisions in a planning dialogue, 2026-11-13
+**See:** figures.md#a-cash-balance-starts-from-an-optional-start-balance — a53f4fef-6c7a-463b-bf4d-189f9d8b24ff — as of 2026-11-14
+
+The Accounts view's edit form takes a cash account's start balance as one amount in euros, still the balance before the account's first stored transaction.
+
+**Reason:** only the closed Sparkasse account needs one, and its history no longer grows, so the plain amount stays right.
+
+**Rejected alternative:** a balance the bank showed on a date, from which the frontend adds and subtracts transactions, which issue #23 raised so that older transactions arriving later change nothing, but which adds a date column, a migration and date handling in the balance and its chart.
+
+**Consequence:** if older transactions ever arrive on an account with a start balance, the user corrects it in the frontend by hand.

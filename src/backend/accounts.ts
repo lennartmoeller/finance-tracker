@@ -5,7 +5,7 @@ import type { Account } from "@finance-tracker/shared/contract";
 import { banks } from "./banks.ts";
 import { withApiErrors } from "./database-errors.ts";
 
-const columns = `id, name, bank, type, number, last_synced_at as "lastSyncedAt", start_balance as "startBalance"`;
+const columns = `id, name, bank, type, number, last_synced_at as "lastSyncedAt", start_balance as "startBalance", closed`;
 
 export const accountNotFound = () =>
   new ORPCError("NOT_FOUND", { message: "The account does not exist." });
@@ -38,12 +38,20 @@ export async function createAccount(
 export const listAccounts = async (db: Pool) =>
   (await db.query<Account>(`select ${columns} from accounts order by id`)).rows;
 
-export async function renameAccount(
+export async function updateAccount(
   db: Pool,
-  { id, name }: Pick<Account, "id" | "name">,
+  {
+    id,
+    name,
+    startBalance,
+    closed,
+  }: Pick<Account, "id" | "name" | "startBalance" | "closed">,
 ) {
   const { rowCount } = await withApiErrors(
-    db.query("update accounts set name = $2 where id = $1", [id, name]),
+    db.query(
+      "update accounts set name = $2, start_balance = $3, closed = $4 where id = $1",
+      [id, name, startBalance, closed],
+    ),
   );
   if (!rowCount) throw accountNotFound();
 }
