@@ -1,59 +1,6 @@
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding: 12px 20px;
-  border-bottom: 1px solid var(--border);
-}
-
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  height: 28px;
-  padding: 0 11px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--bg);
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.chip:hover {
-  background: var(--hover);
-}
-
-.chip[aria-pressed="true"] {
-  border-color: var(--ink);
-  background: var(--ink);
-  color: var(--on-ink);
-}
-
-.chip:has(.bank) {
-  padding-left: 6px;
-}
-
-.dot.fresh {
-  background: var(--fresh);
-}
-
-.dot.aging {
-  background: var(--aging);
-}
-
-.dot.stale {
-  background: var(--stale);
-}
-
-.chips .skeleton {
-  width: 120px;
-  height: 28px;
-  border-radius: 999px;
-}
-
 tr.month th {
   position: sticky;
-  top: 32px;
+  top: 63px;
   z-index: 1;
   height: 30px;
   padding: 0 12px 0 20px;
@@ -121,4 +68,80 @@ tr.month th {
 .account-meta {
   display: block;
   color: var(--muted);
+}
+
+th .sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+th.num .sort {
+  flex-direction: row-reverse;
+}
+
+th .sort svg {
+  width: 12px;
+  height: 12px;
+}
+
+thead tr.filters th {
+  top: 32px;
+  padding: 0;
+  background: var(--surface);
+}
+
+tr.filters .pattern-input {
+  height: 30px;
+  padding: 0 12px;
+}
+
+tr.filters th:first-child .pattern-input {
+  padding-left: 20px;
+}
+
+tr.filters th:last-child .pattern-input {
+  padding-right: 20px;
+}
+
+tr.filters th.num .pattern-input,
+tr.filters th.num .pattern-input input {
+  text-align: right;
+}
+
+tr.no-match td {
+  height: 120px;
+  color: var(--muted);
+  text-align: center;
+  cursor: default;
+}
+
+tfoot td {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  border-top: 1px solid var(--border);
+  border-bottom: 0;
+  background: var(--bg);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+tfoot td:first-child {
+  overflow: visible;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+tbody tr.spacer td {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: default;
 }

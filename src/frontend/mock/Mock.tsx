@@ -9,9 +9,19 @@ import {
 import "./mock.css";
 
 const data = fakeData();
+const fiveTimes = {
+  ...data,
+  transactions: data.transactions.flatMap((transaction) =>
+    [0, 1, 2, 3, 4].map((copy) => ({
+      ...transaction,
+      id: transaction.id + copy * 100_000,
+    })),
+  ),
+};
 
 const dataStates = {
   normal: ["Normal", () => Promise.resolve(data)],
+  fiveTimes: ["5× transactions", () => Promise.resolve(fiveTimes)],
   loading: ["Loading", () => new Promise<Data>(() => undefined)],
   error: ["Error", () => Promise.reject(new Error("Can't reach the backend."))],
   noAccounts: [

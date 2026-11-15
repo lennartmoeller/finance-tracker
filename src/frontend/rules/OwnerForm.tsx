@@ -1,7 +1,15 @@
 import { useState, type ReactNode } from "react";
 import { Plus, X } from "lucide-react";
-import type { Brand, Rule, RuleInput } from "@finance-tracker/shared/contract";
+import type {
+  Brand,
+  Rule,
+  RuleInput,
+  Transaction,
+} from "@finance-tracker/shared/contract";
 import { EditPanel, type Removal } from "../EditPanel.tsx";
+import { formatCount } from "../format.ts";
+import { PatternInput } from "../PatternInput.tsx";
+import { ruleMatcher } from "../rule-matcher.ts";
 import { byName } from "./RuleList.tsx";
 
 type Options = [value: string, label: string][];
@@ -34,6 +42,21 @@ const inputOf = (draft: Draft): RuleInput => ({
   descriptionPattern: draft.descriptionPattern || null,
 });
 
+const matchesOf = (draft: Draft, transactions: Transaction[]) => {
+  const rule = inputOf(draft);
+  if (Object.values(rule).every((condition) => condition === null)) return;
+  let holds;
+  try {
+    holds = ruleMatcher(rule);
+  } catch {
+    return;
+  }
+  const count = transactions.filter(
+    ({ cash, brandId }) => cash && holds(cash, brandId),
+  ).length;
+  return `Matches ${formatCount(count)} ${count === 1 ? "transaction" : "transactions"}`;
+};
+
 function Control({
   id,
   value,
@@ -49,6 +72,17 @@ function Control({
   placeholder?: string | undefined;
   pattern?: true;
 }) {
+  if (pattern)
+    return (
+      <PatternInput
+        id={id}
+        className="input"
+        rule
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+      />
+    );
   const props = {
     id,
     value,
@@ -66,7 +100,7 @@ function Control({
     </select>
   ) : (
     <input
-      className={pattern ? "input pattern" : "input"}
+      className="input"
       autoComplete="off"
       spellCheck={false}
       placeholder={placeholder}
@@ -83,6 +117,7 @@ export function OwnerForm<Name extends string>({
   initial,
   rules: initialRules,
   brands,
+  transactions,
   onSave,
   removal,
   onClose,
@@ -94,6 +129,7 @@ export function OwnerForm<Name extends string>({
   initial: Record<Name, string>;
   rules: Rule[] | undefined;
   brands?: Brand[];
+  transactions: Transaction[];
   onSave: (values: Record<Name, string>, rules: RuleInput[]) => Promise<void>;
   removal: Removal | undefined;
   onClose: () => void;
@@ -204,6 +240,9 @@ export function OwnerForm<Name extends string>({
                   changeRule(index, { descriptionPattern });
                 }}
               />
+              <span className="rule-matches">
+                {matchesOf(rule, transactions) ?? "\u00a0"}
+              </span>
               <button
                 type="button"
                 className="icon-button rule-remove"

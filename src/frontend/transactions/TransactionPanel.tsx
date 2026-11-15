@@ -3,7 +3,6 @@ import { accountTypeNames } from "@finance-tracker/shared/account-type-names";
 import type { Account } from "@finance-tracker/shared/contract";
 import { AccountName } from "../AccountName.tsx";
 import { formatDate } from "../format.ts";
-import { Logo } from "../Logo.tsx";
 import { none } from "../none.tsx";
 import { Panel } from "../Panel.tsx";
 
@@ -13,7 +12,7 @@ export function TransactionPanel({
   account,
   date,
   amount,
-  logo,
+  icon,
   title,
   fields,
   onClose,
@@ -21,7 +20,7 @@ export function TransactionPanel({
   account: Account;
   date: string;
   amount: string | null;
-  logo: string | null;
+  icon: ReactNode;
   title: string | null;
   fields: Field[];
   onClose: () => void;
@@ -44,7 +43,7 @@ export function TransactionPanel({
       label="Transaction"
       head={
         <>
-          <Logo src={logo} name={title} />
+          {icon}
           <div className="panel-title">
             <div className="panel-name">{title ?? none}</div>
             <div className="panel-amount">{amount ?? none}</div>

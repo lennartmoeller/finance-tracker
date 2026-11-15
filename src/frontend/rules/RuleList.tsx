@@ -4,6 +4,7 @@ import type { Change, Data } from "../App.tsx";
 import { byId } from "../by-id.ts";
 import { formatCount } from "../format.ts";
 import { Logo } from "../Logo.tsx";
+import { PatternText } from "../PatternInput.tsx";
 
 type Owner = { id: number; name: string; rules: Rule[] };
 
@@ -43,12 +44,18 @@ function RuleChip({
     ),
     rule.counterpartyPattern !== null && (
       <>
-        <i>counterparty</i> <code>{rule.counterpartyPattern}</code>
+        <i>counterparty</i>{" "}
+        <code>
+          <PatternText value={rule.counterpartyPattern} />
+        </code>
       </>
     ),
     rule.descriptionPattern !== null && (
       <>
-        <i>description</i> <code>{rule.descriptionPattern}</code>
+        <i>description</i>{" "}
+        <code>
+          <PatternText value={rule.descriptionPattern} />
+        </code>
       </>
     ),
   ].filter(Boolean);
