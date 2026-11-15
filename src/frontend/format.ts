@@ -83,5 +83,13 @@ export function parseMoneyInput(text: string): string | undefined {
     : `${sign ?? ""}${whole.replaceAll(".", "")}.${cents.padEnd(2, "0")}`;
 }
 
+// A decimal as the filters match it: German, without grouping or currency, and a quantity without trailing zeros in its fraction.
+export const formatPlainAmount = (amount: string) => amount.replace(".", ",");
+
+export const formatPlainQuantity = (quantity: string) =>
+  formatPlainAmount(
+    quantity.includes(".") ? quantity.replace(/\.?0+$/, "") : quantity,
+  );
+
 export const capitalized = (term: string) =>
   term.charAt(0).toUpperCase() + term.slice(1);

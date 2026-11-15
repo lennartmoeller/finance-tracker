@@ -46,11 +46,12 @@ Among the matching rules, the one with the most conditions, counting a required 
 
 **Id:** 2e7be9c1-435b-4aef-97ca-6ae4c93a6b6c
 **Type:** decision
-**Status:** active
+**Status:** superseded
 **Evidence:** confirmed
 **Source:** issue #34; maintainer decision of 2026-11-13
 **Revisit when:** the frontend needs to preview a pattern's matches while it is typed
 **See:** rules.md#brands-and-categories-follow-from-rules-not-from-labels — 8232f188-5501-4252-8d44-17b2f41076bb — as of 2026-11-13
+**Superseded by:** 45904d9b-c90f-430b-bcfb-7ed7377067b5
 
 `transaction.list` matches every cash transaction against the rules in PostgreSQL with `~*` on each read, and the frontend shows what a saved rule matches after reloading.
 
@@ -61,6 +62,67 @@ Among the matching rules, the one with the most conditions, counting a required 
 **Rejected alternative:** a procedure that previews a draft's matches while typing, one more procedure and form wiring, which can still come later without rework.
 
 **Consequence:** the user sees a pattern's effect only after saving it.
+
+## Rules match in PostgreSQL, and the frontend reads their dialect through a translation
+
+**Id:** 45904d9b-c90f-430b-bcfb-7ed7377067b5
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** issue #54; maintainer decisions of 2026-11-14 and 2026-11-15 in the experiment and planning behind it
+**Revisit when:** the database's locale or PostgreSQL's regular-expression engine changes, or a stored pattern uses syntax the translation refuses
+**See:** rules.md#matching-stays-in-postgresql — 2e7be9c1-435b-4aef-97ca-6ae4c93a6b6c — as of 2026-11-15
+
+`transaction.list` keeps matching every cash transaction against the rules in PostgreSQL with `~*`, which validates every stored pattern, while the frontend reads the same dialect through `src/frontend/pattern.ts`, a one-way translation into JavaScript's `RegExp`, for the Transactions view's filters, the Rules editor's live match count and the mock mode.
+What the user types is what is stored, and every pattern, in a rule or a filter, is written in PostgreSQL's dialect.
+
+**Reason:** the filters and the live count match while the user types, which a round trip per keystroke would slow, and the filters match texts the frontend formats, such as German dates and category paths, which SQL would have to rebuild.
+
+**Reason:** the stored patterns keep their syntax, such as `\m` and `\M`, so nothing is migrated; on the local database on 2026-11-15 the translation matched exactly what `~*` matches for all 63 stored patterns over about 3,000 cash transactions, and for 621 synthetic cases of umlauts at word boundaries, case folding, line breaks, anchors and class escapes, and 900 of braces and brackets, valid and invalid alike.
+
+**Rejected alternative:** filtering or previewing through a PostgreSQL procedure, a round trip per keystroke that rebuilds the frontend's shown texts in SQL.
+
+**Rejected alternative:** JavaScript's own dialect for the filters, in which the stored rules' `\m` and `\M` do not mean word boundaries, so a pattern would not move between a rule and a filter.
+
+**Rejected alternative:** an easier dialect of its own, such as glob wildcards, which is a language with its own parser, converters and documentation, and cannot say whole word, alternation or lookahead, which the stored rules use.
+
+**Rejected alternative:** JavaScript's dialect as what people write, converted to PostgreSQL's for matching, which needs every stored `\m` and `\M` migrated and a converter in the backend, and whose ASCII-only `\b` disagrees with PostgreSQL around umlauts.
+
+**Rejected alternative:** converters between an easier dialect and PostgreSQL's in both directions, which keep two forms of one pattern and lose information on the way back.
+
+**Rejected alternative:** moving rule matching itself into TypeScript, which loses the database's pattern check.
+
+**Consequence:** the translation must keep agreeing with PostgreSQL: it maps `\m`, `\M`, `\y`, `\Y`, `\A` and `\Z`, and `\w`, `\W`, `\s` and `\S` as the database's `en_US.utf8` locale reads them, where JavaScript's `\w` is ASCII-only and its `\s` takes in Unicode spaces; it escapes a `]` first in brackets, a `]` or `}` outside brackets and bounds, and a `{` before a non-digit, which PostgreSQL reads as themselves and JavaScript refuses or ends on, and refuses a bound above 255 as PostgreSQL does; it refuses `\b`, a backspace in PostgreSQL, with a hint to `\y`, and refuses POSIX bracket classes, which no stored pattern uses.
+
+**Consequence:** JavaScript-only syntax that passes the translation, such as `\p{L}`, works in a filter and the live count while PostgreSQL refuses it on save, and a pattern the translation refuses still reaches PostgreSQL on save, which decides whether it is stored.
+
+**Consequence:** the Rules editor shows how many transactions each rule matches while it is typed, counting the rule's conditions without the precedence between rules.
+
+## One lightweight pattern input colours and checks every pattern
+
+**Id:** 53830b93-925e-45da-ade2-b043059f8df5
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** issue #54; maintainer decisions of 2026-11-14 and 2026-11-15, after comparing a Prism input with a CodeMirror editor
+**See:** rules.md#rules-match-in-postgresql-and-the-frontend-reads-their-dialect-through-a-translation — 45904d9b-c90f-430b-bcfb-7ed7377067b5 — as of 2026-11-15
+
+The Transactions view's filters and the Rules editor's pattern fields share `PatternInput`: a plain input with transparent text over a layer that Prism colours, its `regex` grammar extended by PostgreSQL's word anchors.
+A pattern the translation refuses gets a wavy underline and its message in the input's tooltip, and in the Rules editor a pattern matching the empty string is marked too, as the database refuses it; the Rules list's chips show their patterns in the same colours.
+
+**Reason:** the maintainer wants writing patterns made easy, but not at all costs: a lightweight input with some validation and some colour was judged enough, and Prism with its grammar costs about 9 kB gzipped.
+
+**Reason:** a pattern looks the same in the list and in its editor, and anchors, groups and escapes stand out from literal text.
+
+**Rejected alternative:** a CodeMirror 6 editor with a grammar of its own, autocomplete in plain words, bracket matching and inline error marks, which added 112 kB gzipped to the 223 kB app and slowed opening the Transactions view from about 212 to about 400 ms with 3,430 rows.
+
+**Rejected alternative:** the message shown as red text under a rule in the Rules editor, or in the Transactions view's footer, beside the tooltip.
+
+**Rejected alternative:** monochrome rule chips, colour only where patterns are written.
+
+**Consequence:** pattern syntax joins the frontend's few places for colour, each colour reaching 4.5:1 contrast against every background it sits on, as `src/frontend/CLAUDE.md` requires.
+
+**Consequence:** reading a broken pattern's message takes a hover.
 
 ## One rules table for brands and categories
 

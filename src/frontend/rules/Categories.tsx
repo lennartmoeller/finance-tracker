@@ -59,6 +59,7 @@ function CategoryPanel({
   const parent = categories.get(category?.parentId ?? null);
   return (
     <OwnerForm
+      transactions={data.transactions}
       title={category?.name ?? "New category"}
       subtitle={parent ? categoryPath(categories, parent) : "Category"}
       fields={[

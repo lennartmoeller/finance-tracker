@@ -7,9 +7,12 @@ import {
   Plus,
 } from "lucide-react";
 import type { Account } from "@finance-tracker/shared/contract";
+import { syncedBy } from "@finance-tracker/shared/bank";
 import { decimalSum } from "@finance-tracker/shared/decimal";
+import { freshness, lastSyncText } from "@finance-tracker/shared/last-sync";
 import { AccountName } from "../AccountName.tsx";
 import type { Change, Data, Loading, Scope } from "../App.tsx";
+import { banks } from "../banks.ts";
 import { DepotSummary } from "../DepotSummary.tsx";
 import { Donut, type Slice } from "../Donut.tsx";
 import {
@@ -230,7 +233,7 @@ function AccountList({
       label: "Transactions",
       icon: <ArrowRightLeft />,
       run: () => {
-        onOpen({ type: account.type, accountId: account.id });
+        onOpen({ type: account.type, account });
       },
     },
     {
@@ -357,9 +360,15 @@ function AccountList({
                       {account.closed && (
                         <span className="closed-tag">Closed</span>
                       )}
+                      {syncedBy(banks, account) && (
+                        <span
+                          className={`dot ${freshness(account.lastSyncedAt)}`}
+                          title={lastSyncText(account.lastSyncedAt)}
+                        />
+                      )}
                     </AccountName>
                   </td>
-                  <td className="num">{value ? formatMoney(value) : none}</td>
+                  <td className="num">{value && formatMoney(value)}</td>
                   <td>
                     <div className="row-actions">
                       {actionsOf(account).map(({ label, icon, run }) => (
