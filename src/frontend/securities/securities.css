@@ -5,7 +5,3 @@
 tbody tr.hovered td {
   background: var(--hover);
 }
-
-.donut.selectable .recharts-pie-sector {
-  cursor: pointer;
-}

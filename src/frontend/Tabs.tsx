@@ -1,25 +1,16 @@
-export function Tabs<Key extends string>({
+export function Tabs({
   tabs,
   value,
-  onChange,
 }: {
-  tabs: [key: Key, label: string][];
-  value: Key;
-  onChange: (key: Key) => void;
+  tabs: [href: string, label: string][];
+  value: string;
 }) {
   return (
     <div className="tabs" role="tablist">
-      {tabs.map(([key, label]) => (
-        <button
-          key={key}
-          role="tab"
-          aria-selected={key === value}
-          onClick={() => {
-            onChange(key);
-          }}
-        >
+      {tabs.map(([href, label]) => (
+        <a key={href} role="tab" aria-selected={href === value} href={href}>
           {label}
-        </button>
+        </a>
       ))}
     </div>
   );

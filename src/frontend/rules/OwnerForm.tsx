@@ -8,7 +8,9 @@ import type {
 } from "@finance-tracker/shared/contract";
 import { EditPanel, type Removal } from "../EditPanel.tsx";
 import { formatCount } from "../format.ts";
+import { exactly } from "../pattern.ts";
 import { PatternInput } from "../PatternInput.tsx";
+import { href } from "../route.ts";
 import { ruleMatcher } from "../rule-matcher.ts";
 import { byName } from "./RuleList.tsx";
 
@@ -42,20 +44,45 @@ const inputOf = (draft: Draft): RuleInput => ({
   descriptionPattern: draft.descriptionPattern || null,
 });
 
-const matchesOf = (draft: Draft, transactions: Transaction[]) => {
+function Matches({
+  draft,
+  transactions,
+  brands,
+}: {
+  draft: Draft;
+  transactions: Transaction[];
+  brands: Brand[] | undefined;
+}) {
   const rule = inputOf(draft);
-  if (Object.values(rule).every((condition) => condition === null)) return;
+  const blank = "\u00a0";
+  if (Object.values(rule).every((condition) => condition === null))
+    return blank;
   let holds;
   try {
     holds = ruleMatcher(rule);
   } catch {
-    return;
+    return blank;
   }
   const count = transactions.filter(
     ({ cash, brandId }) => cash && holds(cash, brandId),
   ).length;
-  return `Matches ${formatCount(count)} ${count === 1 ? "transaction" : "transactions"}`;
-};
+  const brand = brands?.find(({ id }) => id === rule.requiredBrandId);
+  const filters = {
+    ...(brand && { brand: exactly(brand.name) }),
+    ...(rule.counterpartyPattern !== null && {
+      counterparty: rule.counterpartyPattern,
+    }),
+    ...(rule.descriptionPattern !== null && {
+      description: rule.descriptionPattern,
+    }),
+  };
+  return (
+    <a href={href({ view: "transactions", tab: "cash", filters, sort: null })}>
+      Matches {formatCount(count)}{" "}
+      {count === 1 ? "transaction" : "transactions"}
+    </a>
+  );
+}
 
 function Control({
   id,
@@ -241,7 +268,11 @@ export function OwnerForm<Name extends string>({
                 }}
               />
               <span className="rule-matches">
-                {matchesOf(rule, transactions) ?? "\u00a0"}
+                <Matches
+                  draft={rule}
+                  transactions={transactions}
+                  brands={brands}
+                />
               </span>
               <button
                 type="button"

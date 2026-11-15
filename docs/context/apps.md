@@ -73,6 +73,7 @@ The frontend draws its charts with Recharts, coloured by the colour tokens in it
 **Evidence:** confirmed
 **Source:** issue #54; maintainer decisions of 2026-11-14 and 2026-11-15 in the experiment, planning and review behind it
 **See:** rules.md#rules-match-in-postgresql-and-the-frontend-reads-their-dialect-through-a-translation — 45904d9b-c90f-430b-bcfb-7ed7377067b5 — as of 2026-11-15
+**See:** apps.md#every-screen-has-an-address-and-every-move-to-another-screen-is-a-link — 80bdd506-5ada-436c-9c9b-ad23c2d7fbe9 — as of 2026-11-15
 
 A row of filters under the column titles narrows the Transactions view: each takes a pattern in the rules' dialect, unanchored and case-insensitive, over its column's text, and a row shows when every filled filter finds its text.
 A column's text is what it shows, except that the category matches its full path, counterparty and description their stored text with line breaks, the account its bank's name and its own, such as `ING Girokonto`, and amount and quantity their value in German without grouping or currency, such as `-1234,56`, a quantity without trailing zeros in its fraction.
@@ -96,7 +97,7 @@ Filters and sort reset when the tab between cash and depot changes or the user l
 
 **Rejected alternative:** a table library such as TanStack Table, which the previous app used, for what a few array operations over each column's text do.
 
-**Consequence:** the tab stays when the user comes back from another view, while the filters start empty.
+**Consequence:** coming back from another view through the sidebar opens the cash tab with empty filters, while Back returns to the tab and filters left.
 
 **Consequence:** an account's bank shows only as its logo, while its filter text names it.
 
@@ -140,3 +141,63 @@ The table stays a `<table>`, rows keep fixed heights, and no cell wraps.
 **Rejected alternative:** rows of `<div>`s as the previous app had, which assumed sticky headers and virtualization would not work in a table; both do beside spacer rows.
 
 **Consequence:** the browser's own find reaches only the rendered rows, which the filter row replaces.
+
+## Every screen has an address, and every move to another screen is a link
+
+**Id:** 80bdd506-5ada-436c-9c9b-ad23c2d7fbe9
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer decisions of 2026-11-15 in the planning behind the change
+**See:** apps.md#the-transactions-view-filters-with-one-pattern-per-column — c847f540-ace1-47be-bc6c-e6462c714f55 — as of 2026-11-15
+
+The frontend's address holds where the user is: the path names the view and its tab or its selected account or security, such as `/transactions/cash`, `/accounts/3` by the account's id, `/securities/IE00B4L5Y983` by ISIN and `/rules/categories`, and on the Transactions view the query holds one filter per column, named by the column in lower case, and the sort, such as `?account=%5EING+Girokonto%24&sort=-amount`.
+Everything that moves to another screen is an `<a href>`: the sidebar, the tabs, the column titles' sort, selecting and deselecting an account or a security in its table, crumb and donut, and every link to an account's, brand's, category's or rule's transactions.
+Every link adds a history entry, while typing in a filter replaces the current one; the sidebar opens each view's first tab, and the open transaction and the edit panels stay out of the address.
+
+**Reason:** the maintainer opens screens in new tabs with Cmd-click and steps back with the browser's controls, and a reload or a bookmark shows the same screen again.
+
+**Reason:** the path holds what the user looks at and the query what narrows it, so a selection and a filter never share a parameter name, and an account's id keeps a link working after a rename.
+
+**Reason:** an entry per keystroke would make Back step through letters, and a sidebar link opens the same screen every time.
+
+**Rejected alternative:** everything in the query, which spares nginx a fallback but makes `account` a selection in one view and a filter in another; everything after a `#`; accounts by bank and name, which a rename breaks.
+
+**Rejected alternative:** one history entry per filter edit, so that Back undoes a filter, at the cost of the input tracking whether it already added one.
+
+**Rejected alternative:** the open transaction and the edit panels in the address, whose unsaved drafts no link brings back.
+
+**Rejected alternative:** sidebar links that follow the last tab used, as the Transactions tab did before, which keeps tab state outside the address.
+
+**Consequence:** nginx answers every path outside `/rpc/` and `/logos/` that names no file with `index.html`.
+
+**Consequence:** Back does not undo a filter, and coming back through the sidebar opens the cash tab without filters.
+
+## The browser's Navigation API follows the links
+
+**Id:** c075c691-545d-42a3-9ef0-154609bd942b
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer decision of 2026-11-15; probes in Firefox 160 in the planning behind it
+**Revisit when:** the frontend has to run in a browser without the Navigation API
+**See:** apps.md#every-screen-has-an-address-and-every-move-to-another-screen-is-a-link — 80bdd506-5ada-436c-9c9b-ad23c2d7fbe9 — as of 2026-11-15
+
+`main.tsx` intercepts every navigation to another document, which a link click is, through the Navigation API's `navigate` event, and `useRoute` reads the address on every `currententrychange`; `route.ts` is the one module that parses and builds addresses.
+Every link stays a plain `<a href>`, so the browser itself opens a Cmd-click, a middle click or the context menu's new tab in a new tab.
+
+**Reason:** about fifteen lines without a dependency, on an API stable in Firefox 147, Chrome 102 and Safari 26.2 and later.
+
+**Reason:** `history.replaceState` from a filter and Back between the app's own entries are same-document navigations the browser carries out itself, while intercepting them resets focus, which in a probe left a filter after its first keystroke.
+
+**Rejected alternative:** wouter, an established router of 2 to 6 kB, which needs its `<Link>` for every link and one more dependency.
+
+**Rejected alternative:** an own History API `<Link>` with modifier-key checks, `pushState` and a `popstate` listener, which rebuilds what the browser now does.
+
+**Rejected alternative:** React Router or TanStack Router, 10 to 40 kB of route configuration and loaders the frontend has no use for.
+
+**Rejected alternative:** intercepting every navigation, which reset focus out of a filter on each `replaceState`.
+
+**Consequence:** the frontend does not start in a browser without the Navigation API.
+
+**Consequence:** Back restores no list's scroll position, since the views scroll inside their own boxes and the API restores only the document's.

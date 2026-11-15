@@ -1,17 +1,12 @@
 import { useMemo, useState } from "react";
-import {
-  ArrowRightLeft,
-  ChevronRight,
-  Landmark,
-  Pencil,
-  Plus,
-} from "lucide-react";
+import { ChevronRight, Landmark, Pencil, Plus } from "lucide-react";
 import type { Account } from "@finance-tracker/shared/contract";
 import { syncedBy } from "@finance-tracker/shared/bank";
 import { decimalSum } from "@finance-tracker/shared/decimal";
 import { freshness, lastSyncText } from "@finance-tracker/shared/last-sync";
 import { AccountName } from "../AccountName.tsx";
-import type { Change, Data, Loading, Scope } from "../App.tsx";
+import { accountText } from "../account-text.ts";
+import type { Change, Data, Loading } from "../App.tsx";
 import { banks } from "../banks.ts";
 import { DepotSummary } from "../DepotSummary.tsx";
 import { Donut, type Slice } from "../Donut.tsx";
@@ -32,6 +27,9 @@ import { formatMoney } from "../format.ts";
 import { Intro } from "../Intro.tsx";
 import { Loaded, SkeletonRows } from "../Loaded.tsx";
 import { none } from "../none.tsx";
+import { exactly } from "../pattern.ts";
+import { href } from "../route.ts";
+import { TransactionsLink } from "../TransactionsLink.tsx";
 import {
   balanceSeries,
   depotSeries,
@@ -46,9 +44,7 @@ type Editing = { id?: number } | undefined;
 type ListProps = {
   data: Data;
   selectedId: number | null;
-  onSelect: (id: number | null) => void;
   onEdit: (id: number) => void;
-  onOpen: (scope: Scope) => void;
 };
 
 const worth = (account: AccountWithFigures) =>
@@ -151,14 +147,13 @@ const skeleton = (
 
 export function Accounts({
   loading,
+  accountId,
   onChange,
-  onOpen,
 }: {
   loading: Loading;
+  accountId: number | null;
   onChange: Change;
-  onOpen: (scope: Scope) => void;
 }) {
-  const [selectedId, setSelectedId] = useState<number | null>(null);
   const [editing, setEditing] = useState<Editing>();
   const edited = loading.data?.accounts.find(({ id }) => id === editing?.id);
 
@@ -182,12 +177,10 @@ export function Accounts({
           {(data) => (
             <AccountList
               data={data}
-              selectedId={selectedId}
-              onSelect={setSelectedId}
+              selectedId={accountId}
               onEdit={(id) => {
                 setEditing({ id });
               }}
-              onOpen={onOpen}
             />
           )}
         </Loaded>
@@ -207,13 +200,39 @@ export function Accounts({
   );
 }
 
-function AccountList({
-  data,
-  selectedId,
-  onSelect,
+function AccountActions({
+  account,
+  labelled,
   onEdit,
-  onOpen,
-}: ListProps) {
+}: {
+  account: Account;
+  labelled: boolean;
+  onEdit: (id: number) => void;
+}) {
+  const className = labelled ? undefined : "icon-button";
+  return (
+    <>
+      <TransactionsLink
+        tab={account.type}
+        filters={{ account: exactly(accountText(account)) }}
+        className={className}
+        labelled={labelled}
+      />
+      <button
+        className={className}
+        title={labelled ? undefined : "Edit"}
+        onClick={() => {
+          onEdit(account.id);
+        }}
+      >
+        <Pencil />
+        {labelled && "Edit"}
+      </button>
+    </>
+  );
+}
+
+function AccountList({ data, selectedId, onEdit }: ListProps) {
   const accounts = useMemo(
     () =>
       withFigures(data.accounts, data.transactions, data.prices).toSorted(
@@ -228,22 +247,6 @@ function AccountList({
   );
   const unpriced = unpricedAccounts(accounts);
   const slices = moneySlices(accounts);
-  const actionsOf = (account: AccountWithFigures) => [
-    {
-      label: "Transactions",
-      icon: <ArrowRightLeft />,
-      run: () => {
-        onOpen({ type: account.type, account });
-      },
-    },
-    {
-      label: "Edit",
-      icon: <Pencil />,
-      run: () => {
-        onEdit(account.id);
-      },
-    },
-  ];
 
   if (!accounts.length)
     return (
@@ -258,14 +261,12 @@ function AccountList({
     <div className="scroll">
       <section className="figures">
         <nav className="crumbs" aria-label="Selection">
-          <button
+          <a
+            href={href({ view: "accounts", accountId: null })}
             aria-current={selected ? undefined : "page"}
-            onClick={() => {
-              onSelect(null);
-            }}
           >
             All accounts
-          </button>
+          </a>
           {selected && (
             <>
               <ChevronRight />
@@ -273,12 +274,7 @@ function AccountList({
                 <AccountName account={selected} />
               </span>
               <span className="crumb-actions">
-                {actionsOf(selected).map(({ label, icon, run }) => (
-                  <button key={label} onClick={run}>
-                    {icon}
-                    {label}
-                  </button>
-                ))}
+                <AccountActions account={selected} labelled onEdit={onEdit} />
               </span>
             </>
           )}
@@ -351,39 +347,36 @@ function AccountList({
                       .filter(Boolean)
                       .join(" ") || undefined
                   }
-                  onClick={() => {
-                    onSelect(account === selected ? null : account.id);
-                  }}
                 >
                   <td>
-                    <AccountName account={account}>
-                      {account.closed && (
-                        <span className="closed-tag">Closed</span>
-                      )}
-                      {syncedBy(banks, account) && (
-                        <span
-                          className={`dot ${freshness(account.lastSyncedAt)}`}
-                          title={lastSyncText(account.lastSyncedAt)}
-                        />
-                      )}
-                    </AccountName>
+                    <a
+                      className="stretched"
+                      href={href({
+                        view: "accounts",
+                        accountId: account === selected ? null : account.id,
+                      })}
+                    >
+                      <AccountName account={account}>
+                        {account.closed && (
+                          <span className="closed-tag">Closed</span>
+                        )}
+                        {syncedBy(banks, account) && (
+                          <span
+                            className={`dot ${freshness(account.lastSyncedAt)}`}
+                            title={lastSyncText(account.lastSyncedAt)}
+                          />
+                        )}
+                      </AccountName>
+                    </a>
                   </td>
                   <td className="num">{value && formatMoney(value)}</td>
                   <td>
                     <div className="row-actions">
-                      {actionsOf(account).map(({ label, icon, run }) => (
-                        <button
-                          key={label}
-                          className="icon-button"
-                          title={label}
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            run();
-                          }}
-                        >
-                          {icon}
-                        </button>
-                      ))}
+                      <AccountActions
+                        account={account}
+                        labelled={false}
+                        onEdit={onEdit}
+                      />
                     </div>
                   </td>
                 </tr>

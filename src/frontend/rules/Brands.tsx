@@ -2,6 +2,7 @@ import { Store } from "lucide-react";
 import type { Brand } from "@finance-tracker/shared/contract";
 import { Intro } from "../Intro.tsx";
 import { Logo } from "../Logo.tsx";
+import { exactly } from "../pattern.ts";
 import { OwnerForm } from "./OwnerForm.tsx";
 import { byName, type Kind, type OwnerPanelProps } from "./RuleList.tsx";
 
@@ -17,6 +18,7 @@ export const brandKind: Kind<Brand> = {
       </span>
     </span>
   ),
+  filters: (brand) => ({ brand: exactly(brand.name) }),
   counts: (data) => {
     const counts = new Map<number | null, number>();
     for (const { brandId } of data.transactions)

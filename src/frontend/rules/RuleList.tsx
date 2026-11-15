@@ -5,6 +5,7 @@ import { byId } from "../by-id.ts";
 import { formatCount } from "../format.ts";
 import { Logo } from "../Logo.tsx";
 import { PatternText } from "../PatternInput.tsx";
+import { TransactionsLink } from "../TransactionsLink.tsx";
 
 type Owner = { id: number; name: string; rules: Rule[] };
 
@@ -19,6 +20,7 @@ export type Kind<O extends Owner> = {
   noun: "brand" | "category";
   rows: (data: Data) => [owner: O, depth: number, folder: boolean][];
   name: (owner: O) => ReactNode;
+  filters: (owner: O, data: Data) => Record<string, string>;
   counts: (data: Data) => Map<number | null, number>;
   intro: ReactNode;
   OwnerPanel: (props: OwnerPanelProps<O>) => ReactNode;
@@ -96,17 +98,17 @@ export function RuleList<O extends Owner>({
       {rows.length ? (
         <div className="scroll">
           {rows.map(([owner, depth, folder]) => (
-            <button
-              key={owner.id}
-              className={folder ? "owner folder" : "owner"}
-              aria-pressed={owner === edited}
-              onClick={() => {
-                onEdit({ id: owner.id });
-              }}
-            >
-              <span className="owner-name" style={{ paddingLeft: depth * 20 }}>
+            <div key={owner.id} className={folder ? "owner folder" : "owner"}>
+              <button
+                className="owner-name stretched"
+                style={{ paddingLeft: depth * 20 }}
+                aria-pressed={owner === edited}
+                onClick={() => {
+                  onEdit({ id: owner.id });
+                }}
+              >
                 <span>{kind.name(owner)}</span>
-              </span>
+              </button>
               <span className="rule-chips">
                 {owner.rules.map((rule) => (
                   <RuleChip key={rule.id} rule={rule} brands={brands} />
@@ -115,7 +117,11 @@ export function RuleList<O extends Owner>({
               <span className="owner-count">
                 {formatCount(counts.get(owner.id) ?? 0)}
               </span>
-            </button>
+              <TransactionsLink
+                filters={kind.filters(owner, data)}
+                className="icon-button"
+              />
+            </div>
           ))}
         </div>
       ) : (

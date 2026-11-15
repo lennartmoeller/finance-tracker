@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { ArrowDown, ArrowUp, Inbox } from "lucide-react";
 import {
@@ -12,7 +12,8 @@ import {
 } from "@finance-tracker/shared/contract";
 import { decimalSum } from "@finance-tracker/shared/decimal";
 import { AccountName } from "../AccountName.tsx";
-import type { Data, Loading, Scope } from "../App.tsx";
+import { accountText } from "../account-text.ts";
+import type { Data, Loading } from "../App.tsx";
 import { byId } from "../by-id.ts";
 import { categoryPath } from "../category-path.ts";
 import {
@@ -29,8 +30,9 @@ import {
 import { Intro } from "../Intro.tsx";
 import { Loaded, SkeletonRows } from "../Loaded.tsx";
 import { Logo } from "../Logo.tsx";
-import { literal, pattern } from "../pattern.ts";
+import { pattern } from "../pattern.ts";
 import { PatternInput } from "../PatternInput.tsx";
+import { href, type Route, type Sort } from "../route.ts";
 import { Tabs } from "../Tabs.tsx";
 import { TransactionPanel, type Field } from "./TransactionPanel.tsx";
 import "./transactions.css";
@@ -102,8 +104,6 @@ const amountColumn: Column<Part> = {
   cell: ({ part }) => amountOf(part),
   order: ({ part }) => Number(part.amount ?? 0),
 };
-
-const accountText = ({ bank, name }: Account) => `${bank} ${name}`;
 
 const accountColumn: Column<Part> = {
   name: "Account",
@@ -190,34 +190,37 @@ const depotKind: Kind<DepotTransaction> = {
   ],
 };
 
+type TransactionsRoute = Extract<Route, { view: "transactions" }>;
+
+const tabHref = (tab: Account["type"]) =>
+  href({ view: "transactions", tab, filters: {}, sort: null });
+
 export function Transactions({
   loading,
-  scope,
-  onScope,
+  route,
 }: {
   loading: Loading;
-  scope: Scope;
-  onScope: (scope: Scope) => void;
+  route: TransactionsRoute;
 }) {
   return (
     <>
       <header className="page-head">
         <h1>Transactions</h1>
         <Tabs
-          tabs={accountType.options.map((type) => [type, capitalized(type)])}
-          value={scope.type}
-          onChange={(type) => {
-            onScope({ type });
-          }}
+          tabs={accountType.options.map((type) => [
+            tabHref(type),
+            capitalized(type),
+          ])}
+          value={tabHref(route.tab)}
         />
       </header>
       <div className="content">
         <Loaded loading={loading} skeleton={<SkeletonRows count={14} />}>
           {(data) =>
-            scope.type === "cash" ? (
-              <TransactionList kind={cashKind} data={data} scope={scope} />
+            route.tab === "cash" ? (
+              <TransactionList kind={cashKind} data={data} route={route} />
             ) : (
-              <TransactionList kind={depotKind} data={data} scope={scope} />
+              <TransactionList kind={depotKind} data={data} route={route} />
             )
           }
         </Loaded>
@@ -226,9 +229,7 @@ export function Transactions({
   );
 }
 
-type Filter = { text: string; regex?: RegExp };
-
-type Sort = { name: string; descending: boolean } | null;
+const paramOf = (name: string) => name.toLowerCase();
 
 type Item<P extends Part> = { month: string } | { row: Row<P> };
 
@@ -239,21 +240,21 @@ const rowHeight = 32;
 function TransactionList<P extends Part>({
   kind,
   data,
-  scope,
+  route,
 }: {
   kind: Kind<P>;
   data: Data;
-  scope: Scope;
+  route: TransactionsRoute;
 }) {
   const { columns } = kind;
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [filters, setFilters] = useState<Record<string, Filter>>(() => {
-    if (!scope.account) return {};
-    const text = `^${literal(accountText(scope.account))}$`;
-    return { [accountColumn.name]: { text, regex: pattern(text) } };
-  });
-  const [sort, setSort] = useState<Sort>(null);
+  const lastValidRegexes = useRef(new Map<string, RegExp>());
   const scrollBox = useRef<HTMLDivElement>(null);
+  const address = href(route);
+
+  useEffect(() => {
+    scrollBox.current?.scrollTo({ top: 0 });
+  }, [address]);
 
   const searched = useMemo(() => {
     const accounts = byId(data.accounts);
@@ -275,14 +276,32 @@ function TransactionList<P extends Part>({
     });
   }, [data, columns, kind]);
 
+  const filterOf = (name: string) => route.filters[paramOf(name)] ?? "";
+  const regexOf = (name: string) => {
+    try {
+      const regex = pattern(filterOf(name));
+      lastValidRegexes.current.set(name, regex);
+      return regex;
+    } catch {
+      return lastValidRegexes.current.get(name);
+    }
+  };
   const active = columns.flatMap(({ name }, index) => {
-    const regex = filters[name]?.regex;
-    return regex ? [[index, regex] as const] : [];
+    const regex = regexOf(name);
+    return filterOf(name) && regex ? [[index, regex] as const] : [];
   });
+  const sortOf = (name: string) =>
+    route.sort?.column === paramOf(name) ? route.sort : null;
+  const nextSort = (name: string): Sort | null =>
+    !sortOf(name)
+      ? { column: paramOf(name), descending: false }
+      : sortOf(name)?.descending
+        ? null
+        : { column: paramOf(name), descending: true };
   const matching = searched.filter(({ texts }) =>
     active.every(([index, regex]) => regex.test(texts[index] ?? "")),
   );
-  const sortColumn = columns.find(({ name }) => name === sort?.name);
+  const sortColumn = columns.find(({ name }) => sortOf(name));
   const rows = (
     sortColumn
       ? matching.toSorted((a, b) => {
@@ -295,7 +314,7 @@ function TransactionList<P extends Part>({
             typeof x === "number" && typeof y === "number"
               ? x - y
               : String(x).localeCompare(String(y), "de-DE");
-          return sort?.descending ? -compared : compared;
+          return route.sort?.descending ? -compared : compared;
         })
       : matching
   ).map(({ row }) => row);
@@ -372,19 +391,12 @@ function TransactionList<P extends Part>({
     );
   };
 
-  const toTop = () => {
-    scrollBox.current?.scrollTo({ top: 0 });
-  };
-
   const filter = (name: string, text: string) => {
-    let regex: RegExp | undefined;
-    try {
-      regex = text ? pattern(text) : undefined;
-    } catch {
-      regex = filters[name]?.regex;
-    }
-    setFilters({ ...filters, [name]: { text, regex } });
-    toTop();
+    history.replaceState(
+      null,
+      "",
+      href({ ...route, filters: { ...route.filters, [paramOf(name)]: text } }),
+    );
   };
 
   return (
@@ -404,30 +416,25 @@ function TransactionList<P extends Part>({
                     key={name}
                     className={className}
                     aria-sort={
-                      sort?.name === name
-                        ? sort.descending
+                      sortOf(name)
+                        ? sortOf(name)?.descending
                           ? "descending"
                           : "ascending"
                         : undefined
                     }
                   >
-                    <button
+                    <a
                       className="sort"
-                      onClick={() => {
-                        toTop();
-                        setSort(
-                          sort?.name !== name
-                            ? { name, descending: false }
-                            : sort.descending
-                              ? null
-                              : { name, descending: true },
-                        );
-                      }}
+                      href={href({ ...route, sort: nextSort(name) })}
                     >
                       {name}
-                      {sort?.name === name &&
-                        (sort.descending ? <ArrowDown /> : <ArrowUp />)}
-                    </button>
+                      {sortOf(name) &&
+                        (sortOf(name)?.descending ? (
+                          <ArrowDown />
+                        ) : (
+                          <ArrowUp />
+                        ))}
+                    </a>
                   </th>
                 ))}
               </tr>
@@ -436,7 +443,7 @@ function TransactionList<P extends Part>({
                   <th key={name} className={className}>
                     <PatternInput
                       label={`Filter ${name}`}
-                      value={filters[name]?.text ?? ""}
+                      value={filterOf(name)}
                       onChange={(text) => {
                         filter(name, text);
                       }}

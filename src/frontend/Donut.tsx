@@ -40,13 +40,13 @@ export function slicesOf(parts: { key: string; value: string }[]): Slice[] {
 export function Donut({
   slices,
   selectedKey,
-  onSelect,
+  hrefOf,
   onHover,
   tooltip,
 }: {
   slices: Slice[];
   selectedKey?: string | null;
-  onSelect?: (key: string) => void;
+  hrefOf?: (key: string) => string;
   onHover?: (keys: string[]) => void;
   tooltip?: (slice: Slice) => ReactNode;
 }) {
@@ -82,17 +82,15 @@ export function Donut({
       onMouseLeave={() => {
         onHover?.([]);
       }}
-      onClick={(_, index) => {
-        const [key, ...others] = data[index]?.keys ?? [];
-        if (key && !others.length) onSelect?.(key);
-      }}
       shape={(props) => {
         const slice = data[props.index];
         const leaf = !slice?.parts;
         const edge = (props.outerRadius / outer) * radii.outer;
         const share = (slice?.value ?? 0) / total;
         const mid = (-(props.midAngle ?? 0) * Math.PI) / 180;
-        return (
+        const [key, ...others] = slice?.keys ?? [];
+        const link = key && !others.length ? hrefOf?.(key) : undefined;
+        const sector = (
           <g
             opacity={
               selectedKey && !slice?.keys.includes(selectedKey) ? 0.25 : 1
@@ -112,6 +110,7 @@ export function Donut({
             )}
           </g>
         );
+        return link ? <a href={link}>{sector}</a> : sector;
       }}
     />
   );

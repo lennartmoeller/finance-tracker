@@ -4,7 +4,7 @@
   margin-left: auto;
 }
 
-.crumb-actions button {
+.crumb-actions > * {
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -19,6 +19,8 @@
 }
 
 .row-actions {
+  position: relative;
+  z-index: 1;
   display: flex;
   justify-content: flex-end;
   gap: 2px;
@@ -33,6 +35,8 @@ tr.closed .bank {
 }
 
 .account-table .dot {
+  position: relative;
+  z-index: 1;
   display: inline-block;
   margin-left: 8px;
   vertical-align: 1px;

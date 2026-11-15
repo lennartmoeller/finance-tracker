@@ -59,6 +59,17 @@ button {
   color: inherit;
 }
 
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.stretched::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
 #root {
   display: flex;
   flex-direction: column;
@@ -90,27 +101,23 @@ button {
   padding: 0 8px;
 }
 
-.nav button {
+.nav a {
   display: flex;
   align-items: center;
   gap: 10px;
   height: 32px;
   padding: 0 10px;
-  border: 0;
   border-radius: 8px;
-  background: none;
   color: var(--muted);
   font-weight: 500;
-  text-align: left;
-  cursor: pointer;
 }
 
-.nav button:hover {
+.nav a:hover {
   background: var(--hover);
   color: var(--text);
 }
 
-.nav button[aria-current="page"] {
+.nav a[aria-current="page"] {
   background: var(--selected);
   color: var(--text);
 }
@@ -160,22 +167,19 @@ button {
   gap: 20px;
 }
 
-.tabs button {
+.tabs a {
   margin-bottom: -1px;
   padding: 6px 0 9px;
-  border: 0;
   border-bottom: 2px solid transparent;
-  background: none;
   color: var(--muted);
   font-weight: 500;
-  cursor: pointer;
 }
 
-.tabs button:hover {
+.tabs a:hover {
   color: var(--text);
 }
 
-.tabs button[aria-selected="true"] {
+.tabs a[aria-selected="true"] {
   border-bottom-color: var(--ink);
   color: var(--text);
 }
@@ -408,6 +412,7 @@ td.num .percent {
 }
 
 tbody tr {
+  position: relative;
   cursor: pointer;
 }
 
@@ -654,11 +659,10 @@ tbody tr.selected td {
   padding: 0;
   border: 0;
   background: none;
-  color: inherit;
   cursor: pointer;
 }
 
-.crumbs button:hover,
+.crumbs :is(a, button):hover,
 .crumbs [aria-current="page"] {
   color: var(--text);
 }
