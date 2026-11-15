@@ -1,15 +1,11 @@
 .owner {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
-  width: 100%;
   min-height: 37px;
   padding: 4px 20px;
-  border: 0;
   border-bottom: 1px solid var(--border);
-  background: none;
-  text-align: left;
-  cursor: pointer;
 }
 
 .owner-name {
@@ -18,8 +14,12 @@
   align-items: center;
   gap: 6px;
   width: 230px;
+  padding: 0;
+  border: 0;
+  background: none;
   font-weight: 500;
   white-space: nowrap;
+  cursor: pointer;
 }
 
 .owner-name > span {
@@ -36,7 +36,7 @@
   background: var(--hover);
 }
 
-.owner[aria-pressed="true"] {
+.owner:has([aria-pressed="true"]) {
   background: var(--selected);
 }
 
@@ -99,6 +99,16 @@
   text-align: right;
 }
 
+.owner .icon-button {
+  position: relative;
+  z-index: 1;
+}
+
+.owner .icon-button:hover {
+  background: var(--selected);
+  color: var(--text);
+}
+
 .rules-head {
   display: flex;
   align-items: center;
@@ -139,4 +149,9 @@
   grid-column: 2;
   color: var(--muted);
   font-size: 12px;
+}
+
+.rule-matches a:hover {
+  color: var(--text);
+  text-decoration: underline;
 }

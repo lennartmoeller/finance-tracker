@@ -19,7 +19,7 @@ flowchart LR
     extension["Browser extension in Firefox"]
   end
   migrate -- "pgschema brings the database to schema.sql,<br/>planning in the database pgschema_plan" --> postgres
-  page --> frontend
+  page -- "the build's files,<br/>index.html for every other path" --> frontend
   extension -- "/rpc" --> frontend
   frontend -- "/rpc and /logos,<br/>adds API_TOKEN from .env" --> backend
   backend --> postgres
@@ -45,7 +45,7 @@ flowchart LR
     postgres[("StatefulSet postgres,<br/>ClusterIP Service,<br/>1 GiB volume from a claim template")]
     cron["CronJob price-fill,<br/>daily at 01:00 Europe/Berlin"]
   end
-  page -- "node address and NodePort" --> frontend
+  page -- "node address and NodePort,<br/>the build's files,<br/>index.html for every other path" --> frontend
   extension -- "/rpc at the node address and NodePort" --> frontend
   frontend -- "/rpc and /logos, adds API_TOKEN" --> backend
   migrate -- "pgschema brings the database to schema.sql,<br/>before the backend starts" --> postgres

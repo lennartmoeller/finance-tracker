@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { literal, pattern } from "./pattern.ts";
+import { exactly, pattern } from "./pattern.ts";
 
 test("a pattern reads as PostgreSQL's ~* reads it, umlauts and line breaks included", () => {
   expect(pattern(String.raw`\mbäck`).test("Die Bäckerei")).toBe(true);
@@ -17,8 +17,8 @@ test("a pattern reads as PostgreSQL's ~* reads it, umlauts and line breaks inclu
   expect(() => pattern("a{256}")).toThrow("255");
 });
 
-test("a literal matches its text alone", () => {
-  const exact = pattern(`^${literal("ING Depot (alt) 1.0+")}$`);
+test("an exact pattern matches its text alone", () => {
+  const exact = pattern(exactly("ING Depot (alt) 1.0+"));
   expect(exact.test("ING Depot (alt) 1.0+")).toBe(true);
   expect(exact.test("ING Depot (alt) 1x0+")).toBe(false);
 });

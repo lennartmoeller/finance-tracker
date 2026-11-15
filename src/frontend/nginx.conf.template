@@ -6,6 +6,10 @@ server {
     client_max_body_size 0;
     proxy_read_timeout 10m;
 
+    location / {
+        try_files $uri /index.html;
+    }
+
     location ~ ^/(rpc|logos)/ {
         proxy_pass http://backend:3000;
         proxy_set_header Authorization "Bearer ${API_TOKEN}";

@@ -196,3 +196,29 @@ Deleting a brand that a category's rule requires is refused with the names of th
 **Reason:** brands are now changed and deleted in the frontend, so their logos follow them instead of piling up.
 
 **Rejected alternative:** leaving a deleted brand's or old domain's logo behind, which issue #22 accepted while brands changed only by hand.
+
+## Each brand, category and rule links to the transactions it matches
+
+**Id:** 86e158bc-d6f2-4844-ac9f-5234b8d85379
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer decisions of 2026-11-15, after comparing three layouts in a mockup and trying the first implementation
+**See:** rules.md#the-rule-with-the-most-conditions-wins-then-the-oldest — daa68fab-5937-462f-9c6f-8ac0b1e2b064 — as of 2026-11-15
+**See:** apps.md#every-screen-has-an-address-and-every-move-to-another-screen-is-a-link — 80bdd506-5ada-436c-9c9b-ad23c2d7fbe9 — as of 2026-11-15
+
+Each row of the Rules view ends with an icon link to its brand's or category's cash transactions, and in the edit panel each rule's "Matches N transactions" line links to the transactions it counts, both by filling the Transactions view's filters.
+A brand's link filters its name exactly, a category's its path exactly and a folder's its path with every path below it, so each lists as many transactions as its row counts; a rule's link fills the counterparty and description filters with its patterns as currently typed and the brand filter with its required brand.
+A rule's link lists every transaction its conditions match, also those a rule with more conditions takes, as its count does.
+
+**Reason:** a rule's list then shows how broad the rule is, with the count beside it, and follows an edit before it is saved.
+
+**Reason:** the row's icon link stays in view, as the Accounts view's Transactions action, read as one pattern across views.
+
+**Rejected alternative:** a small icon link at the end of each rule chip in the table, which the maintainer moved into the edit panel after trying it.
+
+**Rejected alternative:** a rule's link limited to the transactions its own brand or category was assigned, whose count can fall below the rule form's.
+
+**Rejected alternative:** the count and the whole chip as links in the table, which add nothing on screen but click differently from the row without showing it; the icon links shown only on the hovered row.
+
+**Consequence:** a plain click on a rule's link leaves the Rules view and with it an unsaved edit in the panel, which a Cmd-click keeps.
