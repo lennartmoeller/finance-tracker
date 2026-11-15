@@ -14,6 +14,7 @@ erDiagram
   categories |o--o{ categories : "parent of"
   brands |o--o{ rules : "required by"
   rules |o..o{ cash_transactions : "assign a brand and a category by matching"
+  transactions |o..o| transactions : "transfers with, by matching amounts and dates"
 
   accounts {
     integer id PK

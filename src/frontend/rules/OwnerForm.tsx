@@ -64,7 +64,8 @@ function Matches({
     return blank;
   }
   const count = transactions.filter(
-    ({ cash, brandId }) => cash && holds(cash, brandId),
+    ({ cash, brandId, transferPartnerId }) =>
+      cash && transferPartnerId === null && holds(cash, brandId),
   ).length;
   const brand = brands?.find(({ id }) => id === rule.requiredBrandId);
   const filters = {

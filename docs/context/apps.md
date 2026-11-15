@@ -201,3 +201,32 @@ Every link stays a plain `<a href>`, so the browser itself opens a Cmd-click, a 
 **Consequence:** the frontend does not start in a browser without the Navigation API.
 
 **Consequence:** Back restores no list's scroll position, since the views scroll inside their own boxes and the API restores only the document's.
+
+## A transfer shows as one row when both its sides are listed
+
+**Id:** e90e05d7-b504-4cfc-9973-d19e2b6ddda1
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer decisions of 2026-11-15 in the planning dialogue, after an HTML mockup of three layouts, in four mock-mode rounds and in a look at the real data
+**See:** transactions.md#transfers-between-accounts-are-recognised-by-equal-opposite-amounts-on-every-read — ef87172b-df77-4e67-8df8-5229ab435f42 — as of 2026-11-15
+**See:** apps.md#the-transactions-footer-counts-and-sums-the-matching-rows — 097ea4ad-edf7-4387-90be-b7f7576e96ee — as of 2026-11-15
+
+In the Transactions view, a transfer whose two sides both match the filters shows as one row at the sending side's date, with its amount unsigned in grey; a side whose partner is filtered out or sits in the other tab, as a purchase's cash and depot sides always do, shows alone with its signed amount.
+Every transfer side's Account cell reads "From → To", such as `Spending → ETFs` in both tabs, its Brand, Category, Counterparty and Description stay empty, as their filter texts do, and its panel shows the transfer with a From and a To side, each with its own texts.
+
+**Reason:** the maintainer wants a transfer to read as one thing from the paying to the receiving account, while the footer still sums the matching sides, so a merged row adds 0 and the shown amounts always add up to the footer.
+
+**Reason:** a transfer's counterparty is the owner or the other bank and its description mostly bank boilerplate, both repeating "From → To".
+
+**Rejected alternative:** two linked rows that name each other and highlight their partner on hover, the agent's recommendation, cheaper but still showing a transfer twice.
+
+**Rejected alternative:** a Transfers tab with the transfer sides removed from Cash and Depot, after which an account's rows no longer add up to its balance change; one list for cash and depots, so that a purchase merges too, which mixes their columns and sums cash with invested money.
+
+**Rejected alternative:** a lone side unsigned like a merged row, either with the footer unchanged, so the shown amounts no longer add up to it, or left out of the footer, which then no longer equals an account's balance change.
+
+**Rejected alternative:** a lone side naming only the other account, and transfers marked "⇄ Transfer" in the Brand column, both tried in the mock rounds; the counterparty and description kept as delivered, or the description alone, which sometimes names a savings plan's security or the owner's own reference.
+
+**Consequence:** a counterparty or description filter no longer finds a transfer, such as `Vanguard` for savings plans in the Cash tab, which the Depot tab's Security column still finds.
+
+**Consequence:** the footer counts a merged transfer once, against all rows of the tab with every transfer merged.

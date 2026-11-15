@@ -9,7 +9,7 @@ The backend serves oRPC procedures under `/rpc`, which [`contract.ts`](../../src
 | `account.update` | Browser extension, frontend | Changes an account's name, start balance and closed mark |
 | `account.remove` | Browser extension, frontend | Removes an account with its transactions |
 | `sync` | Browser extension | Ingests an account's raw transactions, as [Ingestion](./ingestion.md) shows |
-| `transaction.list` | Frontend | Fetches the missing logos, then lists every normalized transaction, newest first, with its security's name and logo path, and the brand and category its [rules](./rules.md) assign |
+| `transaction.list` | Frontend | Fetches the missing logos, then lists every normalized transaction, newest first, with its security's name and logo path, the transaction on another account it forms a transfer with, and otherwise the brand and category its [rules](./rules.md) assign |
 | `brand.list` | Frontend | Fetches the missing logos, then lists every brand with its domain, logo path and rules, as [Logos](./logos.md) shows |
 | `brand.create` | Frontend | Creates a brand from its name and domain, with its rules |
 | `brand.update` | Frontend | Changes a brand's name, domain and rules |
