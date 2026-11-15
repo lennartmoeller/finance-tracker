@@ -222,3 +222,19 @@ A rule's link lists every transaction its conditions match, also those a rule wi
 **Rejected alternative:** the count and the whole chip as links in the table, which add nothing on screen but click differently from the row without showing it; the icon links shown only on the hovered row.
 
 **Consequence:** a plain click on a rule's link leaves the Rules view and with it an unsaved edit in the panel, which a Cmd-click keeps.
+
+## Rules count no transfer side
+
+**Id:** e28b32cf-e8b0-46bd-a1ee-2ce183247abd
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer decision of 2026-11-15, looking at the real data, which reversed the agent's first choice approved with the plan
+**See:** rules.md#each-brand-category-and-rule-links-to-the-transactions-it-matches — 86e158bc-d6f2-4844-ac9f-5234b8d85379 — as of 2026-11-15
+**See:** apps.md#a-transfer-shows-as-one-row-when-both-its-sides-are-listed — e90e05d7-b504-4cfc-9973-d19e2b6ddda1 — as of 2026-11-15
+
+A rule's "Matches N transactions" in the Rules editor leaves out the sides of transfers, which get no brand or category, and its link lists none of them, since a transfer side's counterparty and description texts in the Transactions view stay empty.
+
+**Reason:** a rule's count and its link keep listing the same set, which the link builds from the rule's patterns as filters.
+
+**Rejected alternative:** counting transfer sides, as the count counts transactions a more specific rule takes, which shows the rules that now match only transfers, such as the brand Trade Republic's rule on ING's direct debits; it stopped agreeing with the link once transfer rows lost their texts.

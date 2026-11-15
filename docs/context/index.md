@@ -25,7 +25,7 @@ Why the finance tracker is built the way it is, in the [Keep the Why](https://ke
 ## A
 
 - [accounts.md](accounts.md) — why an account's figures and sync freshness live in the Accounts view without its transactions, why closing an account is a flag that takes it out of syncing, and why deleting one takes typing its name
-- [apps.md](apps.md) — why the system is one backend, one frontend and a browser extension, what the frontend shows, how it draws charts, how the Transactions view filters, sums and renders its rows, and why every screen has an address that the Navigation API follows
+- [apps.md](apps.md) — why the system is one backend, one frontend and a browser extension, what the frontend shows, how it draws charts, how the Transactions view filters, sums and renders its rows and shows a transfer as one row, and why every screen has an address that the Navigation API follows
 
 ## B
 
@@ -77,13 +77,13 @@ Why the finance tracker is built the way it is, in the [Keep the Why](https://ke
 
 ## R
 
-- [rules.md](rules.md) — why brands and categories follow from rules matched in PostgreSQL, why the frontend reads the same patterns through a translation, how patterns are written, which rule wins, how categories nest, how rules are saved and deleted, and what a brand's, category's or rule's transactions link lists
+- [rules.md](rules.md) — why brands and categories follow from rules matched in PostgreSQL, why the frontend reads the same patterns through a translation, how patterns are written, which rule wins, how categories nest, how rules are saved and deleted, what a brand's, category's or rule's transactions link lists, and why rules count no transfer
 
 ## S
 
 ## T
 
-- [transactions.md](transactions.md) — how depot amounts count and how normalized transactions are stored and checked
+- [transactions.md](transactions.md) — how depot amounts count, how normalized transactions are stored and checked, and how transfers between accounts are recognised
 
 ## U
 

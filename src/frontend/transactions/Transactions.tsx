@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { ArrowDown, ArrowUp, Inbox } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowLeftRight,
+  ArrowRight,
+  ArrowUp,
+  Inbox,
+} from "lucide-react";
 import {
   accountType,
   type Account,
@@ -34,7 +40,11 @@ import { pattern } from "../pattern.ts";
 import { PatternInput } from "../PatternInput.tsx";
 import { href, type Route, type Sort } from "../route.ts";
 import { Tabs } from "../Tabs.tsx";
-import { TransactionPanel, type Field } from "./TransactionPanel.tsx";
+import {
+  TransactionPanel,
+  type Field,
+  type PanelSide,
+} from "./TransactionPanel.tsx";
 import "./transactions.css";
 
 type Part = CashTransaction | DepotTransaction;
@@ -51,7 +61,14 @@ type Labelled = Transaction & {
   categoryPath: string | undefined;
 };
 
-type Row<P extends Part = Part> = Labelled & Shown<P> & { account: Account };
+type Row<P extends Part = Part> = Labelled &
+  Shown<P> & {
+    account: Account;
+    partner: Side | undefined;
+    merged: boolean;
+  };
+
+type Side = { row: Row; fields: () => Field[] };
 
 type Column<P extends Part> = {
   name: string;
@@ -68,8 +85,21 @@ type Kind<P extends Part> = {
   fields: (row: Row<P>) => Field[];
 };
 
-const amountOf = ({ amount, currency }: Part) =>
-  amount && currency ? formatAmount(amount, currency) : null;
+const amountOf = (
+  { amount, currency }: Part,
+  signDisplay?: "exceptZero" | "never",
+) => (amount && currency ? formatAmount(amount, currency, signDisplay) : null);
+
+const transferIcon = (
+  <span className="logo letter">
+    <ArrowLeftRight />
+  </span>
+);
+
+const sends = ({ part }: Row) => part.amount?.startsWith("-") ?? false;
+
+const unlessTransfer = ({ transferPartnerId }: Row, text: string | null) =>
+  transferPartnerId === null ? text : null;
 
 const quantityOf = ({ quantity }: DepotTransaction) =>
   quantity && formatQuantity(quantity);
@@ -92,8 +122,9 @@ const dateColumn: Column<Part> = {
 const descriptionColumn: Column<Part> = {
   name: "Description",
   className: "muted",
-  text: ({ part }) => part.description,
-  cell: ({ part }) => part.description?.replaceAll("\n", " "),
+  text: (row) => unlessTransfer(row, row.part.description),
+  cell: (row) =>
+    unlessTransfer(row, row.part.description)?.replaceAll("\n", " "),
 };
 
 const amountColumn: Column<Part> = {
@@ -101,15 +132,32 @@ const amountColumn: Column<Part> = {
   width: "136px",
   className: "num",
   text: ({ part }) => part.amount && formatPlainAmount(part.amount),
-  cell: ({ part }) => amountOf(part),
-  order: ({ part }) => Number(part.amount ?? 0),
+  cell: ({ part, merged }) =>
+    merged ? (
+      <span className="transfer-amount">{amountOf(part, "never")}</span>
+    ) : (
+      amountOf(part)
+    ),
+  order: ({ part, merged }) => Number(part.amount ?? 0) * (merged ? -1 : 1),
 };
 
 const accountColumn: Column<Part> = {
   name: "Account",
-  width: "150px",
+  width: "220px",
   text: ({ account }) => accountText(account),
-  cell: ({ account }) => <AccountName account={account} />,
+  cell: (row) => {
+    if (!row.partner) return <AccountName account={row.account} />;
+    const [from, to] = sends(row)
+      ? [row.account, row.partner.row.account]
+      : [row.partner.row.account, row.account];
+    return (
+      <span className="named">
+        <AccountName account={from} />
+        <ArrowRight className="transfer-arrow" />
+        <AccountName account={to} />
+      </span>
+    );
+  },
 };
 
 const cashKind: Kind<CashTransaction> = {
@@ -134,13 +182,20 @@ const cashKind: Kind<CashTransaction> = {
       text: ({ categoryPath }) => categoryPath,
       cell: ({ category }) => category?.name,
     },
-    { name: "Counterparty", text: ({ part }) => part.counterparty },
+    {
+      name: "Counterparty",
+      text: (row) => unlessTransfer(row, row.part.counterparty),
+    },
     descriptionColumn,
     amountColumn,
   ],
-  fields: ({ part, brand, categoryPath }) => [
-    ["Brand", brand?.name],
-    ["Category", categoryPath],
+  fields: ({ part, brand, categoryPath, transferPartnerId }) => [
+    ...(transferPartnerId === null
+      ? ([
+          ["Brand", brand?.name],
+          ["Category", categoryPath],
+        ] satisfies Field[])
+      : []),
     ["Counterparty", part.counterparty],
     ["Description", part.description],
   ],
@@ -233,6 +288,8 @@ const paramOf = (name: string) => name.toLowerCase();
 
 type Item<P extends Part> = { month: string } | { row: Row<P> };
 
+type Searched<P extends Part> = { row: Row<P>; texts: string[] };
+
 const headHeight = 64;
 const monthHeight = 30;
 const rowHeight = 32;
@@ -260,21 +317,38 @@ function TransactionList<P extends Part>({
     const accounts = byId(data.accounts);
     const brands = byId(data.brands);
     const categories = byId(data.categories);
-    return data.transactions.flatMap((transaction) => {
-      const category = categories.get(transaction.categoryId);
-      const labelled = {
-        ...transaction,
-        brand: brands.get(transaction.brandId),
-        category,
-        categoryPath: category && categoryPath(categories, category),
+    const sides = new Map(
+      data.transactions.flatMap((transaction) => {
+        const category = categories.get(transaction.categoryId);
+        const labelled = {
+          ...transaction,
+          brand: brands.get(transaction.brandId),
+          category,
+          categoryPath: category && categoryPath(categories, category),
+        };
+        const account = accounts.get(transaction.accountId);
+        const side =
+          account &&
+          (sideOf(cashKind, labelled, account) ??
+            sideOf(depotKind, labelled, account));
+        return side ? [[transaction.id, side] as const] : [];
+      }),
+    );
+    return [...sides.values()].flatMap(({ row: side }) => {
+      const shown = kind.shown(side);
+      if (!shown) return [];
+      const row: Row<P> = {
+        ...side,
+        ...shown,
+        partner:
+          side.transferPartnerId === null
+            ? undefined
+            : sides.get(side.transferPartnerId),
       };
-      const shown = kind.shown(labelled);
-      const account = accounts.get(transaction.accountId);
-      if (!shown || !account) return [];
-      const row: Row<P> = { ...labelled, ...shown, account };
       return [{ row, texts: columns.map(({ text }) => text(row) ?? "") }];
     });
   }, [data, columns, kind]);
+  const inScope = useMemo(() => mergedTransfers(searched).length, [searched]);
 
   const filterOf = (name: string) => route.filters[paramOf(name)] ?? "";
   const regexOf = (name: string) => {
@@ -301,10 +375,11 @@ function TransactionList<P extends Part>({
   const matching = searched.filter(({ texts }) =>
     active.every(([index, regex]) => regex.test(texts[index] ?? "")),
   );
+  const merged = mergedTransfers(matching);
   const sortColumn = columns.find(({ name }) => sortOf(name));
   const rows = (
     sortColumn
-      ? matching.toSorted((a, b) => {
+      ? merged.toSorted((a, b) => {
           const [x, y] = sortColumn.order
             ? [sortColumn.order(a.row), sortColumn.order(b.row)]
             : [a.texts, b.texts].map(
@@ -316,11 +391,16 @@ function TransactionList<P extends Part>({
               : String(x).localeCompare(String(y), "de-DE");
           return route.sort?.descending ? -compared : compared;
         })
-      : matching
+      : merged
   ).map(({ row }) => row);
   const months = !sortColumn || sortColumn === dateColumn;
-  const total = decimalSum(rows.flatMap(({ part }) => part.amount ?? []));
-  const selected = rows.find(({ id }) => id === selectedId);
+  const total = decimalSum(
+    matching.flatMap(({ row }) => row.part.amount ?? []),
+  );
+  const isSelected = ({ id, partner }: Row) =>
+    selectedId !== null &&
+    (id === selectedId || partner?.row.id === selectedId);
+  const selected = rows.find(isSelected);
   const items = rows.flatMap((row, index): Item<P>[] =>
     months &&
     row.part.date.slice(0, 7) !== rows[index - 1]?.part.date.slice(0, 7)
@@ -348,9 +428,9 @@ function TransactionList<P extends Part>({
     ) : (
       <tr
         key={keyOf(item)}
-        className={item.row.id === selectedId ? "selected" : undefined}
+        className={isSelected(item.row) ? "selected" : undefined}
         onClick={() => {
-          setSelectedId(item.row.id === selectedId ? null : item.row.id);
+          setSelectedId(isSelected(item.row) ? null : item.row.id);
         }}
       >
         {columns.map(({ name, className, text, cell }) => (
@@ -466,7 +546,7 @@ function TransactionList<P extends Part>({
                 {columns.map(({ name, className }, index) => (
                   <td key={name} className={className}>
                     {index === 0
-                      ? `${formatCount(rows.length)} of ${formatCount(searched.length)}`
+                      ? `${formatCount(rows.length)} of ${formatCount(inScope)}`
                       : name === amountColumn.name && formatMoney(total)}
                   </td>
                 ))}
@@ -483,12 +563,10 @@ function TransactionList<P extends Part>({
       )}
       {selected && (
         <TransactionPanel
-          account={selected.account}
-          date={selected.part.date}
-          amount={amountOf(selected.part)}
-          icon={selected.icon}
-          title={selected.title}
-          fields={kind.fields(selected)}
+          icon={selected.partner ? transferIcon : selected.icon}
+          title={selected.partner ? "Transfer" : selected.title}
+          amount={amountOf(selected.part, selected.partner && "never")}
+          sides={panelSides(kind, selected)}
           onClose={() => {
             setSelectedId(null);
           }}
@@ -496,4 +574,47 @@ function TransactionList<P extends Part>({
       )}
     </>
   );
+}
+
+function sideOf<P extends Part>(
+  kind: Kind<P>,
+  labelled: Labelled,
+  account: Account,
+): Side | undefined {
+  const shown = kind.shown(labelled);
+  if (!shown) return undefined;
+  const row: Row<P> = {
+    ...labelled,
+    ...shown,
+    account,
+    partner: undefined,
+    merged: false,
+  };
+  return { row, fields: () => kind.fields(row) };
+}
+
+function mergedTransfers<P extends Part>(listed: Searched<P>[]) {
+  const ids = new Set(listed.map(({ row }) => row.id));
+  return listed.flatMap((item) =>
+    !item.row.partner || !ids.has(item.row.partner.row.id)
+      ? [item]
+      : sends(item.row)
+        ? [{ ...item, row: { ...item.row, merged: true } }]
+        : [],
+  );
+}
+
+function panelSides<P extends Part>(
+  kind: Kind<P>,
+  row: Row<P>,
+): [PanelSide] | [from: PanelSide, to: PanelSide] {
+  const sideOfRow = ({ account, part }: Row, fields: Field[]) => ({
+    account,
+    date: part.date,
+    fields,
+  });
+  const own = sideOfRow(row, kind.fields(row));
+  if (!row.partner) return [own];
+  const partner = sideOfRow(row.partner.row, row.partner.fields());
+  return sends(row) ? [own, partner] : [partner, own];
 }

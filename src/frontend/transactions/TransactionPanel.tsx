@@ -8,39 +8,25 @@ import { Panel } from "../Panel.tsx";
 
 export type Field = [name: string, value: ReactNode];
 
+export type PanelSide = { account: Account; date: string; fields: Field[] };
+
 export function TransactionPanel({
-  account,
-  date,
-  amount,
   icon,
   title,
-  fields,
+  amount,
+  sides,
   onClose,
 }: {
-  account: Account;
-  date: string;
-  amount: string | null;
   icon: ReactNode;
   title: string | null;
-  fields: Field[];
+  amount: string | null;
+  sides: [transaction: PanelSide] | [from: PanelSide, to: PanelSide];
   onClose: () => void;
 }) {
-  const allFields: Field[] = [
-    ["Date", formatDate(date)],
-    [
-      "Account",
-      <AccountName account={account}>
-        <span className="account-meta">
-          {account.bank} · {accountTypeNames[account.type]}
-        </span>
-      </AccountName>,
-    ],
-    ...fields,
-  ];
-
+  const transfer = sides.length === 2;
   return (
     <Panel
-      label="Transaction"
+      label={transfer ? "Transfer" : "Transaction"}
       head={
         <>
           {icon}
@@ -52,14 +38,32 @@ export function TransactionPanel({
       }
       onClose={onClose}
     >
-      <dl className="fields">
-        {allFields.map(([name, value]) => (
-          <div key={name}>
-            <dt>{name}</dt>
-            <dd>{value ?? none}</dd>
-          </div>
-        ))}
-      </dl>
+      {sides.map(({ account, date, fields }, index) => (
+        <section key={index}>
+          {transfer && <h3 className="panel-side">{index ? "To" : "From"}</h3>}
+          <dl className="fields">
+            {(
+              [
+                ["Date", formatDate(date)],
+                [
+                  "Account",
+                  <AccountName account={account}>
+                    <span className="account-meta">
+                      {account.bank} · {accountTypeNames[account.type]}
+                    </span>
+                  </AccountName>,
+                ],
+                ...fields,
+              ] satisfies Field[]
+            ).map(([name, value]) => (
+              <div key={name}>
+                <dt>{name}</dt>
+                <dd>{value ?? none}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      ))}
     </Panel>
   );
 }

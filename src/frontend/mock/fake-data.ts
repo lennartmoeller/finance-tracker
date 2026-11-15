@@ -9,6 +9,7 @@ import type {
   Transaction,
 } from "@finance-tracker/shared/contract";
 import type { Data } from "../App.tsx";
+import { transferPartners } from "@finance-tracker/shared/transfers";
 import { ruleMatcher } from "../rule-matcher.ts";
 import { banks } from "../banks.ts";
 
@@ -107,6 +108,12 @@ for (const [name, domain, colours, ...rules] of [
     { counterparty: "paypal", description: "dazn" },
   ],
   [
+    "Trade Republic",
+    "traderepublic.com",
+    ["#000", "#fff", "TR"],
+    { counterparty: "trade republic" },
+  ],
+  [
     "Stadtbäckerei",
     "stadtbaeckerei.de",
     null,
@@ -192,13 +199,16 @@ export function matchTransactions(data: Data): Data {
     cash: CashTransaction,
     brandId: number | null,
   ) => rules.find(({ holds }) => holds(cash, brandId))?.ownerId ?? null;
+  const partners = transferPartners(data.transactions);
   return {
     ...data,
     transactions: data.transactions.map((transaction) => {
-      if (!transaction.cash) return transaction;
+      const transferPartnerId = partners.get(transaction.id) ?? null;
+      if (!transaction.cash || transferPartnerId !== null)
+        return { ...transaction, transferPartnerId };
       const brandId = match(brandRules, transaction.cash, null);
       const categoryId = match(categoryRules, transaction.cash, brandId);
-      return { ...transaction, brandId, categoryId };
+      return { ...transaction, transferPartnerId, brandId, categoryId };
     }),
   };
 }
@@ -392,6 +402,7 @@ export function fakeData(): Data {
         description,
       },
       depot: null,
+      transferPartnerId: null,
       brandId: null,
       categoryId: null,
     });
@@ -419,6 +430,7 @@ export function fakeData(): Data {
         currency: amount === null ? null : "EUR",
         description,
       },
+      transferPartnerId: null,
       brandId: null,
       categoryId: null,
     });
@@ -474,7 +486,7 @@ export function fakeData(): Data {
           "Hausverwaltung Beispiel GmbH",
           `Miete ${period}\nWhg. 3 OG links`,
         ),
-      2: () =>
+      29: () =>
         cash(
           everyday,
           date,
@@ -641,10 +653,22 @@ export function fakeData(): Data {
     "Ausgleich des Kontosaldos wegen Kontoauflösung",
   );
 
+  cash(everyday, daysAgo(186), -1000, "Alex Example", "Umbuchung");
   cash(main, daysAgo(183), 1000, "Alex Example", "Umbuchung");
   cash(main, daysAgo(181), -49.9, "Deutsche Bank AG", "Kontoführungsentgelt");
   cash(main, daysAgo(176), -4.9, "VISA CAFE MILCHBAR", "KARTENZAHLUNG");
   cash(main, daysAgo(170), -250, "Alex Example", "Umbuchung");
+  cash(everyday, daysAgo(169), 250, "Alex Example", "Umbuchung");
+  for (const ago of [40, 38, 37]) {
+    cash(everyday, daysAgo(ago), -1000, "Alex Example", "Depot aufstocken");
+    cash(
+      spending,
+      daysAgo(ago - 1),
+      1000,
+      "Alex Example",
+      "Incoming transfer from Alex Example",
+    );
+  }
   for (const received of [412, 231])
     depot(
       employeeShares,

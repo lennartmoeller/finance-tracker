@@ -60,6 +60,7 @@ const transaction = z.object({
   accountId: z.int(),
   cash: cashTransaction.nullable(),
   depot: depotTransaction.nullable(),
+  transferPartnerId: z.int().nullable(),
   brandId: z.int().nullable(),
   categoryId: z.int().nullable(),
 });
