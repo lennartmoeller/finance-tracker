@@ -35,11 +35,13 @@ export const brandKind: Kind<Brand> = {
 
 function BrandPanel({
   owner: brand,
+  data,
   onChange,
   onClose,
 }: OwnerPanelProps<Brand>) {
   return (
     <OwnerForm
+      transactions={data.transactions}
       title={brand?.name ?? "New brand"}
       icon={brand && <Logo src={brand.logo} name={brand.name} />}
       subtitle="Brand"

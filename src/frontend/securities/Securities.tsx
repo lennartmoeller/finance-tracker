@@ -19,7 +19,6 @@ import { Intro } from "../Intro.tsx";
 import { Loaded, SkeletonRows } from "../Loaded.tsx";
 import { Logo } from "../Logo.tsx";
 import { MoneyWithPercent } from "../MoneyWithPercent.tsx";
-import { none } from "../none.tsx";
 import { depotSeries, ValueChart } from "../ValueChart.tsx";
 import "./securities.css";
 
@@ -262,23 +261,19 @@ function SecurityTable({
                 </span>
               </td>
               <td className="num">
-                {known && isHeld(security) ? (
+                {known && isHeld(security) && (
                   <MoneyWithPercent
                     amount={known.marketValue}
                     percent={Number(known.marketValue) / totalMarketValue}
                   />
-                ) : (
-                  none
                 )}
               </td>
               <td className="num">
-                {known ? (
+                {known && (
                   <ColouredGain
                     amount={known.gain}
                     purchases={known.purchases}
                   />
-                ) : (
-                  none
                 )}
               </td>
             </tr>

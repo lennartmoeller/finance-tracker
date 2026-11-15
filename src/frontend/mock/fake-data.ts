@@ -9,6 +9,7 @@ import type {
   Transaction,
 } from "@finance-tracker/shared/contract";
 import type { Data } from "../App.tsx";
+import { ruleMatcher } from "../rule-matcher.ts";
 import { banks } from "../banks.ts";
 
 type Security = { isin: string; name: string; logo: string | null };
@@ -169,9 +170,6 @@ for (const [path, ...rules] of leaves) {
   leaf?.rules.push(...rulesOf(rules));
 }
 
-const matches = (pattern: string | null, text: string | null) =>
-  pattern === null || (text !== null && new RegExp(pattern, "i").test(text));
-
 const conditions = (rule: Rule) =>
   [
     rule.requiredBrandId,
@@ -181,7 +179,9 @@ const conditions = (rule: Rule) =>
 
 const ranked = (owners: { id: number; rules: Rule[] }[]) =>
   owners
-    .flatMap(({ id, rules }) => rules.map((rule) => ({ ...rule, ownerId: id })))
+    .flatMap(({ id, rules }) =>
+      rules.map((rule) => ({ ...rule, ownerId: id, holds: ruleMatcher(rule) })),
+    )
     .sort((a, b) => conditions(b) - conditions(a) || a.id - b.id);
 
 export function matchTransactions(data: Data): Data {
@@ -189,15 +189,9 @@ export function matchTransactions(data: Data): Data {
   const categoryRules = ranked(data.categories);
   const match = (
     rules: typeof brandRules,
-    { counterparty, description }: CashTransaction,
+    cash: CashTransaction,
     brandId: number | null,
-  ) =>
-    rules.find(
-      (rule) =>
-        (rule.requiredBrandId === null || rule.requiredBrandId === brandId) &&
-        matches(rule.counterpartyPattern, counterparty) &&
-        matches(rule.descriptionPattern, description),
-    )?.ownerId ?? null;
+  ) => rules.find(({ holds }) => holds(cash, brandId))?.ownerId ?? null;
   return {
     ...data,
     transactions: data.transactions.map((transaction) => {

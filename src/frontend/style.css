@@ -31,6 +31,12 @@
   --shadow: 0 12px 32px light-dark(rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.5));
   --card-shadow: 0 1px 2px light-dark(rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.04));
   --logo-backdrop: light-dark(#ffffff, #ffffff);
+  --regex-anchor: light-dark(#1d5fb0, #6aa8f0);
+  --regex-group: light-dark(#c2410c, #fb923c);
+  --regex-class: light-dark(#15803d, #4ade80);
+  --regex-quantifier: light-dark(#a16207, #facc15);
+  --regex-escape: light-dark(#be185d, #f472b6);
+  --regex-alternation: light-dark(#7c3aed, #a78bfa);
   color-scheme: light dark;
 }
 
@@ -515,9 +521,89 @@ tbody tr.selected td {
   color: var(--faint);
 }
 
-.input:focus {
+.input:focus,
+.input:focus-within {
   border-color: var(--muted);
   outline: none;
+}
+
+.pattern-input {
+  display: grid;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 12.5px;
+  font-weight: 400;
+}
+
+.pattern-input > * {
+  grid-area: 1 / 1;
+  min-width: 0;
+}
+
+.pattern-mirror {
+  overflow: hidden;
+  line-height: 20px;
+  white-space: pre;
+  pointer-events: none;
+}
+
+.pattern-mirror > span {
+  display: inline-block;
+}
+
+.pattern-input input {
+  width: 100%;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: none;
+  color: transparent;
+  caret-color: var(--text);
+  font: inherit;
+  line-height: 20px;
+}
+
+.pattern-input input::placeholder {
+  color: var(--faint);
+}
+
+.pattern-input:has([aria-invalid="true"]) .pattern-text {
+  text-decoration: wavy underline var(--danger-text);
+  text-underline-offset: 3px;
+}
+
+.pattern-text .token.anchor {
+  color: var(--regex-anchor);
+  font-weight: 600;
+}
+
+.pattern-text .token.group,
+.pattern-text .token.backreference {
+  color: var(--regex-group);
+  font-weight: 600;
+}
+
+.pattern-text .token.char-class,
+.pattern-text .token.char-set {
+  color: var(--regex-class);
+}
+
+.pattern-text .token.quantifier {
+  color: var(--regex-quantifier);
+  font-weight: 600;
+}
+
+.pattern-text .token.escape {
+  color: var(--regex-escape);
+}
+
+.pattern-text .token.alternation {
+  color: var(--regex-alternation);
+  font-weight: 700;
 }
 
 .edit-actions {

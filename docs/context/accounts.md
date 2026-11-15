@@ -6,11 +6,12 @@
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
-**Source:** maintainer decisions in a planning dialogue, 2026-11-13, the view's mockup rounds, 2026-11-14, and the maintainer's review with the production data, 2026-11-14
+**Source:** maintainer decisions in a planning dialogue, 2026-11-13, the view's mockup rounds, 2026-11-14, the maintainer's review with the production data, 2026-11-14, and the maintainer's decisions when the Transactions view's filter row replaced its account chips, 2026-11-15
 **See:** apps.md#one-backend-one-frontend-and-a-browser-extension — 4117e375-a931-49b6-90b5-79fa89e99080 — as of 2026-11-14
 
 The frontend's Accounts view lists all accounts in one table, valuing a cash account by its balance and a depot by its market value, below the total of all accounts and its value over time, which a selected row narrows to that account's figures and chart; it creates, edits and deletes accounts in a side panel.
-The Overview stays empty for now, and the Accounts view lists no transactions: an account links to its chip in the Transactions view instead.
+The Overview stays empty for now, and the Accounts view lists no transactions: an account links to the Transactions view filtered to that account instead.
+Each account the browser extension syncs shows its sync freshness as a dot beside its name, with its last sync in the tooltip.
 
 **Reason:** each thing has one home, an account's figures in the Accounts view and its transactions in the Transactions view, and the view reuses the Securities view's way of narrowing figures and chart, which the maintainer already knows.
 
@@ -20,7 +21,9 @@ The Overview stays empty for now, and the Accounts view lists no transactions: a
 
 **Rejected alternative:** each account on a screen of its own, which adds a navigation level and shows no chart of all accounts; and the account's figures with a small chart in a side panel.
 
-**Rejected alternative:** dropping the Transactions view's account chips in favour of the Accounts view.
+**Rejected alternative:** dropping the Transactions view's account chips in favour of the Accounts view; the chips later gave way to the Transactions view's Account filter instead.
+
+**Rejected alternative:** the freshness dot beside the account on every row of the Transactions view, where it repeats on each of the account's rows, or no sync freshness in the frontend, leaving it to the extension's popup.
 
 **Rejected alternative:** a Cash and a Depot tab, each with its type's columns, the view's first version, which the maintainer dropped on seeing it with real data: the table needs only one value per account.
 

@@ -32,6 +32,24 @@ tr.closed .bank {
   opacity: 0.5;
 }
 
+.account-table .dot {
+  display: inline-block;
+  margin-left: 8px;
+  vertical-align: 1px;
+}
+
+.dot.fresh {
+  background: var(--fresh);
+}
+
+.dot.aging {
+  background: var(--aging);
+}
+
+.dot.stale {
+  background: var(--stale);
+}
+
 .closed-tag {
   margin-left: 8px;
   padding: 1px 6px;

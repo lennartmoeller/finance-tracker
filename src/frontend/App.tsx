@@ -35,7 +35,7 @@ export type Change = (call: (api: Api) => Promise<unknown>) => Promise<void>;
 
 export type Loading = { data: Data | undefined; error: string };
 
-export type Scope = { type: Account["type"]; accountId: number | null };
+export type Scope = { type: Account["type"]; account?: Account };
 
 const views = [
   { id: "overview", name: "Overview", Icon: LayoutDashboard },
@@ -59,7 +59,7 @@ export function App({ load, api }: { load: () => Promise<Data>; api: Api }) {
     error: "",
   });
   const [view, setView] = useState<(typeof views)[number]["id"]>("overview");
-  const [scope, setScope] = useState<Scope>({ type: "cash", accountId: null });
+  const [scope, setScope] = useState<Scope>({ type: "cash" });
 
   useEffect(() => {
     let current = true;
@@ -94,6 +94,7 @@ export function App({ load, api }: { load: () => Promise<Data>; api: Api }) {
               aria-current={view === id ? "page" : undefined}
               onClick={() => {
                 setView(id);
+                setScope({ type: scope.type });
               }}
             >
               <Icon />
@@ -120,7 +121,7 @@ export function App({ load, api }: { load: () => Promise<Data>; api: Api }) {
           <Rules loading={loading} onChange={change} />
         ) : (
           <Transactions
-            key={`${scope.type}-${String(scope.accountId)}`}
+            key={scope.type}
             loading={loading}
             scope={scope}
             onScope={setScope}
