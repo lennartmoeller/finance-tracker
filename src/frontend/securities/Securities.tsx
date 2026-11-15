@@ -19,6 +19,7 @@ import { Intro } from "../Intro.tsx";
 import { Loaded, SkeletonRows } from "../Loaded.tsx";
 import { Logo } from "../Logo.tsx";
 import { MoneyWithPercent } from "../MoneyWithPercent.tsx";
+import { href } from "../route.ts";
 import { depotSeries, ValueChart } from "../ValueChart.tsx";
 import "./securities.css";
 
@@ -54,14 +55,20 @@ const skeleton = (
   </div>
 );
 
-export function Securities({ loading }: { loading: Loading }) {
+export function Securities({
+  loading,
+  isin,
+}: {
+  loading: Loading;
+  isin: string | null;
+}) {
   return (
     <>
       <header className="page-head plain">
         <h1>Securities</h1>
       </header>
       <Loaded loading={loading} skeleton={skeleton}>
-        {(data) => <Analysis data={data} />}
+        {(data) => <Analysis data={data} selectedIsin={isin} />}
       </Loaded>
     </>
   );
@@ -115,8 +122,16 @@ function securitiesOf({ transactions, prices }: Data) {
   };
 }
 
-function Analysis({ data }: { data: Data }) {
-  const [selectedIsin, setSelectedIsin] = useState<string | null>(null);
+const securityHref = (isin: string | null) =>
+  href({ view: "securities", isin });
+
+function Analysis({
+  data,
+  selectedIsin,
+}: {
+  data: Data;
+  selectedIsin: string | null;
+}) {
   const [hoveredIsins, setHoveredIsins] = useState<string[]>([]);
   const { listed, pricedTransactions, figures, unpriced, slices } = useMemo(
     () => securitiesOf(data),
@@ -148,22 +163,19 @@ function Analysis({ data }: { data: Data }) {
       "unpriced" in shown &&
       `No price for ${shown.unpriced.join(", ")}.`
     : unpriced.length > 0 && withoutPrices(unpriced);
-  const select = (isin: string) => {
-    setSelectedIsin(isin === selectedIsin ? null : isin);
-  };
+  const toggleHref = (isin: string) =>
+    securityHref(isin === selectedIsin ? null : isin);
 
   return (
     <div className="scroll">
       <section className="figures">
         <nav className="crumbs" aria-label="Selection">
-          <button
+          <a
+            href={securityHref(null)}
             aria-current={selected ? undefined : "page"}
-            onClick={() => {
-              setSelectedIsin(null);
-            }}
           >
             All securities
-          </button>
+          </a>
           {selected && (
             <>
               <ChevronRight />
@@ -180,14 +192,11 @@ function Analysis({ data }: { data: Data }) {
       </section>
       <div className="donut-table">
         {slices.length > 0 && (
-          <aside
-            className="donut selectable"
-            aria-label="Market value by security"
-          >
+          <aside className="donut" aria-label="Market value by security">
             <Donut
               slices={slices}
               selectedKey={selectedIsin}
-              onSelect={select}
+              hrefOf={toggleHref}
               onHover={setHoveredIsins}
             />
           </aside>
@@ -198,7 +207,7 @@ function Analysis({ data }: { data: Data }) {
           slices={slices}
           selectedIsin={selectedIsin}
           hoveredIsins={hoveredIsins}
-          onSelect={select}
+          hrefOf={toggleHref}
         />
       </div>
     </div>
@@ -211,14 +220,14 @@ function SecurityTable({
   slices,
   selectedIsin,
   hoveredIsins,
-  onSelect,
+  hrefOf,
 }: {
   securities: Security[];
   totalMarketValue: number;
   slices: Slice[];
   selectedIsin: string | null;
   hoveredIsins: string[];
-  onSelect: (isin: string) => void;
+  hrefOf: (isin: string) => string;
 }) {
   return (
     <table>
@@ -243,12 +252,9 @@ function SecurityTable({
                     ? "hovered"
                     : undefined
               }
-              onClick={() => {
-                onSelect(isin);
-              }}
             >
               <td>
-                <span className="named">
+                <a className="named stretched" href={hrefOf(isin)}>
                   <span
                     className="dot"
                     style={{
@@ -258,7 +264,7 @@ function SecurityTable({
                   />
                   <Logo src={logo} name={name} />
                   <span>{name}</span>
-                </span>
+                </a>
               </td>
               <td className="num">
                 {known && isHeld(security) && (

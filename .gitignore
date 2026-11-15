@@ -4,5 +4,4 @@
 .wxt/
 dist/
 docs/planning/
-finance.db*
 node_modules/

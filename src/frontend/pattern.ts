@@ -35,6 +35,8 @@ function escaped(escape: string, char: string, bracketed: boolean) {
 export const literal = (text: string) =>
   text.replace(/[\\^$.*+?()[\]{}|]/g, "\\$&");
 
+export const exactly = (text: string) => `^${literal(text)}$`;
+
 // PostgreSQL reads a ] first in brackets, a ] or } outside brackets and bounds, and a { before a non-digit, as itself, where JavaScript's RegExp refuses or ends on them, and allows no count above 255.
 function token(match: string, char: string | undefined) {
   if (char !== undefined) return escaped(match, char, false);

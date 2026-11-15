@@ -5,6 +5,7 @@ import {
   Landmark,
   LayoutDashboard,
   ListFilter,
+  type LucideIcon,
 } from "lucide-react";
 import type { ApiClient } from "@finance-tracker/shared/client";
 import { errorMessage } from "@finance-tracker/shared/error-message";
@@ -17,6 +18,7 @@ import type {
 } from "@finance-tracker/shared/contract";
 import { Accounts } from "./accounts/Accounts.tsx";
 import { Overview } from "./overview/Overview.tsx";
+import { href, useRoute, type Route } from "./route.ts";
 import { Rules } from "./rules/Rules.tsx";
 import { Securities } from "./securities/Securities.tsx";
 import { Transactions } from "./transactions/Transactions.tsx";
@@ -35,15 +37,25 @@ export type Change = (call: (api: Api) => Promise<unknown>) => Promise<void>;
 
 export type Loading = { data: Data | undefined; error: string };
 
-export type Scope = { type: Account["type"]; account?: Account };
-
-const views = [
-  { id: "overview", name: "Overview", Icon: LayoutDashboard },
-  { id: "transactions", name: "Transactions", Icon: ArrowRightLeft },
-  { id: "accounts", name: "Accounts", Icon: Landmark },
-  { id: "securities", name: "Securities", Icon: ChartLine },
-  { id: "rules", name: "Rules", Icon: ListFilter },
-] as const;
+const views: { route: Route; name: string; Icon: LucideIcon }[] = [
+  { route: { view: "overview" }, name: "Overview", Icon: LayoutDashboard },
+  {
+    route: { view: "transactions", tab: "cash", filters: {}, sort: null },
+    name: "Transactions",
+    Icon: ArrowRightLeft,
+  },
+  {
+    route: { view: "accounts", accountId: null },
+    name: "Accounts",
+    Icon: Landmark,
+  },
+  {
+    route: { view: "securities", isin: null },
+    name: "Securities",
+    Icon: ChartLine,
+  },
+  { route: { view: "rules", tab: "brands" }, name: "Rules", Icon: ListFilter },
+];
 
 const byBankAndName = (a: Account, b: Account) =>
   a.bank.localeCompare(b.bank) || a.name.localeCompare(b.name);
@@ -58,8 +70,7 @@ export function App({ load, api }: { load: () => Promise<Data>; api: Api }) {
     data: undefined,
     error: "",
   });
-  const [view, setView] = useState<(typeof views)[number]["id"]>("overview");
-  const [scope, setScope] = useState<Scope>({ type: "cash" });
+  const route = useRoute();
 
   useEffect(() => {
     let current = true;
@@ -88,44 +99,38 @@ export function App({ load, api }: { load: () => Promise<Data>; api: Api }) {
       <aside className="sidebar">
         <div className="app-title">Finance Tracker</div>
         <nav className="nav">
-          {views.map(({ id, name, Icon }) => (
-            <button
-              key={id}
-              aria-current={view === id ? "page" : undefined}
-              onClick={() => {
-                setView(id);
-                setScope({ type: scope.type });
-              }}
+          {views.map(({ route: target, name, Icon }) => (
+            <a
+              key={name}
+              href={href(target)}
+              aria-current={route.view === target.view ? "page" : undefined}
             >
               <Icon />
               {name}
-            </button>
+            </a>
           ))}
         </nav>
       </aside>
       <main className="main">
-        {view === "overview" ? (
+        {route.view === "overview" ? (
           <Overview />
-        ) : view === "accounts" ? (
+        ) : route.view === "accounts" ? (
           <Accounts
             loading={loading}
+            accountId={route.accountId}
             onChange={change}
-            onOpen={(next) => {
-              setScope(next);
-              setView("transactions");
-            }}
           />
-        ) : view === "securities" ? (
-          <Securities loading={loading} />
-        ) : view === "rules" ? (
-          <Rules loading={loading} onChange={change} />
-        ) : (
-          <Transactions
-            key={scope.type}
+        ) : route.view === "securities" ? (
+          <Securities loading={loading} isin={route.isin} />
+        ) : route.view === "rules" ? (
+          <Rules
+            key={route.tab}
             loading={loading}
-            scope={scope}
-            onScope={setScope}
+            tab={route.tab}
+            onChange={change}
           />
+        ) : (
+          <Transactions key={route.tab} loading={loading} route={route} />
         )}
       </main>
     </div>

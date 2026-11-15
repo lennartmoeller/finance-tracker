@@ -4,6 +4,7 @@ import type { Data } from "../App.tsx";
 import { byId } from "../by-id.ts";
 import { categoryPath } from "../category-path.ts";
 import { Intro } from "../Intro.tsx";
+import { exactly, literal } from "../pattern.ts";
 import { OwnerForm } from "./OwnerForm.tsx";
 import { byName, type Kind, type OwnerPanelProps } from "./RuleList.tsx";
 
@@ -27,6 +28,14 @@ export const categoryKind: Kind<Category> = {
   noun: "category",
   rows: (data) => tree(data, null, 0),
   name: (category) => category.name,
+  filters: (category, data) => {
+    const path = categoryPath(byId(data.categories), category);
+    return {
+      category: isFolder(data, category)
+        ? `^${literal(path)}( › |$)`
+        : exactly(path),
+    };
+  },
   counts: (data) => {
     const categories = byId(data.categories);
     const counts = new Map<number | null, number>();
