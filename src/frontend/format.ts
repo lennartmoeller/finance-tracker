@@ -40,11 +40,16 @@ const shortMonthFormat = new Intl.DateTimeFormat("en-GB", {
   year: "numeric",
 });
 
-export function formatAmount(amount: string, currency: string) {
-  let format = amounts.get(currency);
+export function formatAmount(
+  amount: string,
+  currency: string,
+  signDisplay: "exceptZero" | "never" = "exceptZero",
+) {
+  const key = `${currency} ${signDisplay}`;
+  let format = amounts.get(key);
   if (!format) {
-    format = german({ style: "currency", currency, signDisplay: "exceptZero" });
-    amounts.set(currency, format);
+    format = german({ style: "currency", currency, signDisplay });
+    amounts.set(key, format);
   }
   return format.format(Number(amount));
 }

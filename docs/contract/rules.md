@@ -13,8 +13,9 @@ sequenceDiagram
   BE->>DB: Match each cash transaction's counterparty and description against the rules
   Note over DB: Brand: the matching brand rule with the most conditions, then the oldest<br/>Category: the same among the category rules, given that brand
   DB-->>BE: Each cash transaction's brand and category
-  BE-->>FE: The transactions with their brand and category ids, the brands and categories with their rules
-  Note over FE: Reads the same patterns through a translation into JavaScript's dialect<br/>to filter the transactions and to count a draft rule's matches before saving
+  BE->>BE: Pair the transfers between accounts and clear both sides' brand and category
+  BE-->>FE: The transactions with their brand and category ids or their transfer partner's id, the brands and categories with their rules
+  Note over FE: Reads the same patterns through a translation into JavaScript's dialect<br/>to filter the transactions and to count a draft rule's matches outside transfers before saving
 ```
 
 The frontend reloads its data after each saved change, so a change applies to every transaction at once.
