@@ -119,11 +119,11 @@ A cash transaction and a depot trade take part, a distribution and a depot row w
 **Type:** decision
 **Status:** active
 **Evidence:** confirmed
-**Source:** maintainer decisions of 2026-11-16 in a planning dialogue, after classifying the evidence behind every pair on a copy of the production data
+**Source:** maintainer decisions of 2026-11-16 in a planning dialogue, after classifying the evidence behind every pair on a copy of the production data; the date order of a bank-name proof decided on 2026-11-17 after a review of the production pairs
 **Revisit when:** a bank's export starts or stops carrying a counterparty IBAN, or a false automatic pair turns up
 **See:** transactions.md#transfers-between-accounts-are-recognised-by-equal-opposite-amounts-named-pairs-first — 1180c5ed-61dd-4500-a22a-668b28887ba7 — as of 2026-11-16
 
-Two transactions on different accounts pair automatically when their amounts are equal with opposite signs in one currency, their dates lie at most 7 days apart, and one of three proofs holds: both are the same raw row of one bank, as Trade Republic books a trade's cash and depot side; a counterparty IBAN is the other account's number; or a counterparty names the other account's bank as a whole word while the booking on that account names no one else.
+Two transactions on different accounts pair automatically when their amounts are equal with opposite signs in one currency, their dates lie at most 7 days apart, and one of three proofs holds: both are the same raw row of one bank, as Trade Republic books a trade's cash and depot side; a counterparty IBAN is the other account's number; or a counterparty names the other account's bank as a whole word while the booking on that account names no one else and is not dated after the naming booking.
 Among proven candidates the closest dates pair first, one to one; the transfer's panel states the proof in one sentence.
 Each bank's extraction writes the counterparty IBAN it exports into the normalized cash transaction: Sparkasse's, Deutsche Bank's cash export's, and Trade Republic's field or, before June 2026, an IBAN in its description.
 
@@ -131,6 +131,10 @@ Each bank's extraction writes the counterparty IBAN it exports into the normaliz
 On the production copy of 2026-11-16 the proofs kept 538 of 563 pairs (433 by bank name, 62 by one raw row, 43 by IBAN) and made none false; the 25 dropped were the 7 false pairs and 18 real transfers that carry no proof.
 
 **Reason:** a bank name says only "some account at that bank", so the other side must name no one else; this paired 3 bank debits with their PayPal funding instead of a shop's refund closer in date.
+
+**Reason:** a bank collects for PayPal or Trade Republic, and credits a withdrawal from them, only after their own booking; closest dates first had paired a 3,20 debit with a PayPal funding two days after it, which left one fare of a series of seven without a partner, and crossed two 15,00 debits with their PayPal payments, the only two bank ↔ PayPal pairs in the wrong order in production.
+
+**Rejected alternative:** a maximum matching of all proven pairs, which pairs the stranded fare but leaves the crossed pair and is harder to explain.
 
 **Rejected alternative:** a holder name per account, so that a booking naming the holder of the other account counts as a proof, which would pair ING Cash ↔ ING Savings, where ING exports no IBAN and both bookings name the user.
 
