@@ -18,6 +18,7 @@ export default {
           amount: row[11],
           currency: row[17],
           counterparty: row[3],
+          counterpartyIban: row[5],
           description: row[4],
         }),
       })),

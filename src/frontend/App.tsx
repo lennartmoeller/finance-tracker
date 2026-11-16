@@ -31,7 +31,10 @@ export type Data = {
   categories: Category[];
 };
 
-export type Api = Pick<ApiClient, "account" | "brand" | "category" | "sync">;
+export type Api = Pick<
+  ApiClient,
+  "account" | "brand" | "category" | "sync" | "transfer"
+>;
 
 export type Change = <T>(call: (api: Api) => Promise<T>) => Promise<T>;
 
@@ -40,7 +43,13 @@ export type Loading = { data: Data | undefined; error: string };
 const views: { route: Route; name: string; Icon: LucideIcon }[] = [
   { route: { view: "overview" }, name: "Overview", Icon: LayoutDashboard },
   {
-    route: { view: "transactions", tab: "cash", filters: {}, sort: null },
+    route: {
+      view: "transactions",
+      tab: "cash",
+      filters: {},
+      sort: null,
+      transfers: null,
+    },
     name: "Transactions",
     Icon: ArrowRightLeft,
   },
@@ -131,7 +140,12 @@ export function App({ load, api }: { load: () => Promise<Data>; api: Api }) {
             onChange={change}
           />
         ) : (
-          <Transactions key={route.tab} loading={loading} route={route} />
+          <Transactions
+            key={route.tab}
+            loading={loading}
+            route={route}
+            onChange={change}
+          />
         )}
       </main>
     </div>

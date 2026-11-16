@@ -59,7 +59,7 @@ const securityRows = [
   ),
 ];
 
-test("a cash amount includes fees and taxes and falls on its Berlin day, under the transaction ID", () => {
+test("a cash amount includes fees and taxes and falls on its Berlin day, under the transaction ID, and reads the other account's IBAN from the description where its field is empty", () => {
   const inpayment = {
     ...row(
       "3e9c6f5b-1a4d-4f8b-8c5e-6d7a8b9c0d1e",
@@ -69,7 +69,7 @@ test("a cash amount includes fees and taxes and falls on its Berlin day, under t
     ),
     datetime: "2026-04-01T22:51:44.341400Z",
     date: "2026-04-01",
-    description: "",
+    description: "Direct Debit Top up with DE89 3704 0044 0532 0130 00",
     counterparty_name: "Max Mustermann",
   };
   expect(
@@ -84,6 +84,7 @@ test("a cash amount includes fees and taxes and falls on its Berlin day, under t
         amount: "-401.00",
         currency: "EUR",
         counterparty: null,
+        counterpartyIban: null,
         description: "BUY",
       },
     },
@@ -94,6 +95,7 @@ test("a cash amount includes fees and taxes and falls on its Berlin day, under t
         amount: "1005.10",
         currency: "EUR",
         counterparty: null,
+        counterpartyIban: null,
         description: "SELL",
       },
     },
@@ -104,6 +106,7 @@ test("a cash amount includes fees and taxes and falls on its Berlin day, under t
         amount: "3.45",
         currency: "EUR",
         counterparty: null,
+        counterpartyIban: null,
         description: "DIVIDEND",
       },
     },
@@ -114,7 +117,8 @@ test("a cash amount includes fees and taxes and falls on its Berlin day, under t
         amount: "500.00",
         currency: "EUR",
         counterparty: "Max Mustermann",
-        description: null,
+        counterpartyIban: "DE89370400440532013000",
+        description: "Direct Debit Top up with DE89 3704 0044 0532 0130 00",
       },
     },
   ]);

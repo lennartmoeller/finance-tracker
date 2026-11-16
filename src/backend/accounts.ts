@@ -22,7 +22,7 @@ export async function createAccount(
   const format = banks.get(bank)?.accounts[type];
   const issue = format
     ? accountNumberIssue(bank, format, number)
-    : `The extension syncs no ${type} account at ${bank}.`;
+    : `The finance tracker takes no ${type} account at ${bank}.`;
   if (issue) throw new ORPCError("BAD_REQUEST", { message: issue });
   const { rows } = await withApiErrors(
     db.query<Account>(

@@ -17,7 +17,13 @@ export function TransactionsLink({
     <a
       className={className}
       title={labelled ? undefined : "Transactions"}
-      href={href({ view: "transactions", tab, filters, sort: null })}
+      href={href({
+        view: "transactions",
+        tab,
+        filters,
+        sort: null,
+        transfers: null,
+      })}
     >
       <ArrowRightLeft />
       {labelled && "Transactions"}

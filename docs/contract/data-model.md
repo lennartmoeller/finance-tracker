@@ -14,7 +14,9 @@ erDiagram
   categories |o--o{ categories : "parent of"
   brands |o--o{ rules : "required by"
   rules |o..o{ cash_transactions : "assign a brand and a category by matching"
-  transactions |o..o| transactions : "transfers with, by matching amounts and dates"
+  transactions |o..o| transactions : "transfers with, by a proof the banks wrote or a pin"
+  transactions ||--o| transfer_corrections : "corrected by"
+  transfer_corrections |o--o| transactions : "pinned to"
 
   accounts {
     integer id PK
@@ -39,7 +41,12 @@ erDiagram
     numeric amount
     text currency
     text counterparty "optional"
+    text counterparty_iban "optional: a German IBAN, where the bank exports one"
     text description "optional"
+  }
+  transfer_corrections {
+    integer transaction_id PK, FK
+    integer partner_id FK "unique, optional: the pinned partner, none for no transfer"
   }
   depot_transactions {
     integer transaction_id PK, FK

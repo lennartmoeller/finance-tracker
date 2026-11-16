@@ -3,6 +3,10 @@ import { accountType, type Account } from "@finance-tracker/shared/contract";
 
 export type Sort = { column: string; descending: boolean };
 
+const transferFilters = ["only", "probable", "none"] as const;
+
+export type TransferFilter = (typeof transferFilters)[number];
+
 export type Route =
   | { view: "overview" }
   | {
@@ -10,6 +14,7 @@ export type Route =
       tab: Account["type"];
       filters: Record<string, string>;
       sort: Sort | null;
+      transfers: TransferFilter | null;
     }
   | { view: "accounts"; accountId: number | null }
   | { view: "securities"; isin: string | null }
@@ -19,7 +24,7 @@ export function parseRoute({ pathname, searchParams }: URL): Route {
   const [, view, item = ""] = pathname.split("/");
   switch (view) {
     case "transactions": {
-      const { sort, ...filters } = Object.fromEntries(
+      const { sort, transfers, ...filters } = Object.fromEntries(
         [...searchParams].filter(([, value]) => value),
       );
       return {
@@ -29,6 +34,8 @@ export function parseRoute({ pathname, searchParams }: URL): Route {
         sort: sort
           ? { column: sort.replace(/^-/, ""), descending: sort.startsWith("-") }
           : null,
+        transfers:
+          transferFilters.find((filter) => filter === transfers) ?? null,
       };
     }
     case "accounts":
@@ -55,6 +62,7 @@ export function href(route: Route): string {
           "sort",
           `${route.sort.descending ? "-" : ""}${route.sort.column}`,
         );
+      if (route.transfers) query.set("transfers", route.transfers);
       return `/transactions/${route.tab}${query.size ? `?${query.toString()}` : ""}`;
     }
     case "accounts":

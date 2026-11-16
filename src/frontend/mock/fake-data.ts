@@ -9,7 +9,7 @@ import type {
   Transaction,
 } from "@finance-tracker/shared/contract";
 import type { Data } from "../App.tsx";
-import { transferPartners } from "@finance-tracker/shared/transfers";
+import { transfers } from "@finance-tracker/shared/transfers";
 import { ruleMatcher } from "../rule-matcher.ts";
 import { banks } from "../banks.ts";
 
@@ -199,16 +199,39 @@ export function matchTransactions(data: Data): Data {
     cash: CashTransaction,
     brandId: number | null,
   ) => rules.find(({ holds }) => holds(cash, brandId))?.ownerId ?? null;
-  const partners = transferPartners(data.transactions);
+  const bankOf = new Map(data.accounts.map(({ id, bank }) => [id, bank]));
+  const { paired, probable } = transfers(
+    data.transactions.map((transaction) => {
+      const { accountId, cash, depot, transferProof, transferPartnerId } =
+        transaction;
+      const part = cash ?? depot;
+      return {
+        ...transaction,
+        // The fake data holds no raw rows; Trade Republic books a trade's cash and depot side from one row of its export, so they share one here.
+        identity:
+          bankOf.get(accountId) === "Trade Republic" && part
+            ? `${part.date} ${part.amount?.replace(/^-/, "") ?? ""}`
+            : String(transaction.id),
+        pinnedPartnerId:
+          transferProof?.kind === "pinned" ? transferPartnerId : null,
+      };
+    }),
+    data.accounts,
+  );
   return {
     ...data,
     transactions: data.transactions.map((transaction) => {
-      const transferPartnerId = partners.get(transaction.id) ?? null;
-      if (!transaction.cash || transferPartnerId !== null)
-        return { ...transaction, transferPartnerId };
+      const pair = paired.get(transaction.id);
+      const transfer = {
+        transferPartnerId: pair?.partnerId ?? null,
+        transferProof: pair?.proof ?? null,
+        probableTransfer: probable.get(transaction.id) ?? null,
+      };
+      if (!transaction.cash || pair)
+        return { ...transaction, ...transfer, brandId: null, categoryId: null };
       const brandId = match(brandRules, transaction.cash, null);
       const categoryId = match(categoryRules, transaction.cash, brandId);
-      return { ...transaction, transferPartnerId, brandId, categoryId };
+      return { ...transaction, ...transfer, brandId, categoryId };
     }),
   };
 }
@@ -282,13 +305,12 @@ const securities = {
 const closedStartBalance = 1250;
 
 function fakeNumber(bank: string, type: Account["type"], index: number) {
-  if (type === "depot")
+  if (type === "depot") {
+    const format = banks.find(({ name }) => name === bank)?.accounts.depot;
     return String(index + 1)
       .repeat(12)
-      .slice(
-        0,
-        banks.find(({ name }) => name === bank)?.accounts.depot?.length,
-      );
+      .slice(0, format?.label === "Depot number" ? format.length : undefined);
+  }
   const bban = `37040044${String(532013000 + index).padStart(10, "0")}`;
   const check = 98n - (BigInt(`${bban}131400`) % 97n);
   return `DE${check.toString().padStart(2, "0")}${bban}`;
@@ -384,12 +406,21 @@ export function fakeData(): Data {
   };
 
   const transactions: Transaction[] = [];
+  const unlabelled = {
+    transferPartnerId: null,
+    transferProof: null,
+    noTransfer: false,
+    probableTransfer: null,
+    brandId: null,
+    categoryId: null,
+  };
   const cash = (
     accountId: number,
     date: Date,
     amount: number,
     counterparty: string | null,
     description: string | null,
+    counterpartyIban: string | null = null,
   ) =>
     transactions.push({
       id: transactions.length + 1,
@@ -399,13 +430,13 @@ export function fakeData(): Data {
         amount: amount.toFixed(2),
         currency: "EUR",
         counterparty,
+        counterpartyIban,
         description,
       },
       depot: null,
-      transferPartnerId: null,
-      brandId: null,
-      categoryId: null,
+      ...unlabelled,
     });
+  const everydayIban = fakeNumber("ING", "cash", everyday - 1);
   const depot = (
     accountId: number,
     date: Date,
@@ -430,9 +461,7 @@ export function fakeData(): Data {
         currency: amount === null ? null : "EUR",
         description,
       },
-      transferPartnerId: null,
-      brandId: null,
-      categoryId: null,
+      ...unlabelled,
     });
     return quantity ?? 0;
   };
@@ -567,13 +596,17 @@ export function fakeData(): Data {
     if (day === 1)
       cash(spending, date, between([2, 12]), null, "Your interest payment");
     if (day === 2) {
-      cash(
-        spending,
-        date,
-        500,
-        "Alex Example",
-        "Incoming transfer from Alex Example",
-      );
+      // Trade Republic has named the sender and their IBAN only for half a year.
+      if (date > daysAgo(180))
+        cash(
+          spending,
+          date,
+          500,
+          "Alex Example",
+          "Incoming transfer from Alex Example",
+          everydayIban,
+        );
+      else cash(spending, date, 500, null, "Incoming transfer");
       savingsPlan(date, securities.msciWorld, 150);
       savingsPlan(date, securities.allWorld, 100);
       if (date <= daysAgo(661))
@@ -654,11 +687,22 @@ export function fakeData(): Data {
   );
 
   cash(everyday, daysAgo(186), -1000, "Alex Example", "Umbuchung");
-  cash(main, daysAgo(183), 1000, "Alex Example", "Umbuchung");
+  cash(main, daysAgo(183), 1000, "Alex Example", "Umbuchung", everydayIban);
   cash(main, daysAgo(181), -49.9, "Deutsche Bank AG", "Kontoführungsentgelt");
   cash(main, daysAgo(176), -4.9, "VISA CAFE MILCHBAR", "KARTENZAHLUNG");
-  cash(main, daysAgo(170), -250, "Alex Example", "Umbuchung");
+  cash(main, daysAgo(170), -250, "Alex Example", "Umbuchung", everydayIban);
   cash(everyday, daysAgo(169), 250, "Alex Example", "Umbuchung");
+  cash(
+    everyday,
+    daysAgo(24),
+    -75,
+    "Trade Republic Bank GmbH",
+    "Einzahlung Trade Republic",
+  );
+  cash(spending, daysAgo(15), 75, null, "Incoming transfer");
+  cash(reserve, daysAgo(11), 12.5, "Erika Musterfrau", "Brötchen");
+  cash(everyday, daysAgo(9), -12.5, "VISA STADTBAECKEREI 12", card(daysAgo(9)));
+  cash(everyday, daysAgo(6), 25, "Erika Musterfrau", "Konzertkarte");
   for (const ago of [40, 38, 37]) {
     cash(everyday, daysAgo(ago), -1000, "Alex Example", "Depot aufstocken");
     cash(
@@ -734,6 +778,21 @@ export function fakeData(): Data {
 
   const dateOf = ({ cash, depot }: Transaction) =>
     cash?.date ?? depot?.date ?? "";
+  const savings = transactions.filter(
+    ({ cash }) => cash?.description === "Sparen",
+  );
+  const [pinnedSent, pinnedReceived] = savings.slice(-2);
+  if (pinnedSent && pinnedReceived) {
+    const pinned = { kind: "pinned", by: null } as const;
+    pinnedSent.transferPartnerId = pinnedReceived.id;
+    pinnedSent.transferProof = pinned;
+    pinnedReceived.transferPartnerId = pinnedSent.id;
+    pinnedReceived.transferProof = pinned;
+  }
+  const concert = transactions.find(
+    ({ cash }) => cash?.description === "Konzertkarte",
+  );
+  if (concert) concert.noTransfer = true;
   return matchTransactions({
     accounts: accounts.map(
       (
