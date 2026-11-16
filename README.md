@@ -23,7 +23,7 @@ flowchart LR
   onvista["onvista"]
   extension -- "reads raw transactions<br/>in the user's session" --> banks
   extension -- "accounts, syncs" --> backend
-  frontend -- "accounts, transactions, prices,<br/>brands, categories" --> backend
+  frontend -- "accounts, transactions, prices,<br/>brands, categories, uploads" --> backend
   backend --> postgres
   backend -- "logos of brands and securities" --> logodev
   backend -- "prices of securities" --> onvista
@@ -32,7 +32,7 @@ flowchart LR
 Finance Tracker consists of three apps:
 
 - a backend with PostgreSQL that stores all data
-- a frontend in which the user views and manages that data
+- a frontend in which the user views and manages that data, and uploads the transaction exports downloaded from a bank's website
 - a Firefox browser extension that reads the transactions from the bank websites in the user's own sessions
 
 One user owns all data, so the system manages no users or permissions, and it holds no bank credentials, because the browser extension reads only sessions the user opened.
@@ -41,7 +41,7 @@ The frontend and the browser extension reach the data only through the backend's
 ## Further reading
 
 - [Banks](./docs/contract/banks.md): what each app gets from a bank.
-- [Ingestion](./docs/contract/ingestion.md): how a sync brings an account's transactions into the backend.
+- [Ingestion](./docs/contract/ingestion.md): how a sync or an upload brings an account's transactions into the backend.
 - [Data model](./docs/contract/data-model.md): the tables, their columns and their relations.
 - [API](./docs/contract/api.md): the backend's procedures and who calls them.
 - [Prices](./docs/contract/prices.md): how security prices come from onvista.

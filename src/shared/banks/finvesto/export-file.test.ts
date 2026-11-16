@@ -1,6 +1,10 @@
 import { expect, test } from "vitest";
-import { parseCsv } from "./adapter.ts";
+import exportFile from "./export-file.ts";
 import { headerV1 } from "./shapes.ts";
+
+const parse = (text: string, number: string) =>
+  exportFile.exportFiles.depot.read(Buffer.from(text, "latin1"), number)
+    .rawTransactions;
 
 const depot = "12345678901";
 const buy = [
@@ -55,17 +59,17 @@ const rows = [buy, advanceTaxSale, usdDistribution];
 const csv = `${[headerV1, ...rows.map((row) => row.join(";"))].join("\r\n")}\r\n`;
 
 test("reads each row's cells", () => {
-  expect(parseCsv(csv, depot)).toEqual(rows);
+  expect(parse(csv, depot)).toEqual(rows);
 });
 
 test("rejects another depot's export, a changed header, a malformed amount, an extra cell and a fund currency without its exchange rate", () => {
-  expect(() => parseCsv(csv, "10987654321")).toThrow("another depot");
+  expect(() => parse(csv, "10987654321")).toThrow("another account");
   for (const changed of [
     csv.replace("Ref. Nr.", "Referenz"),
     csv.replace(";40;EUR;", ";40.00;EUR;"),
     csv.replace(";0\r\n", ";0;\r\n"),
     csv.replace(";1,167463;", ";;"),
   ]) {
-    expect(() => parseCsv(changed, depot)).toThrow("format");
+    expect(() => parse(changed, depot)).toThrow("doesn't match");
   }
 });

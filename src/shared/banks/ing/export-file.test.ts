@@ -1,5 +1,7 @@
 import { expect, test } from "vitest";
-import { parseCsv } from "./adapter.ts";
+import exportFile from "./export-file.ts";
+
+const { read } = exportFile.exportFiles.cash;
 
 const iban = "DE89370400440532013000";
 const csv = [
@@ -19,7 +21,7 @@ const csv = [
 const windows1252 = (text: string) => Buffer.from(text, "latin1");
 
 test("reads each row of the Windows-1252 export, keeping semicolons inside the Verwendungszweck", () => {
-  expect(parseCsv(windows1252(csv), iban)).toEqual([
+  expect(read(windows1252(csv), iban).rawTransactions).toEqual([
     [
       "03.11.2026",
       "03.11.2026",
@@ -60,10 +62,10 @@ test("reads each row of the Windows-1252 export, keeping semicolons inside the V
 });
 
 test("rejects another account's export and a changed format", () => {
-  expect(() => parseCsv(windows1252(csv), "DE02120300000000202051")).toThrow(
+  expect(() => read(windows1252(csv), "DE02120300000000202051")).toThrow(
     "another account",
   );
   expect(() =>
-    parseCsv(windows1252(csv.replace("2.000,00", "2000.00")), iban),
-  ).toThrow("format");
+    read(windows1252(csv.replace("2.000,00", "2000.00")), iban),
+  ).toThrow("doesn't match");
 });

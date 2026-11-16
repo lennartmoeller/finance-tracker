@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ChevronRight, Landmark, Pencil, Plus } from "lucide-react";
+import { ChevronRight, Landmark, Pencil, Plus, Upload } from "lucide-react";
 import type { Account } from "@finance-tracker/shared/contract";
 import { syncedBy } from "@finance-tracker/shared/bank";
 import { decimalSum } from "@finance-tracker/shared/decimal";
@@ -7,7 +7,7 @@ import { freshness, lastSyncText } from "@finance-tracker/shared/last-sync";
 import { AccountName } from "../AccountName.tsx";
 import { accountText } from "../account-text.ts";
 import type { Change, Data, Loading } from "../App.tsx";
-import { banks } from "../banks.ts";
+import { banks, exportFileOf } from "../banks.ts";
 import { DepotSummary } from "../DepotSummary.tsx";
 import { Donut, type Slice } from "../Donut.tsx";
 import {
@@ -37,14 +37,18 @@ import {
   ValueChart,
 } from "../ValueChart.tsx";
 import { AccountPanel } from "./AccountPanel.tsx";
+import { ImportPanel } from "./ImportPanel.tsx";
 import "./accounts.css";
 
-type Editing = { id?: number } | undefined;
+type Opened =
+  { panel: "account"; id?: number } | { panel: "import"; id: number };
+
+type Open = (opened: Opened) => void;
 
 type ListProps = {
   data: Data;
   selectedId: number | null;
-  onEdit: (id: number) => void;
+  onOpen: Open;
 };
 
 const worth = (account: AccountWithFigures) =>
@@ -154,8 +158,12 @@ export function Accounts({
   accountId: number | null;
   onChange: Change;
 }) {
-  const [editing, setEditing] = useState<Editing>();
-  const edited = loading.data?.accounts.find(({ id }) => id === editing?.id);
+  const [opened, setOpened] = useState<Opened>();
+  const account = loading.data?.accounts.find(({ id }) => id === opened?.id);
+  const exportFile = account && exportFileOf(account);
+  const close = () => {
+    setOpened(undefined);
+  };
 
   return (
     <>
@@ -165,7 +173,7 @@ export function Accounts({
           className="button secondary"
           disabled={!loading.data}
           onClick={() => {
-            setEditing({});
+            setOpened({ panel: "account" });
           }}
         >
           <Plus />
@@ -178,21 +186,26 @@ export function Accounts({
             <AccountList
               data={data}
               selectedId={accountId}
-              onEdit={(id) => {
-                setEditing({ id });
-              }}
+              onOpen={setOpened}
             />
           )}
         </Loaded>
-        {editing && loading.data && (
+        {opened?.panel === "account" && loading.data && (
           <AccountPanel
-            key={edited?.id ?? "new"}
-            account={edited}
+            key={account?.id ?? "new"}
+            account={account}
             accounts={loading.data.accounts}
             onChange={onChange}
-            onClose={() => {
-              setEditing(undefined);
-            }}
+            onClose={close}
+          />
+        )}
+        {opened?.panel === "import" && account && exportFile && (
+          <ImportPanel
+            key={account.id}
+            account={account}
+            exportFile={exportFile}
+            onChange={onChange}
+            onClose={close}
           />
         )}
       </div>
@@ -203,15 +216,29 @@ export function Accounts({
 function AccountActions({
   account,
   labelled,
-  onEdit,
+  onOpen,
 }: {
   account: Account;
   labelled: boolean;
-  onEdit: (id: number) => void;
+  onOpen: Open;
 }) {
   const className = labelled ? undefined : "icon-button";
   return (
     <>
+      {exportFileOf(account) ? (
+        <button
+          className={className}
+          title={labelled ? undefined : "Import file"}
+          onClick={() => {
+            onOpen({ panel: "import", id: account.id });
+          }}
+        >
+          <Upload />
+          {labelled && "Import file"}
+        </button>
+      ) : (
+        !labelled && <span className={className} />
+      )}
       <TransactionsLink
         tab={account.type}
         filters={{ account: exactly(accountText(account)) }}
@@ -222,7 +249,7 @@ function AccountActions({
         className={className}
         title={labelled ? undefined : "Edit"}
         onClick={() => {
-          onEdit(account.id);
+          onOpen({ panel: "account", id: account.id });
         }}
       >
         <Pencil />
@@ -232,7 +259,7 @@ function AccountActions({
   );
 }
 
-function AccountList({ data, selectedId, onEdit }: ListProps) {
+function AccountList({ data, selectedId, onOpen }: ListProps) {
   const accounts = useMemo(
     () =>
       withFigures(data.accounts, data.transactions, data.prices).toSorted(
@@ -253,7 +280,7 @@ function AccountList({ data, selectedId, onEdit }: ListProps) {
       <Intro
         icon={<Landmark />}
         title="No accounts yet"
-        text="Add one with New account, then sync it in the browser extension's popup."
+        text="Add one with New account, then sync it in the browser extension's popup or import its bank's export."
       />
     );
 
@@ -274,7 +301,7 @@ function AccountList({ data, selectedId, onEdit }: ListProps) {
                 <AccountName account={selected} />
               </span>
               <span className="crumb-actions">
-                <AccountActions account={selected} labelled onEdit={onEdit} />
+                <AccountActions account={selected} labelled onOpen={onOpen} />
               </span>
             </>
           )}
@@ -375,7 +402,7 @@ function AccountList({ data, selectedId, onEdit }: ListProps) {
                       <AccountActions
                         account={account}
                         labelled={false}
-                        onEdit={onEdit}
+                        onOpen={onOpen}
                       />
                     </div>
                   </td>

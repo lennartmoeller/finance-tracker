@@ -15,7 +15,7 @@
 }
 
 .account-table th.actions {
-  width: 90px;
+  width: 120px;
 }
 
 .row-actions {
@@ -109,4 +109,47 @@ tr.closed .bank {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.import-help {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.drop-zone {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 8px;
+  min-height: 132px;
+  padding: 16px;
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--muted);
+}
+
+.drop-zone.dragging {
+  background: var(--selected);
+  color: var(--text);
+}
+
+.drop-zone > svg {
+  width: 20px;
+  height: 20px;
+}
+
+.import-status {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  text-align: center;
+}
+
+.import-status svg {
+  width: 16px;
+  height: 16px;
+  color: var(--muted);
 }

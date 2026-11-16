@@ -1,5 +1,9 @@
 import { expect, test } from "vitest";
-import { parseCsv } from "./adapter.ts";
+import exportFile from "./export-file.ts";
+
+const parse = (text: string, type: "cash" | "depot") =>
+  exportFile.exportFiles[type].read(new TextEncoder().encode(text))
+    .rawTransactions;
 
 const header =
   '"datetime","date","account_type","category","type","asset_class","name","symbol","shares","price","amount","fee","tax","currency","original_amount","original_currency","fx_rate","description","transaction_id","counterparty_name","counterparty_iban","payment_reference","mcc_code"';
@@ -91,14 +95,14 @@ const storedRawTransactions = [
 
 test("reads each row as the raw transaction stored so far, keys in the header's order, with or without a final line break", () => {
   for (const text of [csv, csv.slice(0, -1)]) {
-    expect(JSON.stringify(parseCsv(text, "cash"))).toBe(
+    expect(JSON.stringify(parse(text, "cash"))).toBe(
       JSON.stringify(storedRawTransactions),
     );
   }
 });
 
 test("keeps only the rows with an ISIN for the depot", () => {
-  expect(parseCsv(csv, "depot")).toEqual([
+  expect(parse(csv, "depot")).toEqual([
     storedRawTransactions[0],
     storedRawTransactions[2],
   ]);
@@ -113,6 +117,6 @@ test("rejects a changed header, an unquoted cell, a missing or extra cell, a mal
     csv.replace('"-500.00"', '"-500,00"'),
     `${csv},`,
   ]) {
-    expect(() => parseCsv(changed, "cash")).toThrow("format");
+    expect(() => parse(changed, "cash")).toThrow("doesn't match");
   }
 });
