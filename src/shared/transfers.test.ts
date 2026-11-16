@@ -122,3 +122,21 @@ test("a pin wins over a closer proven partner, and a transaction marked as no tr
   expect(partners(paired)).toEqual({ 1: "3 pinned null", 3: "1 pinned null" });
   expect(Object.fromEntries(probable)).toEqual({});
 });
+
+test("a booking that names the other bank pairs only with a booking on its own date or before, as a bank collects after PayPal books", () => {
+  const { paired } = transfers(
+    [
+      cash(1, payPal, "2026-03-21", "15.00"),
+      cash(2, payPal, "2026-03-25", "15.00"),
+      cash(3, ingCash, "2026-03-24", "-15.00", "PayPal Europe S.a.r.l."),
+      cash(4, ingCash, "2026-03-27", "-15.00", "PayPal Europe S.a.r.l."),
+    ],
+    accounts,
+  );
+  expect(partners(paired)).toEqual({
+    1: "3 bank 3",
+    3: "1 bank 3",
+    2: "4 bank 4",
+    4: "2 bank 4",
+  });
+});
