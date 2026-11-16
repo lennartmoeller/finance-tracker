@@ -39,11 +39,12 @@ PSD2 covers payment accounts only, so the depots and the Trade Republic and finv
 
 **Id:** 0ff14e1c-0c4c-432d-b45c-c198787d6d50
 **Type:** decision
-**Status:** active
+**Status:** superseded
 **Evidence:** confirmed
 **Source:** ADR 0009, removed from docs/adr/ (see git history); the exploration of 2026-11-10
 **Revisit when:** PayPal offers a synchronous transaction export, or the system needs PayPal's own transactions
 **See:** ingestion.md#ingestion-through-the-extension-only — eff3eade-324a-4347-b66f-2472c46fdd51 — as of 2026-11-11
+**Superseded by:** 54552782-c069-4547-9741-12a4dfe832f9
 
 The PayPal account stays out of the system.
 
@@ -61,6 +62,82 @@ A report carries every field the extension would want, but covers at most 12 mon
 **Rejected alternative:** Enable Banking, which the system dropped and which reached only 376 days back on this account.
 
 **Consequence:** PayPal payments reach the system only where a cash account pays PayPal, as PayPal's debits without item titles.
+
+## PayPal through its uploaded activity report
+
+**Id:** 54552782-c069-4547-9741-12a4dfe832f9
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer decisions in a planning dialogue, 2026-11-16; a probe of PayPal's activity page in the maintainer's logged-in browser and four years of activity reports compared with the stored bank transactions, 2026-11-16
+**Revisit when:** PayPal offers a synchronous export, or an activity listing that carries the bank fundings and real amounts
+**See:** ingestion.md#uploads-read-a-banks-export-as-the-extension-does-and-go-through-sync — ba967acd-5e5b-4f2f-aee3-ba450b30766e — as of 2026-11-16
+**See:** transactions.md#transfers-between-accounts-are-recognised-by-equal-opposite-amounts-named-pairs-first — 1180c5ed-61dd-4500-a22a-668b28887ba7 — as of 2026-11-16
+
+The PayPal account is an account of its own, filled only by uploading PayPal's activity report as CSV in the frontend; the extension doesn't sync it.
+Its account number is the PayPal login's email address, which the report names as sender or recipient on every row, so a report of another account is refused.
+
+**Reason:** PayPal is where a bank debit to PayPal turns into the real purchase: of the 436 bank transactions with counterparty PayPal from 2023-06 to 2026-11, 301 are "Ihr Einkauf bei <merchant>" debits of the purchase's amount, and PayPal's report shows the merchant, the item title and a bank funding of the same amount, which pairs with the bank's debit as a transfer, so each purchase counts once, at its merchant.
+
+**Reason:** only the activity report carries those bank fundings, real amounts, fees and item titles, seven years back; the upload already exists, and nothing runs on PayPal's website.
+
+**Rejected alternative:** the extension reading the JSON behind PayPal's activity page (`/myaccount/activity/filter`), which answers in seconds but lists one entry per payment without the bank funding behind it, gives amounts only as display text, carries no item title and reaches back three years, so the extension would have to invent a funding for every payment and the older history would still need the report.
+
+**Rejected alternative:** the extension reading each payment's details page for its funding source, about 960 KB of HTML per payment and around 470 MB per full sync.
+
+**Rejected alternative:** the extension requesting activity reports, which PayPal generates in about four minutes each, for at most 12 months, with an email per report and a list of 12 reports that pushes out the user's own; and Enable Banking, which reached 376 days back on this account.
+
+**Rejected alternative:** PayPal's REST API, whose live credentials need a business account.
+
+**Consequence:** there is no one-click sync: bringing PayPal up to date takes requesting a report, waiting for it and uploading it.
+
+## A PayPal upload keeps only the rows that move money
+
+**Id:** c494bbea-4520-4851-8515-629d187952f8
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer decision in a planning dialogue, 2026-11-16, on the agent's proposal from four years of activity reports; the bounced rows on the maintainer's review of the first import the same day
+**See:** ingestion.md#paypal-through-its-uploaded-activity-report — 54552782-c069-4547-9741-12a4dfe832f9 — as of 2026-11-16
+
+PayPal's reader stores only the rows that change the EUR balance and move money: payments, money received, refunds, bank fundings, withdrawals to the bank and the EUR side of a foreign-currency payment.
+It drops before storing the Memo rows such as authorisations, the buyer credit's rows, rows in another currency, holds and their releases, the buyer-protection payout pair, and a bank funding or withdrawal that bounced together with the reversal that undoes it, as when a purchase is refunded within minutes.
+A row counts by its balance impact, never by its status, since PayPal reports every bank funding as pending.
+
+**Reason:** the maintainer wants only rows imported that make sense, nothing highly irrelevant; every dropped group adds up to zero, so the stored rows still add up to PayPal's balance: 1,038 of 1,342 rows over four years, whose transaction codes are unique and serve as identities.
+
+**Reason:** Trade Republic's depot upload already keeps only the rows that concern it.
+
+**Rejected alternative:** storing every row and leaving the choice to extraction.
+
+**Rejected alternative:** keeping the buyer-protection pair and the failed withdrawals' reversals as real if rare events, which add an incoming and an outgoing amount each to income and spending.
+
+**Consequence:** the EUR side of a foreign-currency payment keeps no merchant name, because the payment that names it is in USD and not stored; 6 times in four years.
+
+**Consequence:** a report with a type the shape has not seen is refused until the shape widens to accept it.
+
+**Consequence:** a reversal that reaches the system in a later report than the row it undoes leaves that stored row in place.
+
+## A purchase paid later counts once, at the merchant
+
+**Id:** 6e4bc65b-3a79-4d91-8461-ff3db378628c
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer decision in a planning dialogue, 2026-11-16; four years of activity reports
+**See:** ingestion.md#a-paypal-upload-keeps-only-the-rows-that-move-money — c494bbea-4520-4851-8515-629d187952f8 — as of 2026-11-16
+
+A purchase paid with PayPal's buyer credit ("Später bezahlen") is stored as its payment to the merchant only.
+The credit's draw on the purchase day and its repayments, payments to PayPal (Europe) funded by a bank debit or a merchant's refund passed on to the credit, are not imported.
+
+**Reason:** the purchase counts once, as spending at the merchant; taken as PayPal books them, each of 45 such purchases since 2023 would add a draw as incoming money and a repayment as spending at PayPal.
+Draws and repayments add up to the same total over the four reports, so the PayPal account's balance equals PayPal's whenever no credit is open.
+
+**Rejected alternative:** every balance-relevant row as a transaction, which matches PayPal's balance at every moment but inflates income and spending by every purchase paid later.
+
+**Consequence:** while a credit is open, the PayPal account shows less than PayPal's balance, by the amount owed.
+
+**Consequence:** the bank debit that funds a repayment still pairs with its bank funding as a transfer.
 
 ## Trade Republic through its CSV transaction export
 

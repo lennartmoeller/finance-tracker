@@ -25,11 +25,11 @@ Why the finance tracker is built the way it is, in the [Keep the Why](https://ke
 ## A
 
 - [accounts.md](accounts.md) — why an account's figures and sync freshness live in the Accounts view without its transactions, why closing an account is a flag that takes it out of syncing, why deleting one takes typing its name, and why its upload opens a side panel
-- [apps.md](apps.md) — why the system is one backend, one frontend and a browser extension, what the frontend shows, how it draws charts, how the Transactions view filters, sums and renders its rows and shows a transfer as one row, and why every screen has an address that the Navigation API follows
+- [apps.md](apps.md) — why the system is one backend, one frontend and a browser extension, what the frontend shows, how it draws charts, how the Transactions view filters, sums and renders its rows, shows a transfer as one row and switches between transfers, and why every screen has an address that the Navigation API follows
 
 ## B
 
-- [banks.md](banks.md) — why every bank is one folder that the apps discover, why it declares only the account types the extension syncs, and when a shape version may widen
+- [banks.md](banks.md) — why every bank is one folder that the apps discover, why it declares the account types the extension syncs or the user uploads, and when a shape version may widen
 
 ## C
 
@@ -53,7 +53,7 @@ Why the finance tracker is built the way it is, in the [Keep the Why](https://ke
 
 ## I
 
-- [ingestion.md](ingestion.md) — why every account but Sparkasse is read by the browser extension, which export each adapter reads, how raw transactions are read, how the legacy Sparkasse and ING history entered, why uploads read a bank's export as the extension does, and how a Trade Republic IPO subscription books
+- [ingestion.md](ingestion.md) — why every account but Sparkasse and PayPal is read by the browser extension, which export each adapter reads, why PayPal is uploaded as its activity report and which of its rows count, how raw transactions are read, how the legacy Sparkasse and ING history entered, why uploads read a bank's export as the extension does, and how a Trade Republic IPO subscription books
 
 ## J
 
@@ -83,7 +83,7 @@ Why the finance tracker is built the way it is, in the [Keep the Why](https://ke
 
 ## T
 
-- [transactions.md](transactions.md) — how depot amounts count, how normalized transactions are stored and checked, and how transfers between accounts are recognised
+- [transactions.md](transactions.md) — how depot amounts count, how normalized transactions are stored and checked, how transfers between accounts pair on a proof, how the user corrects them by hand, and which unpaired ones are marked
 
 ## U
 

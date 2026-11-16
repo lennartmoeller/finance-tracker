@@ -230,3 +230,22 @@ Every transfer side's Account cell reads "From → To", such as `Spending → ET
 **Consequence:** a counterparty or description filter no longer finds a transfer, such as `Vanguard` for savings plans in the Cash tab, which the Depot tab's Security column still finds.
 
 **Consequence:** the footer counts a merged transfer once, against all rows of the tab with every transfer merged.
+
+## The Transactions view switches between transfers and shows a mark's partner faint
+
+**Id:** bc1aa17c-6867-4cc6-9e8d-822c4e25382b
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer choices of 2026-11-16 from a clickable mockup of layout alternatives, and the review of the mock mode
+**See:** transactions.md#unpaired-transactions-that-look-like-part-of-a-transfer-are-marked — 07371f0e-6503-4e45-9f6e-b7e645c1a2c8 — as of 2026-11-16
+
+A switch at the right of the Cash and Depot tabs shows all rows, only transfers, only probable transfers or no transfers, kept in the view's address like the column filters.
+A marked transaction's Account cell shows the suggested partner's account, or the named bank with a question mark, faint behind a dashed amber arrow, with the reason as its tooltip; the side panel states a transfer's proof and holds the corrections.
+
+**Reason:** the maintainer asked for a filter that shows only transfers or hides them, and chose these from the mockup's alternatives.
+
+**Rejected alternative:** three chips above the table for the transfer filter.
+
+**Rejected alternative:** an amber icon after the account name as the mark.
+

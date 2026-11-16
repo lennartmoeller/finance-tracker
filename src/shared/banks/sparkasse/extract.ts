@@ -16,6 +16,7 @@ export default {
           currency: row[15],
           // The export pads the name with spaces to 70 characters and may append an address or country after them.
           counterparty: row[11].replace(/ {2}.*/, "").trim(),
+          counterpartyIban: row[12],
           description: row[4].trim(),
         }),
       })),

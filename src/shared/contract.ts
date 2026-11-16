@@ -36,6 +36,7 @@ const cashTransaction = z.object({
   amount: decimal,
   currency,
   counterparty: z.string().nullable(),
+  counterpartyIban: z.string().nullable(),
   description: z.string().nullable(),
 });
 
@@ -61,11 +62,23 @@ const transaction = z.object({
   cash: cashTransaction.nullable(),
   depot: depotTransaction.nullable(),
   transferPartnerId: z.int().nullable(),
+  transferProof: z
+    .object({
+      kind: z.enum(["pinned", "row", "iban", "bank"]),
+      by: z.int().nullable(),
+    })
+    .nullable(),
+  noTransfer: z.boolean(),
+  probableTransfer: z
+    .object({ partnerId: z.int().nullable(), bank: z.string().nullable() })
+    .nullable(),
   brandId: z.int().nullable(),
   categoryId: z.int().nullable(),
 });
 
 export type Transaction = z.infer<typeof transaction>;
+
+const transactionIds = z.object({ ids: z.array(z.int()).min(1) });
 
 const rule = z.object({
   id: z.int(),
@@ -126,6 +139,11 @@ export const contract = {
     .output(z.object({ imported: z.int(), skipped: z.int() })),
   transaction: {
     list: oc.output(z.array(transaction)),
+  },
+  transfer: {
+    pin: oc.input(z.object({ id: z.int(), partnerId: z.int() })),
+    exclude: oc.input(transactionIds),
+    release: oc.input(transactionIds),
   },
   brand: {
     list: oc.output(z.array(brand)),

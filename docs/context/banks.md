@@ -28,11 +28,12 @@ The apps find the folders by file name, the frontend and the extension through V
 
 **Id:** bc02b8d8-1203-472c-970a-f5651ec803a7
 **Type:** decision
-**Status:** active
+**Status:** superseded
 **Evidence:** confirmed
 **Source:** maintainer decision in a planning dialogue, 2026-11-12, kept for the frontend's add form in a planning dialogue, 2026-11-13
 **See:** banks.md#every-bank-is-one-folder-that-the-apps-discover — d2f8114b-dd33-47e2-bbf3-8f54bf4bff7e — as of 2026-11-12
 **See:** accounts.md#a-closed-account-is-a-flag-that-takes-it-out-of-syncing — 8dcdf615-992f-404a-a497-99c69d4320f6 — as of 2026-11-14
+**Superseded by:** b8532aa7-2bb9-458d-af4b-e094660ae7cf
 
 A bank's `bank.ts` declares only the account types the browser extension syncs, so a bank the extension doesn't sync, such as Sparkasse, declares none and has no `adapter.ts`.
 That one rule decides four places: `account.create` accepts only a declared type, the frontend's add form offers only declared types, and the popup lists and the frontend marks with a sync's freshness only accounts of a declared type that are not closed.
@@ -44,6 +45,27 @@ That one rule decides four places: `account.create` accepts only a declared type
 **Rejected alternative:** hiding such an account in the popup only, which leaves the frontend's freshness mark stale for good.
 
 **Consequence:** an account of an undeclared type is inserted into the database by hand, so no app checks its number.
+
+## A bank declares the account types the extension syncs or the user uploads
+
+**Id:** b8532aa7-2bb9-458d-af4b-e094660ae7cf
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** the PayPal plan, confirmed by the maintainer in a planning dialogue, 2026-11-16; the decisions of 2026-11-12 and 2026-11-13 in the entry this one replaces
+**See:** banks.md#every-bank-is-one-folder-that-the-apps-discover — d2f8114b-dd33-47e2-bbf3-8f54bf4bff7e — as of 2026-11-16
+**See:** ingestion.md#paypal-through-its-uploaded-activity-report — 54552782-c069-4547-9741-12a4dfe832f9 — as of 2026-11-16
+
+A bank's `bank.ts` declares the account types the browser extension syncs or the user uploads, so PayPal, which is only uploaded, declares a cash account with an email address as its number, and Sparkasse, which is neither, declares none.
+`account.create` accepts and the frontend's add form offers only declared types, the frontend marks a declared type's open accounts with their last import's freshness, and the popup lists only the accounts of banks with an adapter.
+
+**Reason:** an uploaded account needs `account.create` to check its number, and an upload counts as a sync, so the freshness mark follows uploads too; the popup reads its banks from the adapters, so it never offers a sync for a bank without one.
+
+**Rejected alternative:** a field in `bank.ts` marking banks filled by hand or by upload, which says what the presence of `adapter.ts` and `export-file.ts` already says.
+
+**Consequence:** an account of an undeclared type, such as Sparkasse's, is inserted into the database by hand, so no app checks its number.
+
+**Consequence:** an adapter's account types take only the IBAN and depot number formats, so the popup's add form never meets an email address.
 
 ## A shape version widens to accept a value it has not seen
 

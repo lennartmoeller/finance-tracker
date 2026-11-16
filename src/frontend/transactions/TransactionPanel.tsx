@@ -14,19 +14,21 @@ export function TransactionPanel({
   icon,
   title,
   amount,
+  transfer,
   sides,
   onClose,
 }: {
   icon: ReactNode;
   title: string | null;
   amount: string | null;
+  transfer: ReactNode;
   sides: [transaction: PanelSide] | [from: PanelSide, to: PanelSide];
   onClose: () => void;
 }) {
-  const transfer = sides.length === 2;
+  const paired = sides.length === 2;
   return (
     <Panel
-      label={transfer ? "Transfer" : "Transaction"}
+      label={paired ? "Transfer" : "Transaction"}
       head={
         <>
           {icon}
@@ -38,9 +40,10 @@ export function TransactionPanel({
       }
       onClose={onClose}
     >
+      {transfer}
       {sides.map(({ account, date, fields }, index) => (
         <section key={index}>
-          {transfer && <h3 className="panel-side">{index ? "To" : "From"}</h3>}
+          {paired && <h3 className="panel-side">{index ? "To" : "From"}</h3>}
           <dl className="fields">
             {(
               [

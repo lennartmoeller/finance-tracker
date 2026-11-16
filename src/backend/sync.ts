@@ -49,9 +49,13 @@ export async function sync(
       const transaction_id = imported.get(identity);
       return transaction_id ? [{ transaction_id, cash, depot }] : [];
     });
-    const cash = fresh.flatMap(({ transaction_id, cash }) =>
-      cash ? [{ ...cash, transaction_id }] : [],
-    );
+    const cash = fresh.flatMap(({ transaction_id, cash }) => {
+      if (!cash) return [];
+      const { counterpartyIban, ...fields } = cash;
+      return [
+        { ...fields, counterparty_iban: counterpartyIban, transaction_id },
+      ];
+    });
     const depot = fresh.flatMap(({ transaction_id, depot }) =>
       depot ? [{ ...depot, transaction_id }] : [],
     );

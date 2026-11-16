@@ -35,7 +35,7 @@ sequenceDiagram
   participant BE as Backend
   User->>Bank: Download the account's transaction export
   User->>FE: Choose or drop the file in the account's import panel
-  FE->>FE: Read the file with the bank's export file, which the adapter reads its export with too
+  FE->>FE: Read the file with the bank's export file, which the bank's adapter, where it has one, reads its export with too
   alt another bank's export, another account's or another format
     FE->>User: Report the refusal and send nothing
   else the export matches
@@ -48,6 +48,22 @@ sequenceDiagram
 
 An account takes an upload if its bank's export file declares its type, one file at a time.
 A transaction gets the same identity whether a sync or an upload delivered it, so either skips what the other stored.
+
+### PayPal
+
+```mermaid
+sequenceDiagram
+  actor User
+  participant PP as PayPal website
+  participant FE as Frontend
+  User->>PP: Request an activity report, Guthaben-relevant as CSV, for up to 12 months
+  PP-->>User: An email once the report is ready
+  User->>PP: Download the report
+  User->>FE: Upload it to the PayPal account
+  Note over FE: Keeps the rows that change the EUR balance and move money<br/>Identity: Transaktionscode
+```
+
+Only an upload fills a PayPal account, whose number is the email address that every row of its report names as sender or recipient.
 
 ## By hand
 
@@ -67,7 +83,7 @@ sequenceDiagram
   end
 ```
 
-The user inserts the account by hand, because `account.create` takes only the account types the browser extension syncs, and sends its raw transactions through the same `sync` as an adapter.
+The user inserts the account by hand, because `account.create` takes only the account types the browser extension syncs or the user uploads, and sends its raw transactions through the same `sync` as an adapter.
 Two shape versions reach the backend only this way:
 
 - Sparkasse 1: the CSV-CAMT V8 export, every cell quoted; identity: a hash of the row.

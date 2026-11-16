@@ -1,4 +1,7 @@
-import type { AccountNumberFormat } from "./account-number.ts";
+import type {
+  AccountNumberFormat,
+  GroupedAccountNumberFormat,
+} from "./account-number.ts";
 import type {
   Account,
   CashTransaction,
@@ -6,10 +9,10 @@ import type {
   SyncInput,
 } from "./contract.ts";
 
-export type Bank = {
+export type Bank<Format extends AccountNumberFormat = AccountNumberFormat> = {
   name: string;
   logo: string;
-  accounts: Partial<Record<Account["type"], AccountNumberFormat>>;
+  accounts: Partial<Record<Account["type"], Format>>;
 };
 
 export const syncedBy = (
@@ -21,7 +24,7 @@ export const syncedBy = (
     ({ name, accounts }) => name === bank && accounts[type] !== undefined,
   );
 
-export type BankAdapter = Bank & {
+export type BankAdapter = Bank<GroupedAccountNumberFormat> & {
   hosts: string[];
   permissions: string[];
   read: (

@@ -4,6 +4,7 @@ import {
   accountNumberIssue,
   groupAccountNumber,
   takenAccountNumberIssue,
+  type AccountNumberFormat,
 } from "@finance-tracker/shared/account-number";
 import { typeAccountNumber } from "@finance-tracker/shared/account-number-input";
 import { accountTypeNames } from "@finance-tracker/shared/account-type-names";
@@ -22,7 +23,14 @@ type Props = {
 
 const typesOf = (bank: Bank) => Object.keys(bank.accounts) as Account["type"][];
 
-const syncedBanks = banks.filter((bank) => typesOf(bank).length > 0);
+const banksWithAccounts = banks.filter((bank) => typesOf(bank).length > 0);
+
+const numberHint = (format: AccountNumberFormat) =>
+  format.label === "Email"
+    ? "The address the account logs in with"
+    : format.label === "IBAN"
+      ? `German IBAN, ${String(format.length)} characters`
+      : `${String(format.length)} digits`;
 
 function Field({
   id,
@@ -124,12 +132,22 @@ function NewAccount({ accounts, onChange, onClose }: Props) {
     format &&
     (accountNumberIssue(bank.name, format, number) ??
       takenAccountNumberIssue(accounts, bank.name, number));
-  const numberError =
-    number.length === format?.length || touched ? numberIssue : undefined;
+  const complete =
+    format?.label !== "Email" && number.length === format?.length;
+  const numberError = complete || touched ? numberIssue : undefined;
   const input =
     bank && type && format && name.trim() && !nameIssue && !numberIssue
       ? { name: name.trim(), bank: bank.name, type, number }
       : undefined;
+
+  const numberInput = {
+    id: "number",
+    autoComplete: "off",
+    spellCheck: false,
+    onBlur: () => {
+      if (number) setTouched(true);
+    },
+  };
 
   const choose = (nextBank: Bank, nextType: Account["type"] | undefined) => {
     setBank(nextBank);
@@ -152,7 +170,7 @@ function NewAccount({ accounts, onChange, onClose }: Props) {
       </Field>
       <Choices
         label="Bank"
-        options={syncedBanks.map((option) => [
+        options={banksWithAccounts.map((option) => [
           option.name,
           <>
             <img className="bank" src={option.logo} alt="" />
@@ -161,7 +179,7 @@ function NewAccount({ accounts, onChange, onClose }: Props) {
         ])}
         value={bank?.name}
         onChange={(chosen) => {
-          const next = syncedBanks.find(({ name }) => name === chosen);
+          const next = banksWithAccounts.find(({ name }) => name === chosen);
           if (!next) return;
           const types = typesOf(next);
           choose(next, types.length === 1 ? types[0] : undefined);
@@ -182,35 +200,41 @@ function NewAccount({ accounts, onChange, onClose }: Props) {
       )}
       {format && (
         <Field
+          key={`${bank?.name ?? ""}-${type ?? ""}`}
           id="number"
           label={format.label}
-          message={
-            numberError ??
-            (format.label === "IBAN"
-              ? `German IBAN, ${String(format.length)} characters`
-              : `${String(format.length)} digits`)
-          }
+          message={numberError ?? numberHint(format)}
           invalid={!!numberError}
         >
-          <input
-            key={`${bank?.name ?? ""}-${type ?? ""}`}
-            className="input mono"
-            id="number"
-            autoComplete="off"
-            spellCheck={false}
-            inputMode={format.label === "IBAN" ? "text" : "numeric"}
-            placeholder={groupAccountNumber(
-              (format.label === "IBAN" ? "DE" : "").padEnd(format.length, "0"),
-              format.groups,
-            )}
-            value={groupAccountNumber(number, format.groups)}
-            onChange={(event) => {
-              setNumber(typeAccountNumber(event, number, format));
-            }}
-            onBlur={() => {
-              if (number) setTouched(true);
-            }}
-          />
+          {format.label === "Email" ? (
+            <input
+              {...numberInput}
+              className="input"
+              type="email"
+              placeholder="name@example.com"
+              value={number}
+              onChange={(event) => {
+                setNumber(event.target.value.trim());
+              }}
+            />
+          ) : (
+            <input
+              {...numberInput}
+              className="input mono"
+              inputMode={format.label === "IBAN" ? "text" : "numeric"}
+              placeholder={groupAccountNumber(
+                (format.label === "IBAN" ? "DE" : "").padEnd(
+                  format.length,
+                  "0",
+                ),
+                format.groups,
+              )}
+              value={groupAccountNumber(number, format.groups)}
+              onChange={(event) => {
+                setNumber(typeAccountNumber(event, number, format));
+              }}
+            />
+          )}
         </Field>
       )}
     </EditPanel>

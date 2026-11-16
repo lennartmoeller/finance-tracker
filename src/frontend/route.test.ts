@@ -16,8 +16,15 @@ test("every screen comes back from its address", () => {
         description: "zinsen|interest & more",
       },
       sort: { column: "amount", descending: true },
+      transfers: "probable",
     },
-    { view: "transactions", tab: "cash", filters: {}, sort: null },
+    {
+      view: "transactions",
+      tab: "cash",
+      filters: {},
+      sort: null,
+      transfers: null,
+    },
     { view: "accounts", accountId: 3 },
     { view: "accounts", accountId: null },
     { view: "securities", isin: "IE00B4L5Y983" },
@@ -28,11 +35,12 @@ test("every screen comes back from its address", () => {
 
 test("an address naming nothing known opens the first screen of its view", () => {
   expect(parsed("/nowhere")).toEqual({ view: "overview" });
-  expect(parsed("/transactions?brand=")).toEqual({
+  expect(parsed("/transactions?brand=&transfers=all")).toEqual({
     view: "transactions",
     tab: "cash",
     filters: {},
     sort: null,
+    transfers: null,
   });
   expect(parsed("/accounts/new")).toEqual({
     view: "accounts",

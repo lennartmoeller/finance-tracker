@@ -27,6 +27,7 @@ test("a booking reads its two-digit year as 20yy, its counterparty without paddi
         amount: "-31.24",
         currency: "EUR",
         counterparty: "Stadtwerke Beispiel GmbH",
+        counterpartyIban: "DE02120300000000202051",
         description: "Abschlag Strom 06/2023",
       },
     },

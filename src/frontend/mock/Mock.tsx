@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import type { Rule, RuleInput } from "@finance-tracker/shared/contract";
+import type {
+  Rule,
+  RuleInput,
+  Transaction,
+} from "@finance-tracker/shared/contract";
 import { App, type Api, type Data } from "../App.tsx";
 import {
   deutscheBankShares,
@@ -53,6 +57,32 @@ const dataStates = {
 
 const nextId = (items: { id: number }[]) =>
   Math.max(0, ...items.map(({ id }) => id)) + 1;
+
+const pinnedTo = ({ transferProof, transferPartnerId }: Transaction) =>
+  transferProof?.kind === "pinned" ? transferPartnerId : null;
+
+// Releases the given transactions and the partners they were pinned to, then sets each one's own correction.
+const corrected = (
+  transactions: Transaction[],
+  ids: number[],
+  correction: (transaction: Transaction) => Partial<Transaction>,
+) => {
+  const released = new Set(
+    transactions.flatMap((transaction) =>
+      ids.includes(transaction.id)
+        ? [transaction.id, pinnedTo(transaction)]
+        : [],
+    ),
+  );
+  return transactions.map((transaction) => {
+    const freed = released.has(transaction.id)
+      ? { transferProof: null, transferPartnerId: null, noTransfer: false }
+      : {};
+    return ids.includes(transaction.id)
+      ? { ...transaction, ...freed, ...correction(transaction) }
+      : { ...transaction, ...freed };
+  });
+};
 
 function fakeBackend(state: keyof typeof dataStates) {
   let stored: Promise<Data> | undefined;
@@ -163,6 +193,25 @@ function fakeBackend(state: keyof typeof dataStates) {
       remove: ({ id }) =>
         store(({ categories }) => ({
           categories: categories.filter((category) => category.id !== id),
+        })),
+    },
+    transfer: {
+      pin: ({ id, partnerId }) =>
+        store(({ transactions }) => ({
+          transactions: corrected(transactions, [id, partnerId], (pinned) => ({
+            transferPartnerId: pinned.id === id ? partnerId : id,
+            transferProof: { kind: "pinned", by: null },
+          })),
+        })),
+      exclude: ({ ids }) =>
+        store(({ transactions }) => ({
+          transactions: corrected(transactions, ids, () => ({
+            noTransfer: true,
+          })),
+        })),
+      release: ({ ids }) =>
+        store(({ transactions }) => ({
+          transactions: corrected(transactions, ids, () => ({})),
         })),
     },
     sync: async ({ accountId, rawTransactions }) => {

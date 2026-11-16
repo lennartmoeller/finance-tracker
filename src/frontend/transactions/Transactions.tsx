@@ -8,6 +8,10 @@ import {
   Inbox,
 } from "lucide-react";
 import {
+  groupAccountNumber,
+  iban,
+} from "@finance-tracker/shared/account-number";
+import {
   accountType,
   type Account,
   type Brand,
@@ -19,7 +23,8 @@ import {
 import { decimalSum } from "@finance-tracker/shared/decimal";
 import { AccountName } from "../AccountName.tsx";
 import { accountText } from "../account-text.ts";
-import type { Data, Loading } from "../App.tsx";
+import type { Change, Data, Loading } from "../App.tsx";
+import { bankLogo } from "../banks.ts";
 import { byId } from "../by-id.ts";
 import { categoryPath } from "../category-path.ts";
 import {
@@ -38,13 +43,14 @@ import { Loaded, SkeletonRows } from "../Loaded.tsx";
 import { Logo } from "../Logo.tsx";
 import { pattern } from "../pattern.ts";
 import { PatternInput } from "../PatternInput.tsx";
-import { href, type Route, type Sort } from "../route.ts";
+import { href, type Route, type Sort, type TransferFilter } from "../route.ts";
 import { Tabs } from "../Tabs.tsx";
 import {
   TransactionPanel,
   type Field,
   type PanelSide,
 } from "./TransactionPanel.tsx";
+import { probableText, TransferSection } from "./TransferSection.tsx";
 import "./transactions.css";
 
 type Part = CashTransaction | DepotTransaction;
@@ -61,10 +67,11 @@ type Labelled = Transaction & {
   categoryPath: string | undefined;
 };
 
-type Row<P extends Part = Part> = Labelled &
+export type Row<P extends Part = Part> = Labelled &
   Shown<P> & {
     account: Account;
     partner: Side | undefined;
+    suggested: Side | undefined;
     merged: boolean;
   };
 
@@ -143,18 +150,55 @@ const amountColumn: Column<Part> = {
 
 const accountColumn: Column<Part> = {
   name: "Account",
-  width: "220px",
+  width: "260px",
   text: ({ account }) => accountText(account),
   cell: (row) => {
-    if (!row.partner) return <AccountName account={row.account} />;
-    const [from, to] = sends(row)
-      ? [row.account, row.partner.row.account]
-      : [row.partner.row.account, row.account];
+    const own = <AccountName account={row.account} />;
+    if (row.partner) {
+      const partner = <AccountName account={row.partner.row.account} />;
+      return (
+        <span className="named">
+          {sends(row) ? own : partner}
+          <ArrowRight className="transfer-arrow" />
+          {sends(row) ? partner : own}
+        </span>
+      );
+    }
+    const bank = row.probableTransfer?.bank;
+    const target = row.suggested ? (
+      <AccountName account={row.suggested.row.account} />
+    ) : (
+      bank && (
+        <span className="named">
+          <img className="bank" src={bankLogo(bank)} alt="" />
+          <span>{bank}?</span>
+        </span>
+      )
+    );
+    if (!target) return own;
+    const arrow = <ArrowRight className="transfer-arrow probable" />;
     return (
-      <span className="named">
-        <AccountName account={from} />
-        <ArrowRight className="transfer-arrow" />
-        <AccountName account={to} />
+      <span
+        className="named"
+        title={`Probably a transfer: ${probableText(row) ?? ""}`}
+      >
+        {sends(row) ? (
+          <>
+            {own}
+            <span className="named suggested">
+              {arrow}
+              {target}
+            </span>
+          </>
+        ) : (
+          <>
+            <span className="named suggested">
+              {target}
+              {arrow}
+            </span>
+            {own}
+          </>
+        )}
       </span>
     );
   },
@@ -197,6 +241,16 @@ const cashKind: Kind<CashTransaction> = {
         ] satisfies Field[])
       : []),
     ["Counterparty", part.counterparty],
+    ...(part.counterpartyIban
+      ? ([
+          [
+            "IBAN",
+            <span className="isin">
+              {groupAccountNumber(part.counterpartyIban, iban.groups)}
+            </span>,
+          ],
+        ] satisfies Field[])
+      : []),
     ["Description", part.description],
   ],
 };
@@ -248,14 +302,30 @@ const depotKind: Kind<DepotTransaction> = {
 type TransactionsRoute = Extract<Route, { view: "transactions" }>;
 
 const tabHref = (tab: Account["type"]) =>
-  href({ view: "transactions", tab, filters: {}, sort: null });
+  href({ view: "transactions", tab, filters: {}, sort: null, transfers: null });
+
+const transferChoices: [TransferFilter | null, string][] = [
+  [null, "All"],
+  ["only", "Transfers"],
+  ["probable", "Probable"],
+  ["none", "No transfers"],
+];
+
+const shownBy = (transfers: TransferFilter | null) => (row: Row) =>
+  transfers === null ||
+  (transfers === "only"
+    ? row.partner !== undefined
+    : row.partner === undefined &&
+      (transfers === "none" || row.probableTransfer !== null));
 
 export function Transactions({
   loading,
   route,
+  onChange,
 }: {
   loading: Loading;
   route: TransactionsRoute;
+  onChange: Change;
 }) {
   return (
     <>
@@ -268,14 +338,35 @@ export function Transactions({
           ])}
           value={tabHref(route.tab)}
         />
+        <nav className="transfer-switch" aria-label="Transfers">
+          {transferChoices.map(([transfers, label]) => (
+            <a
+              key={label}
+              href={href({ ...route, transfers })}
+              aria-current={route.transfers === transfers || undefined}
+            >
+              {label}
+            </a>
+          ))}
+        </nav>
       </header>
       <div className="content">
         <Loaded loading={loading} skeleton={<SkeletonRows count={14} />}>
           {(data) =>
             route.tab === "cash" ? (
-              <TransactionList kind={cashKind} data={data} route={route} />
+              <TransactionList
+                kind={cashKind}
+                data={data}
+                route={route}
+                onChange={onChange}
+              />
             ) : (
-              <TransactionList kind={depotKind} data={data} route={route} />
+              <TransactionList
+                kind={depotKind}
+                data={data}
+                route={route}
+                onChange={onChange}
+              />
             )
           }
         </Loaded>
@@ -298,10 +389,12 @@ function TransactionList<P extends Part>({
   kind,
   data,
   route,
+  onChange,
 }: {
   kind: Kind<P>;
   data: Data;
   route: TransactionsRoute;
+  onChange: Change;
 }) {
   const { columns } = kind;
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -313,7 +406,7 @@ function TransactionList<P extends Part>({
     scrollBox.current?.scrollTo({ top: 0 });
   }, [address]);
 
-  const searched = useMemo(() => {
+  const { sides, searched } = useMemo(() => {
     const accounts = byId(data.accounts);
     const brands = byId(data.brands);
     const categories = byId(data.categories);
@@ -334,19 +427,21 @@ function TransactionList<P extends Part>({
         return side ? [[transaction.id, side] as const] : [];
       }),
     );
-    return [...sides.values()].flatMap(({ row: side }) => {
-      const shown = kind.shown(side);
-      if (!shown) return [];
-      const row: Row<P> = {
-        ...side,
-        ...shown,
-        partner:
-          side.transferPartnerId === null
-            ? undefined
-            : sides.get(side.transferPartnerId),
-      };
-      return [{ row, texts: columns.map(({ text }) => text(row) ?? "") }];
-    });
+    const sideById = (id: number | null | undefined) =>
+      id === null || id === undefined ? undefined : sides.get(id);
+    for (const { row } of sides.values()) {
+      row.partner = sideById(row.transferPartnerId);
+      row.suggested = sideById(row.probableTransfer?.partnerId);
+    }
+    return {
+      sides: [...sides.values()].map(({ row }) => row),
+      searched: [...sides.values()].flatMap(({ row: side }) => {
+        const shown = kind.shown(side);
+        if (!shown) return [];
+        const row: Row<P> = { ...side, ...shown };
+        return [{ row, texts: columns.map(({ text }) => text(row) ?? "") }];
+      }),
+    };
   }, [data, columns, kind]);
   const inScope = useMemo(() => mergedTransfers(searched).length, [searched]);
 
@@ -372,8 +467,11 @@ function TransactionList<P extends Part>({
       : sortOf(name)?.descending
         ? null
         : { column: paramOf(name), descending: true };
-  const matching = searched.filter(({ texts }) =>
-    active.every(([index, regex]) => regex.test(texts[index] ?? "")),
+  const shown = shownBy(route.transfers);
+  const matching = searched.filter(
+    ({ row, texts }) =>
+      shown(row) &&
+      active.every(([index, regex]) => regex.test(texts[index] ?? "")),
   );
   const merged = mergedTransfers(matching);
   const sortColumn = columns.find(({ name }) => sortOf(name));
@@ -566,6 +664,14 @@ function TransactionList<P extends Part>({
           icon={selected.partner ? transferIcon : selected.icon}
           title={selected.partner ? "Transfer" : selected.title}
           amount={amountOf(selected.part, selected.partner && "never")}
+          transfer={
+            <TransferSection
+              key={selected.id}
+              row={selected}
+              rows={sides}
+              onChange={onChange}
+            />
+          }
           sides={panelSides(kind, selected)}
           onClose={() => {
             setSelectedId(null);
@@ -588,6 +694,7 @@ function sideOf<P extends Part>(
     ...shown,
     account,
     partner: undefined,
+    suggested: undefined,
     merged: false,
   };
   return { row, fields: () => kind.fields(row) };

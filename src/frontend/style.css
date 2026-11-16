@@ -266,7 +266,8 @@ a {
   min-width: 0;
 }
 
-.named > span {
+/* Only text clips: a nested name, such as each account of a transfer, would cut its logo's shadow into a grey box. */
+.named > span:not(.named) {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
