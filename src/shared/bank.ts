@@ -43,3 +43,15 @@ export type BankExtraction = Bank & {
   securityNameRank?: number;
   extractions: Partial<Record<Account["type"], Record<number, Extraction>>>;
 };
+
+export type ExportFile = {
+  download: string;
+  read: (
+    file: ArrayBuffer | ArrayBufferView,
+    number: string,
+  ) => Omit<SyncInput, "accountId">;
+};
+
+export type BankExportFile = Bank & {
+  exportFiles: Partial<Record<Account["type"], ExportFile>>;
+};

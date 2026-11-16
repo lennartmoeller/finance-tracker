@@ -167,3 +167,25 @@ test("a depot trade takes the opposite amount with its signed shares, and a divi
     },
   ]);
 });
+
+test("an IPO subscription pre-pays cash with its fee, and the depot keeps it without a depot transaction", () => {
+  const subscription = {
+    ...row(
+      "4f0d7a6c-2b5e-4a9c-9d6f-7e8b9c0d1e2f",
+      "IPO_SUBSCRIPTION",
+      "",
+      "-1000.000000",
+      "-1.00",
+    ),
+    category: "CASH",
+    asset_class: "STOCK",
+    name: "Example",
+    symbol: "US0000000001",
+  };
+  expect(
+    tradeRepublic.extractions.cash[1]([subscription])?.[0]?.cash?.amount,
+  ).toBe("-1001.00");
+  expect(tradeRepublic.extractions.depot[1]([subscription])).toEqual([
+    { data: subscription, identity: subscription.transaction_id },
+  ]);
+});

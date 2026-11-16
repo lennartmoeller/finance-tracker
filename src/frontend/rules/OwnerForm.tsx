@@ -158,7 +158,10 @@ export function OwnerForm<Name extends string>({
   rules: Rule[] | undefined;
   brands?: Brand[];
   transactions: Transaction[];
-  onSave: (values: Record<Name, string>, rules: RuleInput[]) => Promise<void>;
+  onSave: (
+    values: Record<Name, string>,
+    rules: RuleInput[],
+  ) => Promise<unknown>;
   removal: Removal | undefined;
   onClose: () => void;
 }) {

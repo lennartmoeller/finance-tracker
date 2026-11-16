@@ -141,7 +141,7 @@ function NewAccount({ accounts, onChange, onClose }: Props) {
   return (
     <EditPanel
       title="New account"
-      subtitle="Synced in the browser extension's popup"
+      subtitle="Synced in the browser extension's popup, or imported from a file"
       saveLabel="Add account"
       onSave={input && (() => onChange((api) => api.account.create(input)))}
       removal={undefined}

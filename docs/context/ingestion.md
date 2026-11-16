@@ -4,9 +4,10 @@
 
 **Id:** eff3eade-324a-4347-b66f-2472c46fdd51
 **Type:** decision
-**Status:** active
+**Status:** needs-review
 **Evidence:** confirmed
 **Source:** ADRs 0002 and 0003, removed from docs/adr/ (see git history); the Enable Banking sign-up and measurements of 2026-11-09 in issue #4
+**Verification:** contradicted — since 2026-11-16 the user also uploads a bank's export in the frontend (ingestion.md#uploads-read-a-banks-export-as-the-extension-does-and-go-through-sync), so ingestion no longer runs through the extension only; the case against a data service between bank and backend is untouched
 
 The browser extension reads every account from its bank's website, and no data service sits between a bank and the backend.
 
@@ -157,12 +158,13 @@ Shape versions count per bank and account type: a format change within an export
 
 **Id:** 870bd184-e61b-4b73-99d9-7a19878e49b0
 **Type:** decision
-**Status:** active
+**Status:** needs-review
 **Evidence:** unknown
 **Source:** maintainer request and decisions in a planning dialogue, 2026-11-12
 **Revisit when:** a Sparkasse account is to be kept current
 **See:** ingestion.md#ingestion-through-the-extension-only — eff3eade-324a-4347-b66f-2472c46fdd51 — as of 2026-11-12
 **See:** banks.md#a-bank-declares-only-the-account-types-the-extension-syncs — bc02b8d8-1203-472c-970a-f5651ec803a7 — as of 2026-11-12
+**Verification:** contradicted — it calls Sparkasse the one exception to ingestion through the extension only, while since 2026-11-16 uploads in the frontend are a second way in for the banks whose CSV the extension reads
 
 Sparkasse is a bank the system knows, so it stores Sparkasse accounts and their transactions, but the browser extension has no Sparkasse adapter, the one exception to ingestion through the extension only.
 Its account is inserted into the database by hand, and its raw transactions reach the backend through the same `sync` the extension calls, sent by a script that stays out of the repository, as the [contract](../contract/ingestion.md#by-hand) shows.
@@ -221,3 +223,54 @@ Each fills only the cells the evidence states, with the value date taken as the 
 **Rejected alternative:** a start balance lowered by both amounts, which ends at 0.00 but puts every earlier balance too low.
 
 **Consequence:** the account holds two raw transactions its bank never delivered in this form, the only ones in the system.
+
+## Uploads read a bank's export as the extension does and go through sync
+
+**Id:** ba967acd-5e5b-4f2f-aee3-ba450b30766e
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer request and decisions in a planning dialogue, 2026-11-16; the agent's technical choices, confirmed with the plan the same day; hand-downloaded exports of all four banks compared with the stored rows, 2026-11-16
+**See:** ingestion.md#ingestion-through-the-extension-only — eff3eade-324a-4347-b66f-2472c46fdd51 — as of 2026-11-16
+**See:** banks.md#every-bank-is-one-folder-that-the-apps-discover — d2f8114b-dd33-47e2-bbf3-8f54bf4bff7e — as of 2026-11-16
+
+Beside the extension's sync, the user can upload a transaction export downloaded by hand from the bank's website to one account in the frontend, for every account whose CSV export the extension reads: ING cash, Trade Republic cash and depot, Deutsche Bank cash and finvesto depot.
+The frontend reads the file with the bank's `export-file.ts`, the same code the adapter reads its export with, and sends the raw transactions through the unchanged `sync`, which also sets the account's last sync time.
+
+**Reason:** the maintainer wanted the ability to import from a file for the banks whose CSV the extension already reads.
+Only where the extension reads that same CSV does a hand-downloaded file give every booking the identity a sync gives it, so either way skips what the other stored; one export per bank, downloaded on 2026-11-16, matched the stored rows identity for identity.
+One reader per export and one write path keep a booking from being parsed or stored in two ways.
+
+**Rejected alternative:** a backend procedure that takes the file and parses it, which adds a contract entry, a file transport and a backend discovery of the readers for the same result; the agent's choice, approved with the plan.
+
+**Rejected alternative:** one import for any file that recognises bank and account from the file and fills both Trade Republic accounts at once, which needs recognition across banks and a choice where a file names no account; the user's choice is one chosen account per upload, so a Trade Republic export takes one upload per account.
+
+**Rejected alternative:** an upload that leaves the last sync time to the extension, which needs a flag or a second procedure and leaves an account fed only by uploads stale for good; the accepted cost is that an old saved export marks its account fresh.
+
+**Rejected alternative:** several files in one upload, which would need one `sync` each, because `identify` numbers identical rows across one input, so two overlapping files in one input would store their shared same-day duplicates twice.
+
+**Rejected alternative:** the Deutsche Bank depot's website CSV, which the web app builds in the page from the JSON the extension reads, with fewer fields, so it would be a new shape version whose identities differ from the synced ones; and older formats a bank no longer delivers, such as ING's export without `Referenz`, whose rows would duplicate rows synced in today's format.
+
+**Consequence:** a reader's errors name the file and the bank's export, so one message fits a sync and an upload alike.
+
+## A Trade Republic IPO subscription books cash, and the depot keeps it raw
+
+**Id:** 75582bee-5cf0-4d58-9a4a-8f66be3f4d8d
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer decision in a planning dialogue, 2026-11-16, after Trade Republic's export delivered the first `IPO_SUBSCRIPTION` row
+**Revisit when:** Trade Republic books the allotment or refund of an IPO subscription
+**See:** ingestion.md#trade-republic-through-its-csv-transaction-export — 382ed119-7b7e-4b25-ab69-5d45ef6fae67 — as of 2026-11-16
+**See:** banks.md#a-shape-version-widens-to-accept-a-value-it-has-not-seen — 78b90e63-97a6-4f3f-bba5-5f6e7c3d87dc — as of 2026-11-16
+
+An `IPO_SUBSCRIPTION` row, a pre-payment for an IPO's shares with an ISIN but no shares, becomes a cash transaction of its amount and fee on the Trade Republic cash account, and the depot, which keeps every row with an ISIN, stores it as a raw transaction without a depot transaction.
+
+**Reason:** the cash balance matches Trade Republic's, the depot's filter keeps its one rule, and the raw row is ready to be extracted again once the allotment shows how Trade Republic books the shares; the database refuses a depot trade without shares and a distribution with a negative amount.
+The row broke every Trade Republic sync and upload covering its day, so the maintainer had it fixed together with the uploads rather than in a plan of its own.
+
+**Rejected alternative:** leaving the row out of the depot, an exception to "the depot keeps rows with an ISIN".
+
+**Rejected alternative:** booking it in neither account until the allotment, which leaves the cash balance above Trade Republic's by the pre-payment.
+
+**Consequence:** until the allotment, the total of all accounts is lower than the money held by the pre-payment.

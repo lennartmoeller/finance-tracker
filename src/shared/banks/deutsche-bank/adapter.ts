@@ -1,33 +1,16 @@
 import { z } from "zod";
 import type { BankAdapter } from "../../bank.ts";
 import type { Account } from "../../contract.ts";
-import { parseRawTransactions, shapeMismatch } from "../../raw-transactions.ts";
+import { parseRawTransactions } from "../../raw-transactions.ts";
 import { inject, navigate, notLoggedIn, withSyncTab } from "../../sync-tab.ts";
 import bank from "./bank.ts";
-import { cashHeaderV1, cashV1, depotV1 } from "./shapes.ts";
+import exportFile from "./export-file.ts";
+import { depotV1 } from "./shapes.ts";
 
 const webApp = "https://meine.deutsche-bank.de";
 const api = "https://api.olb.deutsche-bank.de";
 
 type AppRequest = { url: string; headers: Record<string, string> };
-
-export function parseCashCsv(text: string, number: string) {
-  const lines = text.split("\n").filter(Boolean);
-  if (lines[2]?.split(";")[2] !== number)
-    throw new Error(
-      "Deutsche Bank exported another account than the one synced.",
-    );
-  const header = lines.indexOf(cashHeaderV1);
-  if (header < 0) throw shapeMismatch(bank.name);
-  return parseRawTransactions(
-    bank.name,
-    cashV1,
-    lines
-      .slice(header + 1)
-      .filter((line) => !line.startsWith("Kontostand;"))
-      .map((line) => line.split(";")),
-  );
-}
 
 export const parseDepotJson = (text: string) =>
   parseRawTransactions(bank.name, z.object({ transactions: depotV1.array() }), [
@@ -35,24 +18,25 @@ export const parseDepotJson = (text: string) =>
   ]).flatMap(({ transactions }) => transactions);
 
 async function read({ type, number }: Pick<Account, "type" | "number">) {
-  const texts = await withSyncTab(async (tabId) => {
+  const exports = await withSyncTab(async (tabId) => {
     const overview = captureOverviewRequest(tabId);
     await navigate(tabId, `${webApp}/`);
     const request = await overview;
     if (!request) throw await notLoggedIn(webApp);
     // The API authenticates a bearer token that the web app holds only in memory, so the requests run in the page's own world.
-    return inject<string[]>(tabId, {
+    return inject<ArrayBuffer[]>(tabId, {
       world: "MAIN",
-      func: fetchTexts,
+      func: fetchExports,
       args: [request.url, request.headers, type, number],
     });
   });
   return {
     shapeVersion: 1,
-    rawTransactions:
+    rawTransactions: exports.flatMap((file): unknown[] =>
       type === "depot"
-        ? texts.flatMap(parseDepotJson)
-        : texts.flatMap((csv) => parseCashCsv(csv, number)),
+        ? parseDepotJson(new TextDecoder().decode(file))
+        : exportFile.exportFiles.cash.read(file, number).rawTransactions,
+    ),
   };
 }
 
@@ -115,12 +99,12 @@ function captureOverviewRequest(tabId: number) {
   });
 }
 
-async function fetchTexts(
+async function fetchExports(
   overviewUrl: string,
   headers: Record<string, string>,
   type: Account["type"],
   number: string,
-): Promise<string[]> {
+): Promise<ArrayBuffer[]> {
   async function call(url: string, body?: object) {
     const response = await fetch(
       url,
@@ -176,7 +160,7 @@ async function fetchTexts(
         await call(
           `https://api.olb.deutsche-bank.de/investments/securities-accounts/${encodeURIComponent(depot.id)}/transactions?start_date=2000-01-01`,
         )
-      ).text(),
+      ).arrayBuffer(),
     ];
   }
 
@@ -188,7 +172,7 @@ async function fetchTexts(
   const exports = `https://api.olb.deutsche-bank.de/products/${encodeURIComponent(account.id)}/exports/transactions`;
   const today = new Date().toISOString().slice(0, 10);
   const thisYear = Number(today.slice(0, 4));
-  const csvs: string[] = [];
+  const csvs: ArrayBuffer[] = [];
   // The export rejects periods over 13 months and runs one at a time, so the history is read year by year since the account opened.
   for (
     let year = Number(account.details.openingDate.slice(0, 4));
@@ -214,7 +198,7 @@ async function fetchTexts(
       await new Promise((resolve) => setTimeout(resolve, 1_000));
     }
     csvs.push(
-      await (await call(`${exports}/${encodeURIComponent(id)}`)).text(),
+      await (await call(`${exports}/${encodeURIComponent(id)}`)).arrayBuffer(),
     );
   }
   return csvs;

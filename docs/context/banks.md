@@ -44,3 +44,18 @@ That one rule decides four places: `account.create` accepts only a declared type
 **Rejected alternative:** hiding such an account in the popup only, which leaves the frontend's freshness mark stale for good.
 
 **Consequence:** an account of an undeclared type is inserted into the database by hand, so no app checks its number.
+
+## A shape version widens to accept a value it has not seen
+
+**Id:** 78b90e63-97a6-4f3f-bba5-5f6e7c3d87dc
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer decision in a planning dialogue, 2026-11-16, when Trade Republic's export delivered an `IPO_SUBSCRIPTION` row
+**See:** ingestion.md#raw-transactions-read-by-their-account — aef5e287-882f-486e-9b4e-37a23394ddea — as of 2026-11-16
+
+A changed export structure takes a new shape version, while a shape version may widen in place to accept a value it has not seen, such as a new transaction type, as long as it reads every stored row exactly as before; `src/shared/banks/CLAUDE.md` states the rule.
+
+**Reason:** Trade Republic's structure did not change when its export first carried `IPO_SUBSCRIPTION`, only a value its version 1 did not list yet, as `STOCKPERK` was once added; a version per new value would multiply versions with every type a bank adds.
+
+**Rejected alternative:** a new shape version for every new value, a near-copy of the last one with its own extraction entry, which the rule's earlier wording, never to edit a version that stored rows use, demanded.
