@@ -31,7 +31,9 @@ export const rawTransactionV1 = z
   .refine(
     ({ type, symbol, shares }) =>
       (symbol === "" && shares === "") ||
-      ["BUY", "SELL", "DIVIDEND", "STOCKPERK"].includes(type),
+      ["BUY", "SELL", "DIVIDEND", "STOCKPERK", "IPO_SUBSCRIPTION"].includes(
+        type,
+      ),
     { path: ["type"] },
   );
 

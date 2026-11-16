@@ -1,9 +1,8 @@
 import type { BankAdapter } from "../../bank.ts";
 import type { Account } from "../../contract.ts";
-import { parseRawTransactions, shapeMismatch } from "../../raw-transactions.ts";
 import { inject, navigate, notLoggedIn, withSyncTab } from "../../sync-tab.ts";
 import bank from "./bank.ts";
-import { headerV1, depotV1 } from "./shapes.ts";
+import exportFile from "./export-file.ts";
 
 const hosts = ["https://portal.fnz.de/*"];
 
@@ -22,7 +21,7 @@ async function read({ number }: Pick<Account, "number">) {
         `https://portal.fnz.de/(${key})/finvesto/EOY/EL/`,
       );
       if (new URL(loaded).pathname.endsWith("/login")) continue;
-      return inject<string>(tabId, {
+      return inject<ArrayBuffer>(tabId, {
         world: "MAIN",
         func: exportTransactions,
         args: [number],
@@ -31,23 +30,10 @@ async function read({ number }: Pick<Account, "number">) {
     return null;
   });
   if (csv === null) throw await notLoggedIn("https://portal.fnz.de/finvesto");
-  return { shapeVersion: 1, rawTransactions: parseCsv(csv, number) };
+  return exportFile.exportFiles.depot.read(csv, number);
 }
 
-export function parseCsv(text: string, number: string) {
-  const [header, ...rows] = text.split("\r\n").filter(Boolean);
-  if (header !== headerV1) throw shapeMismatch(bank.name);
-  const rawTransactions = parseRawTransactions(
-    bank.name,
-    depotV1,
-    rows.map((row) => row.split(";")),
-  );
-  if (rawTransactions.some(([depotNumber]) => depotNumber !== number))
-    throw new Error(`${bank.name} exported another depot than the one synced.`);
-  return rawTransactions;
-}
-
-async function exportTransactions(number: string): Promise<string> {
+async function exportTransactions(number: string): Promise<ArrayBuffer> {
   async function call(path: string): Promise<Response> {
     const response = await fetch(`eox/rest/${path}`);
     if (!response.ok)
@@ -97,7 +83,7 @@ async function exportTransactions(number: string): Promise<string> {
   const csv = await call(
     `order-transaction/umsaetze-csv-end-customer/filter/${encodeURIComponent(btoa(encodeURIComponent(JSON.stringify(filter))))}`,
   );
-  return new TextDecoder("windows-1252").decode(await csv.arrayBuffer());
+  return csv.arrayBuffer();
 }
 
 export default {

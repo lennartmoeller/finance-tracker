@@ -61,3 +61,20 @@ The frontend deletes an account only after the user types its name, as the popup
 **Reason:** inferred, since the maintainer confirmed the decision but stated no reason: deleting an account deletes all its transactions, and a synced history may reach further back than the bank still offers, so it cannot always be synced again, while a rule is cheap to write again.
 
 **Rejected alternative:** the Rules view's one confirming click for accounts too.
+
+## An account's upload opens a side panel
+
+**Id:** f32a88d3-e177-4cb4-bbf5-8b189a0b0f05
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer decisions in a planning dialogue, 2026-11-16, from a clickable mockup of three layouts, and the review of the panel in the mock mode the same day
+**See:** ingestion.md#uploads-read-a-banks-export-as-the-extension-does-and-go-through-sync — ba967acd-5e5b-4f2f-aee3-ba450b30766e — as of 2026-11-16
+
+An account that takes an upload has an upload icon among its row actions and "Import file" in its breadcrumb, which open a side panel naming the export to download from its bank, with a drop zone, a file chooser, and the counts or the refusal centred below it.
+
+**Reason:** the panel reuses the Accounts view's side panel, has room to name the export the bank's website offers, and shows the result where the upload happened.
+
+**Rejected alternative:** the icon opening the file picker at once with the result in a toast, one click less but a new kind of element and no room to name the export.
+
+**Rejected alternative:** an import section in the account's edit panel, which mixes an immediate action into a form that is saved.

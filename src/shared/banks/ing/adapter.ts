@@ -1,44 +1,15 @@
 import type { BankAdapter } from "../../bank.ts";
-import { parseRawTransactions, shapeMismatch } from "../../raw-transactions.ts";
 import { inject, navigate, notLoggedIn, withSyncTab } from "../../sync-tab.ts";
 import bank from "./bank.ts";
-import { cashV1, headerV1 } from "./shapes.ts";
+import exportFile from "./export-file.ts";
 
 const origin = "https://banking.ing.de";
 const hosts = [`${origin}/*`];
 
-export function parseCsv(csv: AllowSharedBufferSource, iban: string) {
-  const lines = new TextDecoder("windows-1252")
-    .decode(csv)
-    .split(/\r?\n/)
-    .filter(Boolean);
-  const exportIban = lines
-    .find((line) => line.startsWith("IBAN;"))
-    ?.split(";")[1]
-    ?.replaceAll(" ", "");
-  if (exportIban !== iban)
-    throw new Error("ING exported another account than the one synced.");
-  const header = lines.indexOf(headerV1);
-  if (header < 0) throw shapeMismatch(bank.name);
-  return parseRawTransactions(
-    bank.name,
-    cashV1,
-    lines.slice(header + 1).map((line) => {
-      const cells = line.split(";");
-      // Verwendungszweck is free text that may contain semicolons, so a row is anchored on the four cells before it and the five after it.
-      return [
-        ...cells.slice(0, 4),
-        cells.slice(4, -5).join(";"),
-        ...cells.slice(-5),
-      ];
-    }),
-  );
-}
-
 async function read({ number }: { number: string }) {
   browser.downloads.onCreated.addListener(eraseExportDownload);
   try {
-    const rawTransactions = await withSyncTab(async (tabId) => {
+    return await withSyncTab(async (tabId) => {
       await open(tabId, `${origin}/app/obligo`);
       const url = await inject<string | undefined>(tabId, {
         func: transactionListUrl,
@@ -51,9 +22,8 @@ async function read({ number }: { number: string }) {
         captureCsv(tabId),
         inject(tabId, { func: startCsvExport }),
       ]);
-      return parseCsv(csv, number);
+      return exportFile.exportFiles.cash.read(csv, number);
     });
-    return { shapeVersion: 1, rawTransactions };
   } finally {
     browser.downloads.onCreated.removeListener(eraseExportDownload);
   }

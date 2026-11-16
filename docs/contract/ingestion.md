@@ -25,6 +25,30 @@ sequenceDiagram
 
 A sync leaves the overlap with earlier syncs to the identities already stored, so the browser extension keeps no state between syncs.
 
+## Upload
+
+```mermaid
+sequenceDiagram
+  actor User
+  participant Bank as Bank website
+  participant FE as Frontend
+  participant BE as Backend
+  User->>Bank: Download the account's transaction export
+  User->>FE: Choose or drop the file in the account's import panel
+  FE->>FE: Read the file with the bank's export file, which the adapter reads its export with too
+  alt another bank's export, another account's or another format
+    FE->>User: Report the refusal and send nothing
+  else the export matches
+    FE->>BE: sync the raw transactions with their shape version
+    BE->>BE: Store each raw transaction with a new identity, and the normalized transaction extracted from it
+    BE-->>FE: Imported and skipped counts
+    FE->>User: Show the counts
+  end
+```
+
+An account takes an upload if its bank's export file declares its type, one file at a time.
+A transaction gets the same identity whether a sync or an upload delivered it, so either skips what the other stored.
+
 ## By hand
 
 ```mermaid
@@ -51,7 +75,7 @@ Two shape versions reach the backend only this way:
 
 ## Adapters
 
-Each bank is a folder in [`src/shared/banks/`](../../src/shared/banks/), as [Banks](./banks.md) shows, with its extraction, its shape versions, one for each structure in which it has delivered an account type's raw transactions, and its adapter if the browser extension syncs it.
+Each bank is a folder in [`src/shared/banks/`](../../src/shared/banks/), as [Banks](./banks.md) shows, with its extraction, its shape versions, one for each structure in which it has delivered an account type's raw transactions, its adapter if the browser extension syncs it, and its export file if the user can upload its export.
 An adapter reads the account in an inactive tab within the user's session, and sends every row or object its bank delivers as one raw transaction.
 Where a diagram calls a bank's API, the adapter calls it from within the bank's page, so that the session authenticates the call.
 

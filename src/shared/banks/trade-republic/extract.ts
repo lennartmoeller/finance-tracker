@@ -38,6 +38,9 @@ export default {
     },
     depot: {
       1: extraction(rawTransactionV1, (data) => {
+        // An IPO subscription pre-pays cash for shares Trade Republic allots later, so the depot holds nothing yet.
+        if (data.type === "IPO_SUBSCRIPTION")
+          return { identity: data.transaction_id };
         const { date, amount, description } = booking(data);
         const trade = data.type === "BUY" || data.type === "SELL";
         return {

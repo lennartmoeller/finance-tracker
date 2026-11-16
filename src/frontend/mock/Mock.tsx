@@ -72,6 +72,8 @@ function fakeBackend(state: keyof typeof dataStates) {
     return rules.map(({ id, ...rule }) => ({ ...rule, id: id ?? next++ }));
   };
   const accountRefusal = "This bank already has an account with this name.";
+  // The fake data holds no raw transactions, so a file's rows count as stored once a sync of this session imported them.
+  const synced = new Map<number, Set<string>>();
   const api: Api = {
     account: {
       list: async () => (await load()).accounts,
@@ -162,6 +164,23 @@ function fakeBackend(state: keyof typeof dataStates) {
         store(({ categories }) => ({
           categories: categories.filter((category) => category.id !== id),
         })),
+    },
+    sync: async ({ accountId, rawTransactions }) => {
+      const rows = new Set(rawTransactions.map((row) => JSON.stringify(row)));
+      const seen = synced.get(accountId) ?? new Set();
+      const imported = [...rows].filter((row) => !seen.has(row)).length;
+      await store(
+        ({ accounts }) => ({
+          accounts: accounts.map((account) =>
+            account.id === accountId
+              ? { ...account, lastSyncedAt: new Date() }
+              : account,
+          ),
+        }),
+        "The raw transactions don't match ING cash shape version 1.",
+      );
+      synced.set(accountId, seen.union(rows));
+      return { imported, skipped: rawTransactions.length - imported };
     },
   };
   return { load, api };

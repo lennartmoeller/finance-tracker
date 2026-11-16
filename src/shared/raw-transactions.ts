@@ -3,8 +3,11 @@ import type { Extracted, Extraction } from "./bank.ts";
 
 export const shapeMismatch = (bank: string) =>
   new Error(
-    `${bank} changed the format of its transactions, so nothing was sent. The adapter needs a new shape version.`,
+    `The file doesn't match the ${bank} export the finance tracker reads.`,
   );
+
+export const anotherAccount = (bank: string) =>
+  new Error(`The ${bank} export is of another account.`);
 
 export function parseRawTransactions<T>(
   bank: string,

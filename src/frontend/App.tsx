@@ -31,9 +31,9 @@ export type Data = {
   categories: Category[];
 };
 
-export type Api = Pick<ApiClient, "account" | "brand" | "category">;
+export type Api = Pick<ApiClient, "account" | "brand" | "category" | "sync">;
 
-export type Change = (call: (api: Api) => Promise<unknown>) => Promise<void>;
+export type Change = <T>(call: (api: Api) => Promise<T>) => Promise<T>;
 
 export type Loading = { data: Data | undefined; error: string };
 
@@ -90,8 +90,9 @@ export function App({ load, api }: { load: () => Promise<Data>; api: Api }) {
   }, [load]);
 
   const change: Change = async (call) => {
-    await call(api);
+    const result = await call(api);
     setLoading(sorted(await load()));
+    return result;
   };
 
   return (

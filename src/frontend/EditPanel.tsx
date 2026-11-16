@@ -7,7 +7,7 @@ export type Removal = {
   label: string;
   question: string;
   confirmation?: string;
-  remove: () => Promise<void>;
+  remove: () => Promise<unknown>;
 };
 
 export function EditPanel({
@@ -24,7 +24,7 @@ export function EditPanel({
   icon?: ReactNode;
   subtitle: ReactNode;
   saveLabel?: string;
-  onSave: (() => Promise<void>) | undefined;
+  onSave: (() => Promise<unknown>) | undefined;
   removal: Removal | undefined;
   onClose: () => void;
   children: ReactNode;
@@ -34,7 +34,7 @@ export function EditPanel({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  async function run(action: () => Promise<void>) {
+  async function run(action: () => Promise<unknown>) {
     setBusy(true);
     setError("");
     try {

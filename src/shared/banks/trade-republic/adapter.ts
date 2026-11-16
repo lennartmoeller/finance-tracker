@@ -1,51 +1,16 @@
 import type { BankAdapter } from "../../bank.ts";
 import type { Account } from "../../contract.ts";
-import { parseRawTransactions, shapeMismatch } from "../../raw-transactions.ts";
 import { inject, navigate, notLoggedIn, withSyncTab } from "../../sync-tab.ts";
 import bank from "./bank.ts";
-import { headerV1, rawTransactionV1 } from "./shapes.ts";
+import exportFile from "./export-file.ts";
 
 const webApp = "https://app.traderepublic.com/";
-
-export function parseCsv(text: string, type: Account["type"]) {
-  const [header, ...rows] = quotedRows(text) ?? [];
-  if (JSON.stringify(header) !== JSON.stringify(headerV1))
-    throw shapeMismatch(bank.name);
-  const parsed = parseRawTransactions(
-    bank.name,
-    rawTransactionV1,
-    rows.map((cells) =>
-      Object.fromEntries(
-        cells.map((cell, index) => [headerV1[index] ?? index, cell]),
-      ),
-    ),
-  );
-  // The export holds the cash account's and the depot's rows alike, and the depot's rows are those with an ISIN: trades, dividends and stock perks.
-  return type === "depot"
-    ? parsed.filter(({ symbol }) => symbol !== "")
-    : parsed;
-}
-
-function quotedRows(text: string): string[][] | undefined {
-  const cell = /"((?:[^"]|"")*)"(,|\n|$)/y;
-  const rows: string[][] = [];
-  let row: string[] = [];
-  while (cell.lastIndex < text.length) {
-    const [, quoted, separator] = cell.exec(text) ?? [];
-    if (quoted === undefined) return undefined;
-    row.push(quoted.replaceAll('""', '"'));
-    if (separator === ",") continue;
-    rows.push(row);
-    row = [];
-  }
-  return row.length ? undefined : rows;
-}
 
 async function exportCsv(
   name: string,
   type: Account["type"],
   number: string,
-): Promise<string | null> {
+): Promise<ArrayBuffer | null> {
   const loggedOut = new Error();
   async function call(path: string, init?: RequestInit) {
     const response = await fetch(
@@ -133,7 +98,9 @@ async function exportCsv(
     }
     if (job.status !== "COMPLETED")
       throw new Error(`${name}'s export ended with status ${job.status}.`);
-    return await (await call(`${exports}/download?jobId=${job.jobId}`)).text();
+    return await (
+      await call(`${exports}/download?jobId=${job.jobId}`)
+    ).arrayBuffer();
   } catch (error) {
     if (error === loggedOut) return null;
     throw error;
@@ -148,16 +115,13 @@ export default {
     const csv = await withSyncTab(async (tabId) => {
       await navigate(tabId, webApp);
       // The API authenticates the session's cookies and refuses requests without them, so the export calls it from the page's own world, as the web app does.
-      return inject<string | null>(tabId, {
+      return inject<ArrayBuffer | null>(tabId, {
         world: "MAIN",
         func: exportCsv,
         args: [bank.name, type, number],
       });
     });
     if (csv === null) throw await notLoggedIn(webApp);
-    return {
-      shapeVersion: 1,
-      rawTransactions: parseCsv(csv, type),
-    };
+    return exportFile.exportFiles[type].read(csv);
   },
 } satisfies BankAdapter;
