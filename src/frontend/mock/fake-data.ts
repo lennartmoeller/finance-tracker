@@ -515,7 +515,7 @@ export function fakeData(): Data {
           "Hausverwaltung Beispiel GmbH",
           `Miete ${period}\nWhg. 3 OG links`,
         ),
-      29: () =>
+      4: () =>
         cash(
           everyday,
           date,

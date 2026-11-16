@@ -46,7 +46,7 @@ export function transfers(transactions: Pairable[], accounts: Bank[]) {
     movement.account.bank !== account.bank &&
     (names(movement.counterparty, account.bank) ||
       movement.iban === account.number);
-  // A bank name says only "some account at that bank", so the booking on that account must not name anyone else.
+  // A bank name says only "some account at that bank", so the booking on that account must not name anyone else; and a bank collects for PayPal or credits a withdrawal only after the other side's own booking.
   const proofOf = (one: Movement, other: Movement): Proof | null => {
     if (
       one.account.bank === other.account.bank &&
@@ -66,7 +66,8 @@ export function transfers(transactions: Pairable[], accounts: Bank[]) {
       if (
         by.account.bank !== at.account.bank &&
         names(by.counterparty, at.account.bank) &&
-        (at.counterparty === null || pointsAt(at, by.account))
+        (at.counterparty === null || pointsAt(at, by.account)) &&
+        by.date >= at.date
       )
         return { kind: "bank", by: by.id };
     return null;
