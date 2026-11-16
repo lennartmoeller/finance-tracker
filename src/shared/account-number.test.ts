@@ -2,11 +2,12 @@ import { expect, test } from "vitest";
 import {
   accountNumberIssue,
   depotNumber,
+  email,
   groupAccountNumber,
   iban,
 } from "./account-number.ts";
 
-test("a German IBAN with matching check digits and a depot number of its bank's length pass", () => {
+test("a German IBAN with matching check digits, a depot number of its bank's length and an email address pass", () => {
   expect(
     accountNumberIssue("Muster Bank", iban, "DE89370400440532013000"),
   ).toBe(undefined);
@@ -17,9 +18,12 @@ test("a German IBAN with matching check digits and a depot number of its bank's 
       "100123456700",
     ),
   ).toBe(undefined);
+  expect(accountNumberIssue("Muster Pay", email, "max@example.com")).toBe(
+    undefined,
+  );
 });
 
-test("a mistyped or foreign IBAN and a depot number of another length or with letters are named", () => {
+test("a mistyped or foreign IBAN, a depot number of another length or with letters and a malformed email address are named", () => {
   expect(
     accountNumberIssue("Muster Bank", iban, "DE89370400440532013001"),
   ).toBe("This IBAN's check digits don't match. Check it for a typo.");
@@ -36,6 +40,10 @@ test("a mistyped or foreign IBAN and a depot number of another length or with le
   expect(accountNumberIssue("Muster Bank", format, "1234A")).toBe(
     "A depot number has digits only.",
   );
+  for (const malformed of ["max.example.com", "max @example.com"])
+    expect(accountNumberIssue("Muster Pay", email, malformed)).toBe(
+      "An email address has one @ and no spaces.",
+    );
 });
 
 test("an account number groups as typed", () => {

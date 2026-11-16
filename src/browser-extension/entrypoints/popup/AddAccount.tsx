@@ -8,14 +8,14 @@ import {
 } from "@finance-tracker/shared/account-number";
 import { typeAccountNumber } from "@finance-tracker/shared/account-number-input";
 import { accountTypeNames } from "@finance-tracker/shared/account-type-names";
-import type { Bank } from "@finance-tracker/shared/bank";
+import type { BankAdapter } from "@finance-tracker/shared/bank";
 import { errorMessage } from "@finance-tracker/shared/error-message";
 import type { Account } from "@finance-tracker/shared/contract";
 import { apiClient } from "../../api.ts";
 import { banks } from "../../banks.ts";
 import { BankLogo } from "./BankLogo.tsx";
 
-const accountTypes = (bank: Bank) =>
+const accountTypes = (bank: BankAdapter) =>
   Object.keys(bank.accounts) as Account["type"][];
 
 export function AddAccount({
@@ -26,7 +26,7 @@ export function AddAccount({
   onAdded: (account: Account) => void;
 }) {
   const [name, setName] = useState("");
-  const [bank, setBank] = useState<Bank>();
+  const [bank, setBank] = useState<BankAdapter>();
   const [type, setType] = useState<Account["type"]>();
   const [number, setNumber] = useState("");
   const [touched, setTouched] = useState(false);
@@ -43,7 +43,10 @@ export function AddAccount({
   const complete = number.length === format?.length;
   const numberError = complete || touched ? numberIssue : undefined;
 
-  function choose(nextBank: Bank, nextType: Account["type"] | undefined) {
+  function choose(
+    nextBank: BankAdapter,
+    nextType: Account["type"] | undefined,
+  ) {
     setBank(nextBank);
     setType(nextType);
     setNumber("");

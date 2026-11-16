@@ -12,7 +12,7 @@ create table accounts (
   constraint accounts_bank_number_key unique (bank, number),
   constraint accounts_bank_name_key unique (bank, name),
   constraint accounts_name_filled check (name <> ''),
-  constraint accounts_bank_known check (bank in ('Deutsche Bank', 'finvesto', 'ING', 'Sparkasse', 'Trade Republic')),
+  constraint accounts_bank_known check (bank in ('Deutsche Bank', 'finvesto', 'ING', 'PayPal', 'Sparkasse', 'Trade Republic')),
   constraint accounts_type_known check (type in ('cash', 'depot')),
   constraint accounts_number_filled check (number <> ''),
   constraint accounts_start_balance_of_cash check (type = 'cash' or start_balance is null),
@@ -53,10 +53,12 @@ create table cash_transactions (
   amount numeric not null,
   currency text not null,
   counterparty text,
+  counterparty_iban text,
   description text,
   constraint cash_transactions_amount_in_cents check (scale(amount) = 2),
   constraint cash_transactions_currency_format check (currency ~ '^[A-Z]{3}$'),
   constraint cash_transactions_counterparty_filled check (counterparty <> ''),
+  constraint cash_transactions_counterparty_iban_format check (counterparty_iban ~ '^DE\d{20}$'),
   constraint cash_transactions_description_filled check (description <> '')
 );
 
@@ -121,6 +123,13 @@ create table logos (
   image bytea,
   constraint logos_one_identifier check ((domain is null) <> (isin is null)),
   constraint logos_domain_format check (domain ~ '^([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$')
+);
+
+-- A row with a partner pins the two transactions together as a transfer; a row without one marks its transaction as no transfer.
+create table transfer_corrections (
+  transaction_id integer primary key references transactions on delete cascade,
+  partner_id integer unique references transactions on delete cascade,
+  constraint transfer_corrections_partner_other check (partner_id <> transaction_id)
 );
 
 create function require_account_type() returns trigger language plpgsql as $$
@@ -188,5 +197,36 @@ $$;
 
 create trigger categories_in_tree before insert or update of parent_id on categories
   for each row execute function require_category_tree();
+
+create function require_transfer_pair() returns trigger language plpgsql as $$
+begin
+  if new.partner_id is null then
+    return new;
+  end if;
+  if not exists (select from transfer_corrections where transaction_id = new.partner_id and partner_id = new.transaction_id) then
+    raise exception 'A pinned transfer pins both of its transactions to each other.' using errcode = 'check_violation';
+  end if;
+  if not exists (
+    select from transactions one
+    join transactions other on other.id = new.partner_id
+    left join cash_transactions one_cash on one_cash.transaction_id = one.id
+    left join depot_transactions one_depot on one_depot.transaction_id = one.id
+    left join cash_transactions other_cash on other_cash.transaction_id = other.id
+    left join depot_transactions other_depot on other_depot.transaction_id = other.id
+    where one.id = new.transaction_id
+      and one.account_id <> other.account_id
+      and coalesce(one_cash.currency, one_depot.currency) = coalesce(other_cash.currency, other_depot.currency)
+      and coalesce(one_cash.amount, one_depot.amount) = -coalesce(other_cash.amount, other_depot.amount)
+      and coalesce(one_cash.amount, one_depot.amount) <> 0
+  ) then
+    raise exception 'A pinned transfer joins opposite equal amounts in one currency on two accounts.' using errcode = 'check_violation';
+  end if;
+  return new;
+end
+$$;
+
+create constraint trigger transfer_corrections_pair after insert or update on transfer_corrections
+  deferrable initially deferred
+  for each row execute function require_transfer_pair();
 
 commit;

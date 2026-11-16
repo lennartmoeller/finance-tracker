@@ -1,6 +1,6 @@
 import {
   groupAccountNumber,
-  type AccountNumberFormat,
+  type GroupedAccountNumberFormat,
 } from "./account-number.ts";
 
 export function typeAccountNumber(
@@ -9,7 +9,7 @@ export function typeAccountNumber(
     nativeEvent,
   }: { currentTarget: HTMLInputElement; nativeEvent: Event },
   previous: string,
-  { label, length, groups }: AccountNumberFormat,
+  { label, length, groups }: GroupedAccountNumberFormat,
 ): string {
   const clean = (text: string) =>
     label === "IBAN"

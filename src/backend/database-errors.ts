@@ -24,6 +24,11 @@ const messages: Record<string, string> = {
     "Another category with the same parent has this name.",
   categories_name_filled: "Name the category.",
   rules_condition_given: "Give each rule at least one condition.",
+  transfer_corrections_partner_other:
+    "A transaction can't be its own transfer partner.",
+  transfer_corrections_transaction_id_fkey: "The transaction does not exist.",
+  transfer_corrections_partner_id_fkey:
+    "The partner transaction does not exist.",
   rules_counterparty_pattern_valid:
     "A counterparty pattern matches every transaction.",
   rules_description_pattern_valid:

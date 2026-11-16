@@ -78,7 +78,15 @@ function Matches({
     }),
   };
   return (
-    <a href={href({ view: "transactions", tab: "cash", filters, sort: null })}>
+    <a
+      href={href({
+        view: "transactions",
+        tab: "cash",
+        filters,
+        sort: null,
+        transfers: null,
+      })}
+    >
       Matches {formatCount(count)}{" "}
       {count === 1 ? "transaction" : "transactions"}
     </a>

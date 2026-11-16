@@ -23,6 +23,11 @@ import {
 import { fetchMissingLogos, logoIdOf, storedLogo } from "./logos.ts";
 import { fillPrices, listPrices } from "./prices.ts";
 import { sync } from "./sync.ts";
+import {
+  excludeTransfers,
+  pinTransfer,
+  releaseTransfers,
+} from "./transfer-corrections.ts";
 import { listTransactions } from "./transactions.ts";
 
 const { DATABASE_URL, API_TOKEN, LOGO_DEV_SECRET_KEY } = process.env;
@@ -64,6 +69,15 @@ const handler = new RPCHandler(
         await fetchMissingLogos(db, LOGO_DEV_SECRET_KEY);
         return listTransactions(db);
       }),
+    },
+    transfer: {
+      pin: os.transfer.pin.handler(({ input }) => pinTransfer(db, input)),
+      exclude: os.transfer.exclude.handler(({ input }) =>
+        excludeTransfers(db, input),
+      ),
+      release: os.transfer.release.handler(({ input }) =>
+        releaseTransfers(db, input),
+      ),
     },
     brand: {
       list: os.brand.list.handler(async () => {

@@ -1,12 +1,15 @@
 import type { Account } from "./contract.ts";
 
-export type AccountNumberFormat = {
+export type GroupedAccountNumberFormat = {
   label: "IBAN" | "Depot number";
   length: number;
   groups: readonly number[];
 };
 
-export const iban: AccountNumberFormat = {
+export type AccountNumberFormat =
+  GroupedAccountNumberFormat | { label: "Email" };
+
+export const iban: GroupedAccountNumberFormat = {
   label: "IBAN",
   length: 22,
   groups: [4, 4, 4, 4, 4, 2],
@@ -15,13 +18,20 @@ export const iban: AccountNumberFormat = {
 export const depotNumber = (
   length: number,
   groups: readonly number[],
-): AccountNumberFormat => ({ label: "Depot number", length, groups });
+): GroupedAccountNumberFormat => ({ label: "Depot number", length, groups });
+
+export const email: AccountNumberFormat = { label: "Email" };
 
 export function accountNumberIssue(
   bank: string,
-  { label, length }: AccountNumberFormat,
+  format: AccountNumberFormat,
   number: string,
 ): string | undefined {
+  if (format.label === "Email")
+    return /^[^\s@]+@[^\s@]+$/.test(number)
+      ? undefined
+      : "An email address has one @ and no spaces.";
+  const { label, length } = format;
   if (label === "IBAN") {
     if (number.length !== length)
       return `An IBAN has ${length.toString()} characters; this one has ${number.length.toString()}.`;
@@ -37,6 +47,13 @@ export function accountNumberIssue(
     return `A ${bank} depot number has ${length.toString()} digits; this one has ${number.length.toString()}.`;
   return undefined;
 }
+
+// Banks write an IBAN in groups or inside free text; an account of the user's has a German IBAN, so only those count.
+export const ibanIn = (text: string) =>
+  text
+    .toUpperCase()
+    .replace(/\s/g, "")
+    .match(/DE\d{20}/)?.[0] ?? null;
 
 export const takenAccountNumberIssue = (
   accounts: readonly Account[],

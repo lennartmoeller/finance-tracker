@@ -24,6 +24,7 @@ test("a booking pads its date and its amount's cents, its identity hashes the wh
         amount: "-100.80",
         currency: "EUR",
         counterparty: "Max Mustermann",
+        counterpartyIban: null,
         description: "Umbuchung",
       },
     },

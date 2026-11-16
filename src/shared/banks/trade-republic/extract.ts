@@ -1,3 +1,4 @@
+import { ibanIn } from "../../account-number.ts";
 import type { BankExtraction } from "../../bank.ts";
 import { cents, decimalSum, negated } from "../../decimal.ts";
 import { depotFields } from "../../depot.ts";
@@ -31,6 +32,9 @@ export default {
             amount: cents(amount),
             currency: data.currency,
             counterparty: data.counterparty_name || null,
+            // Before June 2026 Trade Republic wrote the other account's IBAN only into the description, as in "Direct Debit Top up with DE…".
+            counterpartyIban:
+              ibanIn(data.counterparty_iban) ?? ibanIn(data.description),
             description,
           },
         };
