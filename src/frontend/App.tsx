@@ -5,6 +5,7 @@ import {
   Landmark,
   LayoutDashboard,
   ListFilter,
+  SettingsIcon,
   type LucideIcon,
 } from "lucide-react";
 import type { ApiClient } from "@finance-tracker/shared/client";
@@ -14,6 +15,7 @@ import type {
   Brand,
   Category,
   Price,
+  Settings as InstallationSettings,
   Transaction,
 } from "@finance-tracker/shared/contract";
 import { Accounts } from "./accounts/Accounts.tsx";
@@ -21,6 +23,7 @@ import { Overview } from "./overview/Overview.tsx";
 import { href, useRoute, type Route } from "./route.ts";
 import { Rules } from "./rules/Rules.tsx";
 import { Securities } from "./securities/Securities.tsx";
+import { Settings } from "./settings/Settings.tsx";
 import { Transactions } from "./transactions/Transactions.tsx";
 
 export type Data = {
@@ -29,18 +32,21 @@ export type Data = {
   prices: Price[];
   brands: Brand[];
   categories: Category[];
+  settings: InstallationSettings;
 };
 
 export type Api = Pick<
   ApiClient,
-  "account" | "brand" | "category" | "sync" | "transfer"
+  "account" | "brand" | "category" | "settings" | "sync" | "transfer"
 >;
 
 export type Change = <T>(call: (api: Api) => Promise<T>) => Promise<T>;
 
 export type Loading = { data: Data | undefined; error: string };
 
-const views: { route: Route; name: string; Icon: LucideIcon }[] = [
+type View = { route: Route; name: string; Icon: LucideIcon };
+
+const views: View[] = [
   { route: { view: "overview" }, name: "Overview", Icon: LayoutDashboard },
   {
     route: {
@@ -65,6 +71,12 @@ const views: { route: Route; name: string; Icon: LucideIcon }[] = [
   },
   { route: { view: "rules", tab: "brands" }, name: "Rules", Icon: ListFilter },
 ];
+
+const settingsView: View = {
+  route: { view: "settings" },
+  name: "Settings",
+  Icon: SettingsIcon,
+};
 
 const byBankAndName = (a: Account, b: Account) =>
   a.bank.localeCompare(b.bank) || a.name.localeCompare(b.name);
@@ -104,22 +116,23 @@ export function App({ load, api }: { load: () => Promise<Data>; api: Api }) {
     return result;
   };
 
+  const link = ({ route: target, name, Icon }: View) => (
+    <a
+      key={name}
+      href={href(target)}
+      aria-current={route.view === target.view ? "page" : undefined}
+    >
+      <Icon />
+      {name}
+    </a>
+  );
+
   return (
     <div className="app">
       <aside className="sidebar">
         <div className="app-title">Finance Tracker</div>
-        <nav className="nav">
-          {views.map(({ route: target, name, Icon }) => (
-            <a
-              key={name}
-              href={href(target)}
-              aria-current={route.view === target.view ? "page" : undefined}
-            >
-              <Icon />
-              {name}
-            </a>
-          ))}
-        </nav>
+        <nav className="nav">{views.map(link)}</nav>
+        <nav className="nav settings-nav">{link(settingsView)}</nav>
       </aside>
       <main className="main">
         {route.view === "overview" ? (
@@ -132,6 +145,8 @@ export function App({ load, api }: { load: () => Promise<Data>; api: Api }) {
           />
         ) : route.view === "securities" ? (
           <Securities loading={loading} isin={route.isin} />
+        ) : route.view === "settings" ? (
+          <Settings loading={loading} onChange={change} />
         ) : route.view === "rules" ? (
           <Rules
             key={route.tab}

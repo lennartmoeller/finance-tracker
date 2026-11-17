@@ -37,13 +37,13 @@ Why the finance tracker is built the way it is, in the [Keep the Why](https://ke
 
 ## D
 
-- [database.md](database.md) — why the schema is one SQL file without an ORM, and how pgschema brings the database to it
+- [database.md](database.md) — why the schema is one SQL file without an ORM, how pgschema brings the database to it, and why the installation's settings are one row of typed columns
 
 ## E
 
 ## F
 
-- [figures.md](figures.md) — how the frontend's balances, gains and distributions count, why the frontend computes them, and why the start balance keeps its meaning when the frontend sets it
+- [figures.md](figures.md) — how the frontend's balances, gains and distributions count, why the frontend computes them, why the start balance keeps its meaning when the frontend sets it, and why the start date hides earlier transactions from lists and charts without deleting them
 
 ## G
 

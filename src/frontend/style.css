@@ -84,6 +84,8 @@ a {
 }
 
 .sidebar {
+  display: flex;
+  flex-direction: column;
   border-right: 1px solid var(--border);
   background: var(--surface);
 }
@@ -120,6 +122,11 @@ a {
 .nav a[aria-current="page"] {
   background: var(--selected);
   color: var(--text);
+}
+
+.settings-nav {
+  margin-top: auto;
+  padding-bottom: 8px;
 }
 
 .nav svg {
@@ -610,6 +617,17 @@ tbody tr.selected td {
 .pattern-text .token.alternation {
   color: var(--regex-alternation);
   font-weight: 700;
+}
+
+.field-message {
+  min-height: 16px;
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.field-message.invalid {
+  color: var(--danger-text);
 }
 
 .edit-actions {

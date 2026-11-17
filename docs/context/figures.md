@@ -94,3 +94,31 @@ The Accounts view's edit form takes a cash account's start balance as one amount
 **Rejected alternative:** a balance the bank showed on a date, from which the frontend adds and subtracts transactions, which issue #23 raised so that older transactions arriving later change nothing, but which adds a date column, a migration and date handling in the balance and its chart.
 
 **Consequence:** if older transactions ever arrive on an account with a start balance, the user corrects it in the frontend by hand.
+
+## The start date bounds what the frontend lists and charts, never what is stored
+
+**Id:** b3f30235-10b6-44eb-834e-d8193fac9465
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** maintainer request and decisions in a planning dialogue, 2026-11-17, with the scope and the frontend's part the agent's design, confirmed with the plan; the Transactions view's look decided in the settings page's mock round the same day
+**Revisit when:** an evaluation, such as the Overview's statistics, needs a figure over the period since the start date rather than over an account's or a security's whole life
+**See:** figures.md#a-cash-balance-starts-from-an-optional-start-balance — a53f4fef-6c7a-463b-bf4d-189f9d8b24ff — as of 2026-11-17
+
+The installation's settings hold an optional day on which transactions begin: the Transactions view lists, counts and sums only transactions from that day on, and every chart of the Accounts and the Securities view begins on it, opening with the balance, market value and invested money carried over from before.
+Every other figure counts every transaction: balances, market values, invested money, purchases, gains and distributions, and the lists of accounts and securities.
+The frontend applies it, since it computes every figure and needs the earlier transactions for the carried values, so `transaction.list`, `sync` and uploads are unbounded.
+
+**Reason:** the maintainer wants the evaluation to begin on 1 January 2024, because the Sparkasse and PayPal histories begin in mid-2023 and a half year at the start would distort every later yearly comparison; production begins there.
+
+**Reason:** hiding rather than deleting keeps every balance and holding right without a second meaning for the start balance, and a later, earlier start date shows the hidden transactions again.
+
+**Rejected alternative:** deleting the transactions before the start date and skipping them on every later sync and upload, which loses data only an old export file brings back, needs Sparkasse's start balance rewritten from 27.571,35 € to 14.120,70 €, and has to refuse a start date after a depot's first trade, whose shares are still held.
+
+**Rejected alternative:** `transaction.list` returning only transactions from the start date with an opening balance per account, which needs opening holdings per security for depots.
+
+**Rejected alternative:** only 1 January as a start date, with a year picker and a database check, which follows the reason most strictly but forces a history beginning mid-year to keep or drop its whole first year; only the first of a month; the maintainer chose any day, leaving the choice of a whole period to the user.
+
+**Rejected alternative:** a note in the Transactions view that earlier transactions are hidden, as "… since 01.01.2024" in its footer or as a last row linking to Settings; the user set the date and the Settings page says what it does.
+
+**Consequence:** a security sold or an account emptied wholly before the start date is still listed with its figures but charts nothing, and a transfer's panel still names a partner dated before it; production has neither.

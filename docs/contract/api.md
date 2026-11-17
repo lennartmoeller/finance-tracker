@@ -23,5 +23,7 @@ The backend serves oRPC procedures under `/rpc`, which [`contract.ts`](../../src
 | `category.remove` | Frontend | Removes a category with its rules |
 | `price.fill` | The cluster's daily CronJob, or the user by hand | Fills the prices the holding spans lack, as [Prices](./prices.md) shows |
 | `price.list` | Frontend | Lists every stored price |
+| `settings.get` | Frontend | Reads the installation's settings, none until first saved |
+| `settings.update` | Frontend | Saves the installation's settings |
 
 Beside the procedures, `GET /logos/<id>` serves a stored logo, as [Logos](./logos.md) shows.

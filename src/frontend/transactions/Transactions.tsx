@@ -437,7 +437,8 @@ function TransactionList<P extends Part>({
       sides: [...sides.values()].map(({ row }) => row),
       searched: [...sides.values()].flatMap(({ row: side }) => {
         const shown = kind.shown(side);
-        if (!shown) return [];
+        const start = data.settings.transactionsStart;
+        if (!shown || (start !== null && shown.part.date < start)) return [];
         const row: Row<P> = { ...side, ...shown };
         return [{ row, texts: columns.map(({ text }) => text(row) ?? "") }];
       }),

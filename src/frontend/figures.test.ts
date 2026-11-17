@@ -10,6 +10,7 @@ import {
   dailyTotals,
   dailyValues,
   depotFigures,
+  since,
 } from "./figures.ts";
 
 const fund = "IE00B3RBWM25";
@@ -81,6 +82,24 @@ test("the daily balances start with the start balance on the first transaction's
   expect(dailyBalances([{ ...account, closed: true }], "2026-11-04")).toEqual(
     balances,
   );
+});
+
+test("from the start date, the daily balances open with the start balance and every earlier amount", () => {
+  const cash = (date: string, amount: string) =>
+    ({ cash: { date, amount } }) as Transaction;
+  const account = {
+    startBalance: "27571.35",
+    closed: false,
+    transactions: [
+      cash("2023-06-01", "-13000.00"),
+      cash("2023-12-31", "-450.65"),
+      cash("2024-01-02", "-20.70"),
+    ],
+  };
+  expect(since("2024-01-01", dailyBalances([account], "2024-01-02"))).toEqual([
+    { date: "2024-01-01", balance: 14120.7 },
+    { date: "2024-01-02", balance: 14100 },
+  ]);
 });
 
 test("a reinvested distribution is no paid-out one, even where the shares it bought are worth cents more", () => {

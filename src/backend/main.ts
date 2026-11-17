@@ -22,6 +22,7 @@ import {
 } from "./categories.ts";
 import { fetchMissingLogos, logoIdOf, storedLogo } from "./logos.ts";
 import { fillPrices, listPrices } from "./prices.ts";
+import { readSettings, updateSettings } from "./settings.ts";
 import { sync } from "./sync.ts";
 import {
   excludeTransfers,
@@ -103,6 +104,12 @@ const handler = new RPCHandler(
     price: {
       fill: os.price.fill.handler(() => fillPrices(db)),
       list: os.price.list.handler(() => listPrices(db)),
+    },
+    settings: {
+      get: os.settings.get.handler(() => readSettings(db)),
+      update: os.settings.update.handler(({ input }) =>
+        updateSettings(db, input),
+      ),
     },
   }),
 );

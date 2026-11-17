@@ -16,12 +16,16 @@ import {
   dailyTotals,
   dailyValues,
   priced,
+  since,
   today,
   totalValue,
   unpricedAccounts,
   withFigures,
   withoutPrices,
   type AccountWithFigures,
+  type DayBalance,
+  type DayTotal,
+  type DayValues,
 } from "../figures.ts";
 import { formatMoney } from "../format.ts";
 import { Intro } from "../Intro.tsx";
@@ -110,7 +114,7 @@ function chartedValues(
   accounts: AccountWithFigures[],
   selected: AccountWithFigures | undefined,
   data: Data,
-) {
+): (DayBalance | DayValues | DayTotal)[] {
   if (selected?.type === "cash") return dailyBalances([selected], today());
   if (selected)
     return dailyValues(depotTransactions([selected]), data.prices, today());
@@ -269,7 +273,11 @@ function AccountList({ data, selectedId, onOpen }: ListProps) {
   );
   const selected = accounts.find(({ id }) => id === selectedId);
   const values = useMemo(
-    () => chartedValues(accounts, selected, data),
+    () =>
+      since(
+        data.settings.transactionsStart,
+        chartedValues(accounts, selected, data),
+      ),
     [accounts, selected, data],
   );
   const unpriced = unpricedAccounts(accounts);
