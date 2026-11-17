@@ -19,6 +19,12 @@ create table accounts (
   constraint accounts_start_balance_in_cents check (scale(start_balance) = 2)
 );
 
+create table settings (
+  id boolean primary key default true,
+  transactions_start date,
+  constraint settings_one_row check (id)
+);
+
 create table transactions (
   id integer primary key generated always as identity,
   account_id integer not null references accounts on delete cascade,

@@ -67,3 +67,22 @@ What the wrapper refuses, the maintainer runs by hand first, as [`CONTRIBUTING.m
 **Consequence:** pgschema overlooks NOT NULL constraint names, timestamp modifiers and commas in trigger arguments, so after a change by hand the schema dump is compared with that of a `psql -f schema.sql` build.
 
 **Consequence:** the role in `DATABASE_URL` needs the right to create a database, for `pgschema_plan`.
+
+## The installation's settings are one row of typed columns
+
+**Id:** fdd01947-8729-4373-9276-03b6b502ad72
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** the agent's design in a planning dialogue, 2026-11-17, confirmed by the maintainer with the plan
+**See:** figures.md#the-start-date-bounds-what-the-frontend-lists-and-charts-never-what-is-stored — b3f30235-10b6-44eb-834e-d8193fac9465 — as of 2026-11-17
+
+`settings` holds the settings the user changes for the whole installation in at most one row, whose boolean primary key a check fixes to true, with one column per setting; `settings.update` writes the row with `insert … on conflict (id) do update`, and `settings.get` reads no setting until the first save.
+
+**Reason:** a typed column lets the database check each setting's type and, for later settings, its values, and a further setting adds a column.
+
+**Reason:** the upsert needs no seeded row, which pgschema, planning only the schema's structure, would not insert.
+
+**Rejected alternative:** a key-value table, which keeps every value as text or JSON without a type check.
+
+**Rejected alternative:** an environment variable or Helm value, which the user cannot change in the app.

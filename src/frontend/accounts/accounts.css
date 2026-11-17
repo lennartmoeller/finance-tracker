@@ -94,17 +94,6 @@ tr.closed .bank {
   font-size: 12.5px;
 }
 
-.field-message {
-  min-height: 16px;
-  margin: 4px 0 0;
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.field-message.invalid {
-  color: var(--danger-text);
-}
-
 .check {
   display: flex;
   align-items: center;

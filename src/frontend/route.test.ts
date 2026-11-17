@@ -29,6 +29,7 @@ test("every screen comes back from its address", () => {
     { view: "accounts", accountId: null },
     { view: "securities", isin: "IE00B4L5Y983" },
     { view: "rules", tab: "categories" },
+    { view: "settings" },
   ];
   for (const route of routes) expect(parsed(href(route))).toEqual(route);
 });

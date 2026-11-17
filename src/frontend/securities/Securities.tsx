@@ -8,6 +8,7 @@ import {
   lastSale,
   priced,
   shares,
+  since,
   today,
   withoutPrices,
   type DepotFigures,
@@ -141,12 +142,15 @@ function Analysis({
   const charted = useDeferredValue(selected);
   const values = useMemo(
     () =>
-      dailyValues(
-        charted?.transactions ?? pricedTransactions,
-        data.prices,
-        today(),
+      since(
+        data.settings.transactionsStart,
+        dailyValues(
+          charted?.transactions ?? pricedTransactions,
+          data.prices,
+          today(),
+        ),
       ),
-    [charted, pricedTransactions, data.prices],
+    [charted, pricedTransactions, data.prices, data.settings],
   );
   if (!listed.length)
     return (

@@ -1,0 +1,12 @@
+.settings-form {
+  max-width: 420px;
+}
+
+.settings-form .skeleton {
+  width: 40%;
+}
+
+.settings-form .skeleton.field-skeleton {
+  width: 100%;
+  height: 32px;
+}

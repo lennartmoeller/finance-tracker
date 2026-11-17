@@ -821,5 +821,6 @@ export function fakeData(): Data {
     ),
     brands,
     categories,
+    settings: { transactionsStart: null },
   });
 }

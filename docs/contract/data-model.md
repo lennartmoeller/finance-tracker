@@ -92,6 +92,10 @@ erDiagram
     text isin FK "optional, unique, instead of a domain"
     bytea image "optional: a 256-pixel PNG"
   }
+  settings {
+    boolean id PK "true: the installation's one row"
+    date transactions_start "optional: the day the frontend's lists and charts begin"
+  }
 ```
 
 Every column is required unless the diagram marks it optional.
