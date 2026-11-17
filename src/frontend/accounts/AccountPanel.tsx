@@ -13,6 +13,7 @@ import type { Account } from "@finance-tracker/shared/contract";
 import type { Change } from "../App.tsx";
 import { bankLogo, banks } from "../banks.ts";
 import { EditPanel } from "../EditPanel.tsx";
+import { Field } from "../Field.tsx";
 import { formatMoneyInput, parseMoneyInput } from "../format.ts";
 
 type Props = {
@@ -31,34 +32,6 @@ const numberHint = (format: AccountNumberFormat) =>
     : format.label === "IBAN"
       ? `German IBAN, ${String(format.length)} characters`
       : `${String(format.length)} digits`;
-
-function Field({
-  id,
-  label,
-  message,
-  invalid = false,
-  children,
-}: {
-  id: string;
-  label: string;
-  message?: string | undefined;
-  invalid?: boolean;
-  children: ReactNode;
-}) {
-  return (
-    <div>
-      <label className="edit-label" htmlFor={id}>
-        {label}
-      </label>
-      {children}
-      {message !== undefined && (
-        <p className={invalid ? "field-message invalid" : "field-message"}>
-          {message}
-        </p>
-      )}
-    </div>
-  );
-}
 
 function Choices<Value extends string>({
   label,

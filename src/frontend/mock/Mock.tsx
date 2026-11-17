@@ -52,6 +52,16 @@ const dataStates = {
         matchTransactions({ ...data, brands: [], categories: [] }),
       ),
   ],
+  startDate: [
+    "Start date",
+    () =>
+      Promise.resolve({
+        ...data,
+        settings: {
+          transactionsStart: `${String(new Date().getFullYear() - 1)}-01-01`,
+        },
+      }),
+  ],
   rejectedSave: ["Rejected save", () => Promise.resolve(data)],
 } satisfies Record<string, [string, () => Promise<Data>]>;
 
@@ -213,6 +223,11 @@ function fakeBackend(state: keyof typeof dataStates) {
         store(({ transactions }) => ({
           transactions: corrected(transactions, ids, () => ({})),
         })),
+    },
+    settings: {
+      get: async () => (await load()).settings,
+      update: (settings) =>
+        store(() => ({ settings }), "Can't save the settings."),
     },
     sync: async ({ accountId, rawTransactions }) => {
       const rows = new Set(rawTransactions.map((row) => JSON.stringify(row)));

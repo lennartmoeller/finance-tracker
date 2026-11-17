@@ -23,7 +23,7 @@ flowchart LR
   onvista["onvista"]
   extension -- "reads raw transactions<br/>in the user's session" --> banks
   extension -- "accounts, syncs" --> backend
-  frontend -- "accounts, transactions, prices,<br/>brands, categories, uploads" --> backend
+  frontend -- "accounts, transactions, prices,<br/>brands, categories, uploads, settings" --> backend
   backend --> postgres
   backend -- "logos of brands and securities" --> logodev
   backend -- "prices of securities" --> onvista

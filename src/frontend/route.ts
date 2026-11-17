@@ -18,7 +18,8 @@ export type Route =
     }
   | { view: "accounts"; accountId: number | null }
   | { view: "securities"; isin: string | null }
-  | { view: "rules"; tab: "brands" | "categories" };
+  | { view: "rules"; tab: "brands" | "categories" }
+  | { view: "settings" };
 
 export function parseRoute({ pathname, searchParams }: URL): Route {
   const [, view, item = ""] = pathname.split("/");
@@ -44,6 +45,8 @@ export function parseRoute({ pathname, searchParams }: URL): Route {
       return { view, isin: item || null };
     case "rules":
       return { view, tab: item === "categories" ? item : "brands" };
+    case "settings":
+      return { view };
     default:
       return { view: "overview" };
   }
@@ -71,6 +74,8 @@ export function href(route: Route): string {
       return `/securities${route.isin === null ? "" : `/${route.isin}`}`;
     case "rules":
       return `/rules/${route.tab}`;
+    case "settings":
+      return "/settings";
   }
 }
 

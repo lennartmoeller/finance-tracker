@@ -88,6 +88,17 @@ export function parseMoneyInput(text: string): string | undefined {
     : `${sign ?? ""}${whole.replaceAll(".", "")}.${cents.padEnd(2, "0")}`;
 }
 
+export function parseDateInput(text: string): string | undefined {
+  const [, day, month, year] =
+    /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/.exec(text.trim()) ?? [];
+  if (!day || !month || !year) return undefined;
+  const date = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+  const time = Date.parse(`${date}T00:00Z`);
+  return !Number.isNaN(time) && new Date(time).toISOString().startsWith(date)
+    ? date
+    : undefined;
+}
+
 // A decimal as the filters match it: German, without grouping or currency, and a quantity without trailing zeros in its fraction.
 export const formatPlainAmount = (amount: string) => amount.replace(".", ",");
 

@@ -222,6 +222,11 @@ export function dailyValues(
   return values;
 }
 
+export const since = <Day extends { date: string }>(
+  start: string | null,
+  days: Day[],
+) => (start === null ? days : days.filter(({ date }) => date >= start));
+
 export type DayBalance = { date: string; balance: number };
 
 export function dailyBalances(
