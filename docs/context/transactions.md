@@ -1,5 +1,7 @@
 # Transactions
 
+How depot amounts count, how normalized transactions are stored and checked, how transfers between accounts pair on a proof, how the user corrects them by hand, and which unpaired ones are marked.
+
 ## Depot amounts as invested money
 
 **Id:** 61823f39-7074-47f5-b70c-e7b5e94916bc
@@ -189,4 +191,3 @@ An unpaired transaction not marked as no transfer is marked "probably a transfer
 **Rejected alternative:** marking doubtful automatic pairs for review, which the proofs make unnecessary.
 
 **Consequence:** marking a false alarm as no transfer also clears the mark of a partner that had no other candidate.
-

@@ -1,5 +1,7 @@
 # Banks
 
+Why every bank is one folder that the apps discover, why it declares the account types the extension syncs or the user uploads, and when a shape version may widen.
+
 ## Every bank is one folder that the apps discover
 
 **Id:** d2f8114b-dd33-47e2-bbf3-8f54bf4bff7e

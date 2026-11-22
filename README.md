@@ -49,7 +49,7 @@ The frontend and the browser extension reach the data only through the backend's
 - [Rules](./docs/contract/rules.md): how cash transactions get their brands and categories from rules.
 - [Logos](./docs/contract/logos.md): how brands and securities get their logos from Logo.dev.
 - [Hosting](./docs/contract/hosting.md): where the apps run and how they are released.
-- [Context](./docs/context/index.md): why the system is built as it is.
+- [Context](./docs/context/): why the system is built as it is.
 - [Contributing](./CONTRIBUTING.md): how to set up, run and change the system.
 
 ## License

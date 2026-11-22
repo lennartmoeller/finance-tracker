@@ -1,5 +1,7 @@
 # Hosting
 
+Why the finance tracker ships as a Helm chart with its own PostgreSQL, how nginx, the migrate step and the network policy guard it, how every merge releases, and how the extension finds and updates itself.
+
 ## A Helm chart on K3s is the only production deployment
 
 **Id:** 4fade0dd-8483-47e6-9e4d-862672214e6a
@@ -60,9 +62,10 @@ It has no probes, resource limits, Ingress, Helm hooks, CRDs, `lookup` or random
 
 **Id:** 8d06b288-8164-4561-a4e8-a7bf80152a0d
 **Type:** decision
-**Status:** active
+**Status:** needs-review
 **Evidence:** confirmed
 **Source:** conversation with the maintainer, 2026-11-12
+**Verification:** contradicted — Dependabot no longer runs since 2026-11-22; Renovate updates the PostgreSQL pins of compose.yaml and chart/values.yaml
 
 The chart runs PostgreSQL as a StatefulSet from the image Compose uses, with its volume from a claim template on K3s's local path provisioner and the superuser's password from the chart's Secret, so the migrate step may create the database `pgschema_plan`.
 
@@ -156,10 +159,11 @@ The frontend's code knows no token, and its dev server adds the token the same w
 
 **Id:** 54ea2989-5dba-49f4-9b35-f51482d5db20
 **Type:** decision
-**Status:** active
+**Status:** superseded
 **Evidence:** confirmed
 **Source:** conversation with the maintainer, 2026-11-12
 **See:** hosting.md#nginx-serves-the-frontend-and-adds-the-api-token — 5de12c1a-cef7-49ba-8e78-8dc488c7f6b3 — as of 2026-11-12
+**Superseded by:** a1896607-2947-42a0-b5b8-c982ea65fe78
 
 The frontend's image starts from nginx's mainline series, and Dependabot bumps it like every other base image.
 
@@ -202,9 +206,10 @@ The cluster's PostgreSQL starts empty: the extension syncs every account again a
 
 **Id:** 66a5b052-777d-4820-a44a-5ce88ba18203
 **Type:** decision
-**Status:** active
+**Status:** superseded
 **Evidence:** confirmed
 **Source:** conversation with the maintainer, 2026-11-12
+**Superseded by:** df546a83-10d4-4cb5-b211-5f0bc2cfdeba
 
 Each push to `main` derives the next semantic version from the last `v*` tag and the pushed commit's Conventional Commit subject, tags the commit, and publishes the images, the chart and the signed extension under that version.
 The version lives only in the tag: `chart/Chart.yaml` and the extension's `package.json` hold `0.0.0`, which the release overwrites in its build, and no release commit goes to `main`.
@@ -232,10 +237,11 @@ The first release is 1.0.0, from a pull request titled as a breaking change.
 
 **Id:** 177c7b22-84f6-468c-ba73-92b877b89581
 **Type:** decision
-**Status:** active
+**Status:** superseded
 **Evidence:** confirmed
 **Source:** the coding agent's proposal, confirmed by the maintainer with the plan on 2026-11-12
 **See:** hosting.md#every-merge-to-main-releases-everything-under-one-version — 66a5b052-777d-4820-a44a-5ce88ba18203 — as of 2026-11-12
+**Superseded by:** b368c677-0135-4fc5-bfad-4c1091edef1d
 
 The release workflow calls the CI workflow on the pushed commit before it computes a version, and CI no longer runs on pushes to `main` by itself, so `main` runs CI once.
 
@@ -252,11 +258,12 @@ The release workflow calls the CI workflow on the pushed commit before it comput
 **Id:** 251325d9-379c-4773-9558-86a1839ed5dc
 **Type:** decision
 **Type:** workaround
-**Status:** active
+**Status:** superseded
 **Evidence:** confirmed
 **Source:** the coding agent's proposal after code scanning's pull request check found no matching analysis on `main`, confirmed by the maintainer on 2026-11-12
 **Revisit when:** CodeQL names an analysis in a called workflow after the called file
 **See:** hosting.md#the-release-runs-ci-first — 177c7b22-84f6-468c-ba73-92b877b89581 — as of 2026-11-12
+**Superseded by:** 67298134-5ceb-4fd8-bc0b-1bb0daa1df54
 
 CodeQL scans in `codeql.yml` on pull requests and pushes to `main`, outside the CI workflow that the release calls.
 
@@ -270,9 +277,10 @@ CodeQL scans in `codeql.yml` on pull requests and pushes to `main`, outside the 
 
 **Id:** 1488636a-b6b9-4e1b-87ff-f9b89b5dd1b9
 **Type:** decision
-**Status:** active
+**Status:** superseded
 **Evidence:** confirmed
 **Source:** conversation with the maintainer, 2026-11-12
+**Superseded by:** eb168b47-4285-4f60-a5ce-6f367515061e
 
 CI builds both images without pushing them and runs `helm lint --strict` on the chart with the Helm version in `.tool-versions`, which the release uses too; `pnpm check` stays the local quality gate for the code.
 
@@ -341,3 +349,84 @@ The XPI is public, as the repository is, and the first installation is "Install 
 **Rejected alternative:** keeping the XPI out of the public release as a workflow artifact, which rules out automatic updates.
 
 **Consequence:** that Firefox follows GitHub's two HTTPS redirects from `update_url` to the asset is read from Firefox's source, not documented by Mozilla.
+
+## Every merge to main commits its version, tags it and releases everything from the tag
+
+**Id:** df546a83-10d4-4cb5-b211-5f0bc2cfdeba
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** conversation 2026-11-22
+**See:** hosting.md#every-merge-to-main-releases-everything-under-one-version — 66a5b052-777d-4820-a44a-5ce88ba18203 — as of 2026-11-22
+
+Each push to `main` computes the next version with `lennartmoeller/next-version` from the last `v*` tag and the merged pull request's title, writes it into `chart/Chart.yaml` as `version` and `appVersion` and into the extension's `package.json`, commits `chore(release): <version> [skip ci]` through the repository's deploy key, tags that commit, and builds the images, the chart and the signed extension from the tag.
+
+**Reason:** The version in the repository's files matches the released artifacts at their tag, the same way in all the maintainer's public repositories, and one action computes the version for all of them. The reasons to release every merge, no manual step and one typed squash commit per merge, still hold.
+
+**Rejected alternative:** A version kept only in the tag and stamped into the files at build time, which needed no bot push to `main`.
+
+**Consequence:** Most merges add a release commit on `main`, docs and chore merges still release a patch and sign an extension version on addons.mozilla.org, and the home network merges every new chart version once its CI passes, so this repository's required checks are the only gate before a release reaches the cluster.
+
+## Rulesets gate the release, which no longer runs CI
+
+**Id:** b368c677-0135-4fc5-bfad-4c1091edef1d
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** conversation 2026-11-22
+**See:** hosting.md#the-release-runs-ci-first — 177c7b22-84f6-468c-ba73-92b877b89581 — as of 2026-11-22
+
+The release workflow runs on pushes to `main` without calling CI, and the `pull-requests` ruleset lets a pull request merge only by squash, with the `Quality` and `Images` checks passed on an up-to-date branch.
+
+**Reason:** The ruleset now keeps a red check from publishing, which the release's own CI run did while `main` had no protection, and every squash commit on `main` has the tree CI already passed, so a second run only doubled each release's time.
+
+**Consequence:** A release starts at once after the merge, and `main` shows no CI result of its own.
+
+## CodeQL runs as GitHub's default setup
+
+**Id:** 67298134-5ceb-4fd8-bc0b-1bb0daa1df54
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** conversation 2026-11-22
+**See:** hosting.md#codeql-runs-in-its-own-workflow — 251325d9-379c-4773-9558-86a1839ed5dc — as of 2026-11-22
+
+Code scanning's default setup with the extended query suite analyzes pull requests, pushes to `main` and a weekly schedule, and no workflow of the repository runs CodeQL.
+
+**Reason:** Without a CodeQL workflow, no analysis can be filed under the wrong workflow file, the problem `codeql.yml` existed for, and nothing pins the CodeQL action. The code scanning rule of the `pull-requests` ruleset blocks a merge on new security alerts of high or higher severity.
+
+**Consequence:** No path filters, so tests and fixtures are scanned too.
+
+## Pull requests build the images and lint the chart, with tools from mise
+
+**Id:** eb168b47-4285-4f60-a5ce-6f367515061e
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** conversation 2026-11-22
+**See:** hosting.md#pull-requests-build-the-images-and-lint-the-chart — 1488636a-b6b9-4e1b-87ff-f9b89b5dd1b9 — as of 2026-11-22
+
+CI's `Images` job builds both images without pushing them, and `mise run check`, CI's `Quality` job, runs `helm lint --strict` on the chart after `pnpm check`. `mise.toml` pins Node and Helm for development, CI and the release, and pnpm comes from mise as a bootstrap that switches itself to `packageManager`.
+
+**Reason:** Every merge releases, so a broken Dockerfile, production build or template must fail before the merge, and one file pins the tools that Renovate's `mise` manager keeps current.
+
+**Rejected alternative:** `helm template` piped into `kubeconform -strict`, a second pinned tool that repeats the home network's check on every chart version.
+
+**Rejected alternative:** No checks before the merge, which tags broken releases.
+
+**Consequence:** Renovate raises Helm, while Node, in `mise.toml` and in the Dockerfile's base image, is raised by hand in both places together, and `packageManager` stays the one pnpm pin.
+
+## The frontend's image follows nginx's mainline series under Renovate
+
+**Id:** a1896607-2947-42a0-b5b8-c982ea65fe78
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** conversation 2026-11-22
+**See:** hosting.md#the-frontends-image-follows-nginxs-mainline-series — 54ea2989-5dba-49f4-9b35-f51482d5db20 — as of 2026-11-22
+
+The frontend's image starts from nginx's mainline series, and Renovate bumps it like every other base image but Node's.
+
+**Reason:** nginx recommends mainline for most users, and Renovate proposes the highest version, which is always mainline, without further configuration.
+
+**Rejected alternative:** The stable series, which needs an update rule for the mainline minor, raised by hand each year when a new stable series appears.

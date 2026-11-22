@@ -1,5 +1,7 @@
 # Prices
 
+Where security prices come from, and how and when they are filled.
+
 ## Security prices from onvista
 
 **Id:** 35b1e0be-7456-4bbb-8dfd-f1cf70621ac5

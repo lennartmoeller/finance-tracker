@@ -1,5 +1,7 @@
 # Database
 
+Why the schema is one SQL file without an ORM, how pgschema brings the database to it, and why the installation's settings are one row of typed columns.
+
 ## The schema is one SQL file without an ORM
 
 **Id:** 81078cce-7b4b-46fe-8199-591d500749bc

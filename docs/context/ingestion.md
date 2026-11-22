@@ -1,5 +1,7 @@
 # Ingestion
 
+Why every account but Sparkasse and PayPal is read by the browser extension, which export each adapter reads, why PayPal is uploaded as its activity report and which of its rows count, how raw transactions are read, how the legacy Sparkasse and ING history entered, why uploads read a bank's export as the extension does, and how a Trade Republic IPO subscription books.
+
 ## Ingestion through the extension only
 
 **Id:** eff3eade-324a-4347-b66f-2472c46fdd51

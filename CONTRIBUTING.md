@@ -2,12 +2,11 @@
 
 ## Local setup
 
-1. Install the Node.js version in [`.nvmrc`](./.nvmrc), for example with `nvm install` or `fnm install`.
-2. Install pnpm with `npm install --global pnpm`; any pnpm version switches itself to the one pinned in the `packageManager` field of [`package.json`](./package.json).
-3. Run `pnpm install`.
-4. Install a Docker-compatible container runtime with Compose, such as Docker Desktop, or Colima with the standalone `docker-compose`.
-5. Copy [`.env.example`](./.env.example) to `.env` and fill in its empty values.
-6. Install each Claude Code plugin enabled in [`.claude/settings.json`](./.claude/settings.json) with `claude plugin install <plugin>@<marketplace> --scope project`, because Claude Code enables these plugins for every clone but does not download them.
+1. Install [mise](https://mise.jdx.dev/getting-started.html), and run `mise trust` and `mise install` to install Node.js, pnpm and Helm in the versions [`mise.toml`](./mise.toml) pins; pnpm switches itself to the version in the `packageManager` field of [`package.json`](./package.json).
+2. Run `pnpm install`.
+3. Install a Docker-compatible container runtime with Compose, such as Docker Desktop, or Colima with the standalone `docker-compose`.
+4. Copy [`.env.example`](./.env.example) to `.env` and fill in its empty values.
+5. Install each Claude Code plugin enabled in [`.claude/settings.json`](./.claude/settings.json) with `claude plugin install <plugin>@<marketplace> --scope project`, because Claude Code enables these plugins for every clone but does not download them.
 
 ## Run the system
 
@@ -64,18 +63,18 @@ Before the backend starts, the migrate step plans the difference with pgschema a
 ## Check a change
 
 ```sh
-# Run the quality gate
-pnpm check
+# Run the quality gate, which CI runs as the required Quality check on every pull request
+mise run check
 
 # Fix formatting and autofixable lint findings
 pnpm exec prettier --write .
 pnpm exec eslint --fix .
-
-# Lint the chart, which CI does with the Helm version in .tool-versions
-helm lint --strict chart
 ```
+
+CI also builds both images, as the required `Images` checks.
 
 ## Release
 
-Every merge to `main` releases the backend and frontend images, the Helm chart and the signed browser extension under one version, which [`release.yml`](./.github/workflows/release.yml) derives from the last `v*` tag and the merged pull request's Conventional Commit title.
+Every merge to `main` releases the backend and frontend images, the Helm chart and the signed browser extension under one version, which [`next-version`](https://github.com/lennartmoeller/next-version) computes from the last `v*` tag and the pull request title in [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) form: `!` before the colon bumps the major version, `feat` the minor version, and every other type the patch version.
+[`release.yml`](./.github/workflows/release.yml) writes that version into [`chart/Chart.yaml`](./chart/Chart.yaml) and the extension's [`package.json`](./src/browser-extension/package.json), commits and tags it, and builds every artifact from the tag, so a change never sets these versions by hand.
 The workflow signs the extension with an addons.mozilla.org API key, kept in the Actions secrets `WEB_EXT_API_KEY` and `WEB_EXT_API_SECRET`.

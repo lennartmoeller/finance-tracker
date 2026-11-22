@@ -1,5 +1,7 @@
 # Rules
 
+Why brands and categories follow from rules matched in PostgreSQL, why the frontend reads the same patterns through a translation, how patterns are written, which rule wins, how categories nest, how rules are saved and deleted, what a brand's, category's or rule's transactions link lists, and why rules count no transfer.
+
 ## Brands and categories follow from rules, not from labels
 
 **Id:** 8232f188-5501-4252-8d44-17b2f41076bb

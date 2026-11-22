@@ -1,5 +1,7 @@
 # Figures
 
+How the frontend's balances, gains and distributions count, why the frontend computes them, why the start balance keeps its meaning when the frontend sets it, and why the start date hides earlier transactions from lists and charts without deleting them.
+
 ## Gain percent of what the purchases cost
 
 **Id:** f5b4dee7-9d67-4ac8-99ca-caa733c70afc

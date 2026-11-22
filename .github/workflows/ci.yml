@@ -4,25 +4,35 @@ on:
   pull_request:
     branches:
       - main
-  workflow_call:
 
 permissions: {}
 
+concurrency:
+  group: ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
-  check:
+  quality:
+    name: Quality
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: ./.github/actions/install
-      - run: |
+
+      - name: Set up mise
+        uses: jdx/mise-action@924e7c586e33d7d4bae9c14e26c5d22e2beb6e78 # v5.3.0
+
+      - name: Run quality gate
+        run: |
           set -euo pipefail
-          pnpm check
+          mise run check
 
   images:
+    name: Images
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -30,31 +40,7 @@ jobs:
       matrix:
         target: [backend, frontend]
     steps:
-      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+      - name: Build image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           target: ${{ matrix.target }}
-
-  chart:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: azure/setup-helm@2f5e7bc67f1f9972ab16657bb795f36d8f04de0e # v5.1.0
-        with:
-          version-file: .tool-versions
-      - run: |
-          set -euo pipefail
-          helm lint --strict chart
-
-  context:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: oliver-zehentleitner/keep-the-why@2771046616a3c6bcd62916ed072f71feb5afd222 # v0.20.3

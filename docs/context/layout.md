@@ -1,5 +1,7 @@
 # Layout
 
+Why all implementation lives in `src/`, one folder per package, all shared code in `src/shared/`, and the chart at the root.
+
 ## All implementation lives in `src/`, one folder per package
 
 **Id:** 8841fb4c-d06f-4177-9783-d323cfe6fbe0
