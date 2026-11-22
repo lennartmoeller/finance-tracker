@@ -1,5 +1,7 @@
 # Apps
 
+Why the system is one backend, one frontend and a browser extension, what the frontend shows, how it draws charts, how the Transactions view filters, sums and renders its rows, shows a transfer as one row and switches between transfers, and why every screen has an address that the Navigation API follows.
+
 ## One backend, one frontend and a browser extension
 
 **Id:** 4117e375-a931-49b6-90b5-79fa89e99080
@@ -248,4 +250,3 @@ A marked transaction's Account cell shows the suggested partner's account, or th
 **Rejected alternative:** three chips above the table for the transfer filter.
 
 **Rejected alternative:** an amber icon after the account name as the mark.
-

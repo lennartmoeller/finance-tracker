@@ -1,5 +1,7 @@
 # Contract
 
+Why `docs/contract/` is an overview whose rules live in the code, why it is split by topic, and why terms live in the code without a glossary.
+
 ## The contract is an overview, and its rules live in the code
 
 **Id:** f6104f1e-e7f4-4924-9f6f-e1c4eea93e08

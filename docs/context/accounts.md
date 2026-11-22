@@ -1,5 +1,7 @@
 # Accounts
 
+Why an account's figures and sync freshness live in the Accounts view without its transactions, why closing an account is a flag that takes it out of syncing, why deleting one takes typing its name, and why its upload opens a side panel.
+
 ## The Accounts view is the one home of an account's figures
 
 **Id:** 1236e03f-6801-4051-8e11-c0c26a6a5628
