@@ -2,5 +2,5 @@ apiVersion: v2
 name: finance-tracker
 description: A single-user, self-hosted personal finance tracker.
 # The release workflow writes both versions in its release commit.
-version: 1.9.12
-appVersion: 1.9.12
+version: 1.9.13
+appVersion: 1.9.13
