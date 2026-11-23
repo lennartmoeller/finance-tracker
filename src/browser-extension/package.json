@@ -1,6 +1,6 @@
 {
   "name": "@finance-tracker/browser-extension",
-  "version": "1.9.3",
+  "version": "1.9.4",
   "type": "module",
   "scripts": {
     "dev": "wxt --browser firefox",
