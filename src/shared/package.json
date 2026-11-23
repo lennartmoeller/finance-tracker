@@ -5,8 +5,8 @@
     "./*": "./*.ts"
   },
   "dependencies": {
-    "@orpc/client": "1.16.2",
-    "@orpc/contract": "1.16.2",
+    "@orpc/client": "1.16.4",
+    "@orpc/contract": "1.16.4",
     "zod": "4.6.7"
   },
   "devDependencies": {
