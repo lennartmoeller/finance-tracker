@@ -17,6 +17,6 @@ COPY src/frontend src/frontend
 RUN pnpm install --frozen-lockfile --filter @finance-tracker/frontend...
 RUN pnpm --filter @finance-tracker/frontend build
 
-FROM nginx:1.31.8-alpine AS frontend
+FROM nginx:1.31.9-alpine AS frontend
 COPY --from=frontend-build /app/src/frontend/dist /usr/share/nginx/html
 COPY src/frontend/nginx.conf.template /etc/nginx/templates/default.conf.template
