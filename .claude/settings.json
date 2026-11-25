@@ -6,7 +6,7 @@
     "lennartmoeller": {
       "source": {
         "source": "github",
-        "repo": "lennartmoeller/agentic"
+        "repo": "lennartmoeller/agentic-plugins"
       },
       "autoUpdate": true
     }

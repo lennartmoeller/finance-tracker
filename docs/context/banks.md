@@ -8,7 +8,7 @@ Why every bank is one folder that the apps discover, why it declares the account
 **Type:** decision
 **Status:** active
 **Evidence:** inferred
-**Source:** the empty-house rewrite of 2026-11-11, designed by the coding agent after the target structure of `.claude/skills/empty-house-refactoring/SKILL.md`; not yet confirmed by the maintainer
+**Source:** the empty-house rewrite of 2026-11-11, designed by the coding agent after the target structure of the [`empty-house-refactoring` skill](https://github.com/lennartmoeller/agentic-plugins/blob/main/skills/empty-house-refactoring/SKILL.md); not yet confirmed by the maintainer
 **See:** ingestion.md#raw-transactions-read-by-their-account — aef5e287-882f-486e-9b4e-37a23394ddea — as of 2026-11-11
 
 Everything bank-specific lives in the bank's folder under `src/shared/banks/`: its name, logo and account number formats, its raw transaction shapes, the adapter the extension runs and the extraction the backend runs.

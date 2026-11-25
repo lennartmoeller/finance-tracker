@@ -1,14 +1,11 @@
 # Contributing
 
-## Local setup
+## Setup
 
-1. Install [mise](https://mise.jdx.dev/getting-started.html), and run `mise trust` and `mise install` to install Node.js, pnpm and Helm in the versions [`mise.toml`](./mise.toml) pins; pnpm switches itself to the version in the `packageManager` field of [`package.json`](./package.json).
-2. Run `pnpm install`.
-3. Install a Docker-compatible container runtime with Compose, such as Docker Desktop, or Colima with the standalone `docker-compose`.
-4. Copy [`.env.example`](./.env.example) to `.env` and fill in its empty values.
-5. Install each Claude Code plugin enabled in [`.claude/settings.json`](./.claude/settings.json) with `claude plugin install <plugin>@<marketplace> --scope project`, because Claude Code enables these plugins for every clone but does not download them.
+Install [mise](https://mise.jdx.dev/getting-started.html), then run `mise trust` and `mise install`.
+Run `pnpm install`, install a container runtime with Compose, such as Docker Desktop or Colima with the standalone `docker-compose`, and copy [`.env.example`](./.env.example) to `.env` with its empty values filled in.
 
-## Run the system
+## Run locally
 
 ### For use
 
@@ -60,21 +57,14 @@ Before the backend starts, the migrate step plans the difference with pgschema a
 4. If the migrate step fails on `VALIDATE CONSTRAINT`, existing rows violate the new check, which stays `NOT VALID` until the next start after the rows or `schema.sql` are fixed.
 5. After a change by hand, check that `pg_dump --schema-only` of the database equals that of a scratch database built with `psql -f schema.sql`, the only check that sees NOT NULL constraint names, timestamp modifiers and commas in trigger arguments.
 
-## Check a change
+## Check
 
-```sh
-# Run the quality gate, which CI runs as the required Quality check on every pull request
-mise run check
-
-# Fix formatting and autofixable lint findings
-pnpm exec prettier --write .
-pnpm exec eslint --fix .
-```
-
-CI also builds both images, as the required `Images` checks.
+Run `mise run check`, which CI runs as the `Quality` check on every pull request.
+CI also builds both images, as the `Images` checks.
+Run `pnpm exec prettier --write .` and `pnpm exec eslint --fix .` to fix formatting and autofixable lint findings.
 
 ## Release
 
-Every merge to `main` releases the backend and frontend images, the Helm chart and the signed browser extension under one version, which [`next-version`](https://github.com/lennartmoeller/next-version) computes from the last `v*` tag and the pull request title in [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) form: `!` before the colon bumps the major version, `feat` the minor version, and every other type the patch version.
-[`release.yml`](./.github/workflows/release.yml) writes that version into [`chart/Chart.yaml`](./chart/Chart.yaml) and the extension's [`package.json`](./src/browser-extension/package.json), commits and tags it, and builds every artifact from the tag, so a change never sets these versions by hand.
-The workflow signs the extension with an addons.mozilla.org API key, kept in the Actions secrets `WEB_EXT_API_KEY` and `WEB_EXT_API_SECRET`.
+Title pull requests as [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/), whose types set the [next version](https://github.com/lennartmoeller/release-from-conventional-commits#how-the-version-is-calculated).
+Run the `Release` workflow on `main` to release it.
+A release also publishes the backend and frontend images, the Helm chart and the browser extension under that version, and addons.mozilla.org signs the extension with the API key in the Actions secrets `WEB_EXT_API_KEY` and `WEB_EXT_API_SECRET`.

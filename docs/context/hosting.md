@@ -1,6 +1,6 @@
 # Hosting
 
-Why the finance tracker ships as a Helm chart with its own PostgreSQL, how nginx, the migrate step and the network policy guard it, how every merge releases, and how the extension finds and updates itself.
+Why the finance tracker ships as a Helm chart with its own PostgreSQL, how nginx, the migrate step and the network policy guard it, how a manual run releases everything, and how the extension finds and updates itself.
 
 ## A Helm chart on K3s is the only production deployment
 
@@ -24,6 +24,7 @@ Docker Compose stays the local way to run and test the system.
 **Status:** active
 **Evidence:** confirmed
 **Source:** conversation with the maintainer, 2026-11-12
+**Verification:** contradicted — since 2026-11-25 a merge reaches the cluster only with the next manual release (fd6b6ed5-4a97-4e7c-8109-f058d40dde80)
 **Revisit when:** the home network backs up the cluster's database and has restored it once
 **See:** hosting.md#a-helm-chart-on-k3s-is-the-only-production-deployment — 4fade0dd-8483-47e6-9e4d-862672214e6a — as of 2026-11-12
 **See:** hosting.md#the-cluster-starts-with-an-empty-database — 5b7412c9-d0d0-4e06-8be8-8287ff03c2f7 — as of 2026-11-12
@@ -337,6 +338,7 @@ The extension's pages drop Firefox's default `upgrade-insecure-requests` with an
 **Status:** active
 **Evidence:** confirmed
 **Source:** conversation with the maintainer, 2026-11-12
+**Verification:** contradicted — since 2026-11-25 only a manual run releases (fd6b6ed5-4a97-4e7c-8109-f058d40dde80), not every merge, though each release still changes the backend and the extension together
 **See:** hosting.md#every-merge-to-main-releases-everything-under-one-version — 66a5b052-777d-4820-a44a-5ce88ba18203 — as of 2026-11-12
 
 addons.mozilla.org signs the extension on the unlisted channel, and every GitHub release carries the signed XPI and an `updates.json` that lists it, which the manifest's `update_url` names through the latest release, so Firefox installs each new version within a day by itself.
@@ -354,10 +356,11 @@ The XPI is public, as the repository is, and the first installation is "Install 
 
 **Id:** df546a83-10d4-4cb5-b211-5f0bc2cfdeba
 **Type:** decision
-**Status:** active
+**Status:** superseded
 **Evidence:** confirmed
 **Source:** conversation 2026-11-22
 **See:** hosting.md#every-merge-to-main-releases-everything-under-one-version — 66a5b052-777d-4820-a44a-5ce88ba18203 — as of 2026-11-22
+**Superseded by:** fd6b6ed5-4a97-4e7c-8109-f058d40dde80
 
 Each push to `main` computes the next version with `lennartmoeller/next-version` from the last `v*` tag and the merged pull request's title, writes it into `chart/Chart.yaml` as `version` and `appVersion` and into the extension's `package.json`, commits `chore(release): <version> [skip ci]` through the repository's deploy key, tags that commit, and builds the images, the chart and the signed extension from the tag.
 
@@ -371,10 +374,11 @@ Each push to `main` computes the next version with `lennartmoeller/next-version`
 
 **Id:** b368c677-0135-4fc5-bfad-4c1091edef1d
 **Type:** decision
-**Status:** active
+**Status:** superseded
 **Evidence:** confirmed
 **Source:** conversation 2026-11-22
 **See:** hosting.md#the-release-runs-ci-first — 177c7b22-84f6-468c-ba73-92b877b89581 — as of 2026-11-22
+**Superseded by:** c52b041e-e475-4fc2-9e92-d88b2d47774b
 
 The release workflow runs on pushes to `main` without calling CI, and the `pull-requests` ruleset lets a pull request merge only by squash, with the `Quality` and `Images` checks passed on an up-to-date branch.
 
@@ -404,6 +408,7 @@ Code scanning's default setup with the extended query suite analyzes pull reques
 **Status:** active
 **Evidence:** confirmed
 **Source:** conversation 2026-11-22
+**Verification:** contradicted — since 2026-11-25 only a manual run releases (fd6b6ed5-4a97-4e7c-8109-f058d40dde80), not every merge, though a release still takes every merged commit without another check
 **See:** hosting.md#pull-requests-build-the-images-and-lint-the-chart — 1488636a-b6b9-4e1b-87ff-f9b89b5dd1b9 — as of 2026-11-22
 
 CI's `Images` job builds both images without pushing them, and `mise run check`, CI's `Quality` job, runs `helm lint --strict` on the chart after `pnpm check`. `mise.toml` pins Node and Helm for development, CI and the release, and pnpm comes from mise as a bootstrap that switches itself to `packageManager`.
@@ -430,3 +435,37 @@ The frontend's image starts from nginx's mainline series, and Renovate bumps it 
 **Reason:** nginx recommends mainline for most users, and Renovate proposes the highest version, which is always mainline, without further configuration.
 
 **Rejected alternative:** The stable series, which needs an update rule for the mainline minor, raised by hand each year when a new stable series appears.
+
+## Rulesets gate what a release takes, and the release runs no CI
+
+**Id:** c52b041e-e475-4fc2-9e92-d88b2d47774b
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** conversations 2026-11-22 and 2026-11-25
+**See:** hosting.md#a-manual-run-commits-the-version-tags-it-and-releases-everything-from-the-tag — fd6b6ed5-4a97-4e7c-8109-f058d40dde80 — as of 2026-11-25
+
+The release workflow runs on a manual run on `main` without calling CI, and the `pull-requests` ruleset lets a pull request merge only by squash, with the `Quality` and `Images` checks passed on an up-to-date branch.
+
+**Reason:** The ruleset keeps a red check from reaching `main`, so every commit a release takes has a tree CI already passed, and a second run would only double each release's time.
+
+**Consequence:** `main` shows no CI result of its own.
+
+## A manual run commits the version, tags it and releases everything from the tag
+
+**Id:** fd6b6ed5-4a97-4e7c-8109-f058d40dde80
+**Type:** decision
+**Status:** active
+**Evidence:** confirmed
+**Source:** conversation 2026-11-25
+**See:** https://github.com/lennartmoeller/github-setup — a180fc35-41ed-43cb-bfe3-820678cb6018 — as of 2026-11-25
+**See:** https://github.com/lennartmoeller/github-setup — e4fdafd0-d537-4326-ad14-a085b77927af — as of 2026-11-25
+
+A manual run of `release.yml` on `main` lets `lennartmoeller/release-from-conventional-commits` compute the next version from the commits since the last `v*` tag, write it with `yq` into `chart/Chart.yaml` as `version` and `appVersion` and into the extension's `package.json`, commit `chore(release): <version> [skip ci]` through the repository's deploy key and tag that commit.
+The images, the chart and the signed extension are built from the tag, and a `release` job creates the GitHub release with the XPI and `updates.json`, because the action cannot attach files that later jobs build.
+
+**Reason:** The version in the repository's files matches the released artifacts at their tag, as in all the maintainer's public repositories, and every repository releases only on a manual run, so several merges, Renovate's included, reach the cluster and addons.mozilla.org together.
+
+**Rejected alternative:** Releasing every push to `main` through `lennartmoeller/next-version`, as until 2026-11-25, which released, deployed and signed a version for every merged pull request.
+
+**Consequence:** Merged pull requests wait on `main` until the next manual run, and the home network merges each new chart version once its CI passes, so this repository's required checks and the manual run are the gates before a release reaches the cluster.
