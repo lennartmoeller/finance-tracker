@@ -1,9 +1,7 @@
 name: Release
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 permissions: {}
 
@@ -16,7 +14,7 @@ jobs:
     name: Version
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
     outputs:
       version: ${{ steps.next.outputs.next_version }}
       tag: ${{ steps.next.outputs.next_tag }}
@@ -27,38 +25,19 @@ jobs:
           ssh-key: ${{ secrets.RELEASE_DEPLOY_KEY }}
           fetch-depth: 0
 
-      - name: Compute next version
+      - name: Release next version
         id: next
-        uses: lennartmoeller/next-version@d4aaf21be33352b91a81e9057fd8aff1d102d2cc # v1.0.0
-
-      - name: Write version to chart and extension
-        env:
-          VERSION: ${{ steps.next.outputs.next_version }}
-        run: |
-          set -euo pipefail
-          sed -i -E "s/^(version|appVersion): .*/\1: $VERSION/" chart/Chart.yaml
-          sed -i -E "s/^(  \"version\": \")[^\"]+/\1$VERSION/" src/browser-extension/package.json
-          [[ $(grep -c -E "^(version|appVersion): $VERSION$" chart/Chart.yaml) == 2 ]]
-          grep -q "^  \"version\": \"$VERSION\"," src/browser-extension/package.json
-
-      - name: Push release commit and tag
-        env:
-          VERSION: ${{ steps.next.outputs.next_version }}
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          refs=("refs/tags/v$VERSION")
-          if ! git diff --quiet; then
-            git commit --all --message "chore(release): $VERSION [skip ci]"
-            refs+=(HEAD:refs/heads/main)
-          fi
-          git tag --annotate "v$VERSION" --message "v$VERSION"
-          git push --atomic origin "${refs[@]}"
+        uses: lennartmoeller/release-from-conventional-commits@7764ed22b8fe067d3583b44121e206bd691a534e # v0.1.2
+        with:
+          write_version: |
+            yq -i '.version = strenv(VERSION) | .appVersion = strenv(VERSION)' chart/Chart.yaml
+            yq -i '.version = strenv(VERSION)' src/browser-extension/package.json
+          create_github_release: false
 
   images:
     name: Images
     needs: version
+    if: needs.version.outputs.version != ''
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -121,6 +100,7 @@ jobs:
   extension:
     name: Extension
     needs: version
+    if: needs.version.outputs.version != ''
     runs-on: ubuntu-latest
     permissions:
       contents: read

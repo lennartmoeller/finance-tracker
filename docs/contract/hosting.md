@@ -64,7 +64,8 @@ A NetworkPolicy admits connections to PostgreSQL only from the backend's pod, so
 flowchart LR
   pr["Pull request:<br/>Quality and Images checks"]
   merge["Squash merge to main"]
-  nextversion["lennartmoeller/next-version"]
+  maintainer["Maintainer"]
+  action["lennartmoeller/<br/>release-from-conventional-commits"]
   subgraph actions["GitHub Actions"]
     tag["Release commit with the version in<br/>Chart.yaml and the extension's package.json,<br/>tag v‹version›"]
     images["Build the images"]
@@ -76,8 +77,9 @@ flowchart LR
   amo["addons.mozilla.org,<br/>unlisted"]
   firefox["Installed extension in Firefox"]
   cluster["The home network's cluster"]
-  pr --> merge --> tag
-  nextversion -- "next version" --> tag
+  pr --> merge -- "subjects since the last v-tag" --> action
+  maintainer -- "manual run of release.yml on main" --> action
+  action -- "next version" --> tag
   tag --> images -- "finance-tracker-backend,<br/>finance-tracker-frontend" --> ghcr
   images --> chart -- "charts/finance-tracker" --> ghcr
   tag --> extension -- "build and its sources" --> amo -- "signed XPI" --> extension
@@ -86,4 +88,4 @@ flowchart LR
   cluster -- "chart and images of a version" --> ghcr
 ```
 
-Every merge to `main` releases all artifacts under one version, which `lennartmoeller/next-version` computes in [`release.yml`](../../.github/workflows/release.yml) from the last `v*` tag and the merge's Conventional Commit subject; the release commits that version through the repository's deploy key and builds every artifact from its tag.
+A manual run of [`release.yml`](../../.github/workflows/release.yml) on `main` releases all artifacts under one version, which `lennartmoeller/release-from-conventional-commits` computes from the Conventional Commit subjects since the last `v*` tag; the action commits that version through the repository's deploy key and tags it, and every artifact is built from the tag.
