@@ -1,6 +1,6 @@
 {
   "type": "module",
-  "packageManager": "pnpm@12.22.0",
+  "packageManager": "pnpm@12.23.0",
   "scripts": {
     "check": "prettier --check . && eslint . && pnpm -r --include-workspace-root exec tsc && knip && vitest run"
   },
