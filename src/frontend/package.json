@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "@finance-tracker/shared": "workspace:*",
-    "@tanstack/react-virtual": "3.14.26",
+    "@tanstack/react-virtual": "3.14.27",
     "lucide-react": "1.77.0",
     "prismjs": "1.30.0",
     "react": "19.3.1",
