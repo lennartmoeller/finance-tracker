@@ -192,8 +192,8 @@ importers:
         specifier: 10.0.1
         version: 10.0.1(eslint@10.15.0(jiti@2.7.0)(supports-color@7.2.0))
       '@mozilla/firefox-devtools-mcp':
-        specifier: 0.10.7
-        version: 0.10.7(supports-color@7.2.0)(zod@4.6.7)
+        specifier: 0.11.0
+        version: 0.11.0(supports-color@7.2.0)(zod@4.6.7)
       '@types/node':
         specifier: 26.6.6
         version: 26.6.6
@@ -702,8 +702,8 @@ packages:
       '@cfworker/json-schema':
         optional: true
 
-  '@mozilla/firefox-devtools-mcp@0.10.7':
-    resolution: {integrity: sha512-TJWTPR6ZKfe39JndcB/nvJC52PmpmsMvpu5Gt4iauQDOXZDXjqBJi1vVABJncxMo7HQwfoN0rWPJHAK1g3Ue/A==}
+  '@mozilla/firefox-devtools-mcp@0.11.0':
+    resolution: {integrity: sha512-oXbuTe5KpkAkL5vXxCThXpsXIoz3JjrzIygnSjhgJkv+ihGLGq1K/DiN8kLFoMJj1wzHKeVXnxLoyUc5ZPafZw==}
     engines: {node: '>=20.19.0'}
     hasBin: true
 
@@ -3949,7 +3949,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@mozilla/firefox-devtools-mcp@0.10.7(supports-color@7.2.0)(zod@4.6.7)':
+  '@mozilla/firefox-devtools-mcp@0.11.0(supports-color@7.2.0)(zod@4.6.7)':
     dependencies:
       '@modelcontextprotocol/sdk': 1.32.2(supports-color@7.2.0)(zod@4.6.7)
       geckodriver: 6.0.2(supports-color@7.2.0)
