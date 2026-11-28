@@ -3,4 +3,4 @@ frontend:
 
 postgres:
   # Here rather than in its template, because Dependabot's helm ecosystem bumps image tags in values.yaml only.
-  image: postgres:18.7-alpine
+  image: postgres:19.0-alpine
