@@ -1,4 +1,4 @@
-FROM pgplex/pgschema:1.15.0 AS pgschema
+FROM pgplex/pgschema:2.0.0 AS pgschema
 
 FROM node:26.13.0-alpine AS workspace
 WORKDIR /app
